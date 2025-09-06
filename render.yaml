@@ -1,0 +1,22 @@
+version: 1
+builds:
+  - type: pip
+    name: backend
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python start_server.py
+    plan: free
+    env:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 8000
+services:
+  - type: web
+    name: boi-adda-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python start_server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
