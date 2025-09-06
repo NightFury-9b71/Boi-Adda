@@ -1,0 +1,279 @@
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  BookOpen, 
+  BookMarked, 
+  Clock, 
+  Gift, 
+  AlertCircle, 
+  Search, 
+  HistoryIcon, 
+  User 
+} from 'lucide-react';
+import { useAuth, apiServices } from '../App';
+
+const DashboardWrapper = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  // Real API calls using React Query for user-specific data
+  const { data: userStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['userStats'],
+    queryFn: apiServices.users.getUserStats,
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const { data: books = [], isLoading: booksLoading } = useQuery({
+    queryKey: ['books'],
+    queryFn: apiServices.books.getBooks,
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Extract user activity stats with fallback
+  const borrowStats = userStats?.activity_summary?.borrows || {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    active: 0,
+    returned: 0,
+    rejected: 0
+  };
+
+  const donationStats = userStats?.activity_summary?.donations || {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    completed: 0,
+    rejected: 0
+  };
+
+  // Get recent books from API (first 4)
+  const recentBooks = books.slice(0, 4).map(book => ({
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    status: book.total_copies > 0 ? "উপলব্ধ" : "ধার দেওয়া"
+  }));
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">স্বাগতম, {user?.name}!</h1>
+            <p className="text-green-100 text-lg">আজ আপনার লাইব্রেরি যাত্রা শুরু করুন</p>
+          </div>
+          <div className="hidden md:block">
+            <BookOpen className="h-20 w-20 text-green-200" />
+          </div>
+        </div>
+      </div>
+
+      {/* User Activity Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">গৃহীত ধার</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {statsLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                ) : (
+                  borrowStats.approved?.toLocaleString() || '0'
+                )}
+              </p>
+            </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <BookMarked className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">সক্রিয় ধার</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {statsLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                ) : (
+                  borrowStats.active?.toLocaleString() || '0'
+                )}
+              </p>
+            </div>
+            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <Clock className="h-6 w-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">গৃহীত দান</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {statsLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                ) : (
+                  donationStats.approved?.toLocaleString() || '0'
+                )}
+              </p>
+            </div>
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Gift className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">অপেক্ষমাণ</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {statsLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                ) : (
+                  (borrowStats.pending + donationStats.pending)?.toLocaleString() || '0'
+                )}
+              </p>
+            </div>
+            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">দ্রুত কার্যক্রম</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button
+            onClick={() => navigate('/books')}
+            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors"
+          >
+            <Search className="h-8 w-8 text-green-600 mb-2" />
+            <span className="text-sm font-medium text-gray-700">বই খুঁজুন</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/donate')}
+            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+          >
+            <Gift className="h-8 w-8 text-blue-600 mb-2" />
+            <span className="text-sm font-medium text-gray-700">বই দান করুন</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/history')}
+            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+          >
+            <HistoryIcon className="h-8 w-8 text-purple-600 mb-2" />
+            <span className="text-sm font-medium text-gray-700">ইতিহাস দেখুন</span>
+          </button>
+          
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+          >
+            <User className="h-8 w-8 text-orange-600 mb-2" />
+            <span className="text-sm font-medium text-gray-700">প্রোফাইল</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Books */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">সাম্প্রতিক বই</h2>
+            <button 
+              onClick={() => navigate('/books')}
+              className="text-green-600 hover:text-green-700 text-sm font-medium"
+            >
+              সব দেখুন →
+            </button>
+          </div>
+          {booksLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse flex items-center space-x-3 p-3">
+                  <div className="h-10 w-8 bg-gray-200 rounded"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                  <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
+                </div>
+              ))}
+            </div>
+          ) : recentBooks.length > 0 ? (
+            <div className="space-y-3">
+              {recentBooks.map((book) => (
+                <div key={book.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                     onClick={() => navigate(`/books/${book.id}`)}>
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-8 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{book.title}</p>
+                      <p className="text-sm text-gray-600">{book.author}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    book.status === 'উপলব্ধ' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {book.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="h-6 w-6 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-sm">কোন বই পাওয়া যায়নি</p>
+              <button
+                onClick={() => navigate('/books')}
+                className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
+              >
+                সব বই দেখুন →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* My Recent Activities */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">আমার সাম্প্রতিক কার্যক্রম</h2>
+          <div className="space-y-4">
+            {/* For now showing a message since we don't have activity history API */}
+            <div className="text-center py-8">
+              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <HistoryIcon className="h-6 w-6 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-sm">
+                সাম্প্রতিক কার্যক্রমের তথ্য শীঘ্রই পাওয়া যাবে
+              </p>
+              <button
+                onClick={() => navigate('/history')}
+                className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
+              >
+                সম্পূর্ণ ইতিহাস দেখুন →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardWrapper;
