@@ -253,6 +253,26 @@ const apiServices = {
     getUserStats: async () => {
       const response = await api.get(API_ENDPOINTS.USERS.STATS);
       return response.data;
+    },
+    uploadProfileImage: async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await api.post('/users/me/upload-profile-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    },
+    uploadCoverImage: async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await api.post('/users/me/upload-cover-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
     }
   },
 

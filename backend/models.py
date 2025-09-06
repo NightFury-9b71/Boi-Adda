@@ -12,6 +12,10 @@ class User(SQLModel, table = True):
     email : str = Field(unique=True, index=True)
     phone : Optional[str] = None
     address : Optional[str] = None
+    bio : Optional[str] = None
+    date_of_birth : Optional[str] = None
+    profile_image : Optional[str] = None
+    cover_image : Optional[str] = None
     hashed_password : str
     role : UserRole = Field(default=UserRole.member)
     is_active : bool = Field(default=True)

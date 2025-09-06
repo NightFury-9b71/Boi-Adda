@@ -38,6 +38,10 @@ class UserOut(BaseModel):
     email: str
     phone: Optional[str]
     address: Optional[str]
+    bio: Optional[str]
+    date_of_birth: Optional[str]
+    profile_image: Optional[str]
+    cover_image: Optional[str]
     role: UserRole
     is_active: bool
     created_at: datetime
@@ -48,6 +52,10 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     address: Optional[str] = None
+    bio: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    profile_image: Optional[str] = None
+    cover_image: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
 
