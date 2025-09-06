@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import create_tables
-from . import db_events  # Import to register the event handlers
+import uvicorn
+import os
 
 # Import routers
 from .routers import users, categories, books, book_copies, borrows, donations, database, admin, auth
@@ -43,3 +44,8 @@ app.include_router(borrows.router)
 app.include_router(donations.router)
 app.include_router(database.router)
 app.include_router(admin.router)
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

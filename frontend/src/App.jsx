@@ -82,6 +82,8 @@ const API_ENDPOINTS = {
     LIST: '/books',
     DETAIL: (id) => `/books/${id}`,
     CREATE: '/books',
+    UPDATE: (id) => `/books/${id}`,
+    DELETE: (id) => `/books/${id}`,
     SEARCH: '/books/search',
   },
   // Book Copy endpoints  
@@ -168,6 +170,14 @@ const apiServices = {
     },
     searchBooks: async (query) => {
       const response = await api.get(`${API_ENDPOINTS.BOOKS.SEARCH}?q=${query}`);
+      return response.data;
+    },
+    updateBook: async (id, bookData) => {
+      const response = await api.put(API_ENDPOINTS.BOOKS.UPDATE(id), bookData);
+      return response.data;
+    },
+    deleteBook: async (id) => {
+      const response = await api.delete(API_ENDPOINTS.BOOKS.DELETE(id));
       return response.data;
     }
   },
