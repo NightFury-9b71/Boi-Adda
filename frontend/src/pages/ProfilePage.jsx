@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
@@ -55,6 +55,17 @@ const ProfilePage = () => {
       });
     }
   }, [user]);
+
+  // Fetch user statistics
+  const { data: userStats, isLoading: statsLoading, error: statsError } = useQuery({
+    queryKey: ['userStats', 'me'],
+    queryFn: apiServices.users.getUserStats,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    onError: (error) => {
+      console.error('User stats query error:', error);
+    }
+  });
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -213,14 +224,6 @@ const ProfilePage = () => {
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Mock user stats - in real app, these would come from API
-  const userStats = {
-    totalBorrows: 12,
-    activeBorrows: 3,
-    totalDonations: 8,
-    memberSince: user?.created_at || '2024-01-01'
-  };
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Cover Section */}
@@ -313,7 +316,7 @@ const ProfilePage = () => {
             <p className="text-gray-600 mt-1">{user?.email}</p>
             <div className="flex items-center mt-2 text-sm text-gray-500">
               <Calendar className="h-4 w-4 mr-1" />
-              <span>সদস্য হয়েছেন: {formatDate(userStats.memberSince)}</span>
+              <span>সদস্য হয়েছেন: {formatDate(user?.created_at)}</span>
             </div>
           </div>
           
@@ -488,41 +491,70 @@ const ProfilePage = () => {
           {/* User Stats */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">কার্যক্রম পরিসংখ্যান</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center">
-                  <BookOpen className="h-5 w-5 text-blue-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-700">মোট ধার</span>
-                </div>
-                <span className="text-lg font-bold text-blue-600">{userStats.totalBorrows}</span>
+            
+            {statsError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-red-700 text-sm">
+                  পরিসংখ্যান লোড করতে সমস্যা হয়েছে: {statsError?.response?.data?.detail || statsError.message}
+                </p>
               </div>
+            )}
+            
+            {statsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-pulse">
+                    <div className="flex items-center">
+                      <div className="h-5 w-5 bg-gray-200 rounded mr-3"></div>
+                      <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="h-6 w-8 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center">
+                    <BookOpen className="h-5 w-5 text-blue-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">মোট ধার</span>
+                  </div>
+                  <span className="text-lg font-bold text-blue-600">
+                    {userStats?.activity_summary?.borrows?.total || 0}
+                  </span>
+                </div>
 
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center">
-                  <Clock className="h-5 w-5 text-yellow-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-700">সক্রিয় ধার</span>
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 text-yellow-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">সক্রিয় ধার</span>
+                  </div>
+                  <span className="text-lg font-bold text-yellow-600">
+                    {userStats?.activity_summary?.borrows?.active || 0}
+                  </span>
                 </div>
-                <span className="text-lg font-bold text-yellow-600">{userStats.activeBorrows}</span>
-              </div>
 
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center">
-                  <Gift className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-700">মোট দান</span>
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center">
+                    <Gift className="h-5 w-5 text-green-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">মোট দান</span>
+                  </div>
+                  <span className="text-lg font-bold text-green-600">
+                    {userStats?.activity_summary?.donations?.total || 0}
+                  </span>
                 </div>
-                <span className="text-lg font-bold text-green-600">{userStats.totalDonations}</span>
-              </div>
 
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-purple-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-700">সদস্যপদ</span>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-purple-600 mr-3" />
+                    <span className="text-sm font-medium text-gray-700">সদস্যপদ</span>
+                  </div>
+                  <span className="text-sm font-medium text-purple-600">
+                    {user?.role === 'admin' ? 'প্রশাসক' : user?.role === 'librarian' ? 'গ্রন্থাগারিক' : 'সাধারণ সদস্য'}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-purple-600">
-                  {user?.role === 'admin' ? 'প্রশাসক' : user?.role === 'librarian' ? 'গ্রন্থাগারিক' : 'সাধারণ সদস্য'}
-                </span>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Quick Actions */}
