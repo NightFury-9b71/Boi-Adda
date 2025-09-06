@@ -227,6 +227,10 @@ const apiServices = {
       const response = await api.post(API_ENDPOINTS.DONATIONS.CREATE, donationData);
       return response.data;
     },
+    createDonationWithNewBook: async (donationData) => {
+      const response = await api.post('/donations/with-new-book', donationData);
+      return response.data;
+    },
     getDonationHistory: async () => {
       const response = await api.get(API_ENDPOINTS.DONATIONS.LIST);
       return response.data;

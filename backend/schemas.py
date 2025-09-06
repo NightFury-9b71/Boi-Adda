@@ -141,6 +141,16 @@ class DonationCreate(BaseModel):
     user_id: int
     book_id: int  # For creating new book copy with donor
 
+class DonationWithNewBookCreate(BaseModel):
+    user_id: int
+    # Book information for new book
+    title: str
+    author: str
+    cover: str
+    category_id: Optional[int] = None
+    published_year: int
+    pages: int
+
 class DonationOut(BaseModel):
     id: int
     status: DonationStatus

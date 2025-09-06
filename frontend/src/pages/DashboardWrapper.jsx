@@ -78,13 +78,13 @@ const DashboardWrapper = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">গৃহীত ধার</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                 ) : (
                   borrowStats.approved?.toLocaleString() || '0'
                 )}
-              </p>
+              </div>
             </div>
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <BookMarked className="h-6 w-6 text-blue-600" />
@@ -96,13 +96,13 @@ const DashboardWrapper = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">সক্রিয় ধার</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                 ) : (
                   borrowStats.active?.toLocaleString() || '0'
                 )}
-              </p>
+              </div>
             </div>
             <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
               <Clock className="h-6 w-6 text-yellow-600" />
@@ -114,13 +114,13 @@ const DashboardWrapper = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">গৃহীত দান</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                 ) : (
                   donationStats.approved?.toLocaleString() || '0'
                 )}
-              </p>
+              </div>
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Gift className="h-6 w-6 text-green-600" />
@@ -132,13 +132,13 @@ const DashboardWrapper = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">অপেক্ষমাণ</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                 ) : (
                   (borrowStats.pending + donationStats.pending)?.toLocaleString() || '0'
                 )}
-              </p>
+              </div>
             </div>
             <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <AlertCircle className="h-6 w-6 text-purple-600" />
