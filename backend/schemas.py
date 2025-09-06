@@ -143,6 +143,7 @@ class BorrowOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     book_copy: Optional[BookCopyOut] = None
+    user: Optional[UserOut] = None
 
 # Donation Schemas
 class DonationCreate(BaseModel):
@@ -167,4 +168,5 @@ class DonationOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     book_copy: Optional[BookCopyOut] = None
+    user: Optional[UserOut] = None
 

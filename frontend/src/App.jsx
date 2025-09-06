@@ -124,9 +124,13 @@ const API_ENDPOINTS = {
     UPDATE_USER_STATUS: (userId) => `/admin/users/${userId}/status`,
     BORROW_REQUESTS: '/admin/borrows',
     APPROVE_BORROW: (borrowId) => `/admin/borrows/${borrowId}/approve`,
+    HANDOVER_BOOK: (borrowId) => `/admin/borrows/${borrowId}/handover`,
     REJECT_BORROW: (borrowId) => `/admin/borrows/${borrowId}/reject`,
+    RETURN_BOOK: (borrowId) => `/admin/borrows/${borrowId}/return`,
     DONATION_REQUESTS: '/admin/donations',
     APPROVE_DONATION: (donationId) => `/admin/donations/${donationId}/approve`,
+    COMPLETE_DONATION: (donationId) => `/admin/donations/${donationId}/complete`,
+    REJECT_DONATION: (donationId) => `/admin/donations/${donationId}/reject`,
     USER_BORROWS: (userId) => `/admin/borrows/user/${userId}`,
     USER_DONATIONS: (userId) => `/admin/donations/user/${userId}`,
   },
@@ -310,12 +314,28 @@ const apiServices = {
       const response = await api.post(API_ENDPOINTS.ADMIN.REJECT_BORROW(borrowId), { reason });
       return response.data;
     },
+    handoverBook: async (borrowId) => {
+      const response = await api.post(API_ENDPOINTS.ADMIN.HANDOVER_BOOK(borrowId));
+      return response.data;
+    },
+    returnBook: async (borrowId) => {
+      const response = await api.post(API_ENDPOINTS.ADMIN.RETURN_BOOK(borrowId));
+      return response.data;
+    },
     getDonationRequests: async () => {
       const response = await api.get(API_ENDPOINTS.ADMIN.DONATION_REQUESTS);
       return response.data;
     },
     approveDonation: async (donationId) => {
       const response = await api.post(API_ENDPOINTS.ADMIN.APPROVE_DONATION(donationId));
+      return response.data;
+    },
+    completeDonation: async (donationId) => {
+      const response = await api.post(API_ENDPOINTS.ADMIN.COMPLETE_DONATION(donationId));
+      return response.data;
+    },
+    rejectDonation: async (donationId, reason) => {
+      const response = await api.post(API_ENDPOINTS.ADMIN.REJECT_DONATION(donationId), { reason });
       return response.data;
     },
     updateUserStatus: async (userId, isActive) => {

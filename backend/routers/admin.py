@@ -15,6 +15,20 @@ def get_all_borrows(session: Session = Depends(get_session), admin_user: User = 
     """Get all borrows (admin view)"""
     statement = select(Borrow)
     borrows = session.exec(statement).all()
+    
+    # Load nested relationships
+    for borrow in borrows:
+        if borrow.user_id:
+            user = session.get(User, borrow.user_id)
+            borrow.user = user
+        if borrow.book_copy_id:
+            book_copy = session.get(BookCopy, borrow.book_copy_id)
+            if book_copy and book_copy.book_id:
+                book = session.get(Book, book_copy.book_id)
+                if book:
+                    book_copy.book = book
+            borrow.book_copy = book_copy
+    
     return borrows
 
 @router.get("/borrows/{borrow_id}", response_model=BorrowOut)
@@ -170,6 +184,20 @@ def get_all_donations(session: Session = Depends(get_session), admin_user: User 
     """Get all donations (admin view)"""
     statement = select(Donation)
     donations = session.exec(statement).all()
+    
+    # Load nested relationships
+    for donation in donations:
+        if donation.user_id:
+            user = session.get(User, donation.user_id)
+            donation.user = user
+        if donation.book_copy_id:
+            book_copy = session.get(BookCopy, donation.book_copy_id)
+            if book_copy and book_copy.book_id:
+                book = session.get(Book, book_copy.book_id)
+                if book:
+                    book_copy.book = book
+            donation.book_copy = book_copy
+    
     return donations
 
 @router.get("/donations/{donation_id}", response_model=DonationOut)
