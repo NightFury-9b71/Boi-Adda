@@ -365,6 +365,50 @@ def update_user_status(user_id: int, is_active: bool, session: Session = Depends
         "updated_by": admin_user.name
     }
 
+@router.get("/users/{user_id}/stats")
+def get_user_activity_stats(user_id: int, session: Session = Depends(get_session), admin_user: User = Depends(require_admin)):
+    """Get specific user activity statistics (admin only)"""
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    
+    # Get user's borrow statistics
+    user_borrows = session.exec(select(Borrow).where(Borrow.user_id == user_id)).all()
+    borrow_stats = {
+        "total": len(user_borrows),
+        "pending": len([b for b in user_borrows if b.status == BorrowStatus.pending]),
+        "approved": len([b for b in user_borrows if b.status == BorrowStatus.approved]),
+        "active": len([b for b in user_borrows if b.status == BorrowStatus.active]),
+        "returned": len([b for b in user_borrows if b.status == BorrowStatus.returned]),
+        "rejected": len([b for b in user_borrows if b.status == BorrowStatus.rejected])
+    }
+    
+    # Get user's donation statistics
+    user_donations = session.exec(select(Donation).where(Donation.user_id == user_id)).all()
+    donation_stats = {
+        "total": len(user_donations),
+        "pending": len([d for d in user_donations if d.status == DonationStatus.pending]),
+        "approved": len([d for d in user_donations if d.status == DonationStatus.approved]),
+        "completed": len([d for d in user_donations if d.status == DonationStatus.completed]),
+        "rejected": len([d for d in user_donations if d.status == DonationStatus.rejected])
+    }
+    
+    return {
+        "user_id": user_id,
+        "user_name": user.name,
+        "user_email": user.email,
+        "user_role": user.role,
+        "user_status": "Active" if user.is_active else "Inactive",
+        "borrow_activity": borrow_stats,
+        "donation_activity": donation_stats,
+        "summary": {
+            "total_books_borrowed": borrow_stats["returned"] + borrow_stats["active"],
+            "total_books_donated": donation_stats["completed"],
+            "current_active_borrows": borrow_stats["active"],
+            "pending_requests": borrow_stats["pending"] + donation_stats["pending"]
+        }
+    }
+
 # ===== ADMIN DASHBOARD =====
 
 @router.get("/stats/overview")

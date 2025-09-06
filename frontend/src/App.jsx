@@ -121,11 +121,14 @@ const API_ENDPOINTS = {
     DASHBOARD_STATS: '/admin/dashboard/stats',
     USERS: '/admin/users',
     UPDATE_USER_ROLE: (userId) => `/admin/users/${userId}/role`,
+    UPDATE_USER_STATUS: (userId) => `/admin/users/${userId}/status`,
     BORROW_REQUESTS: '/admin/borrows',
     APPROVE_BORROW: (borrowId) => `/admin/borrows/${borrowId}/approve`,
     REJECT_BORROW: (borrowId) => `/admin/borrows/${borrowId}/reject`,
     DONATION_REQUESTS: '/admin/donations',
     APPROVE_DONATION: (donationId) => `/admin/donations/${donationId}/approve`,
+    USER_BORROWS: (userId) => `/admin/borrows/user/${userId}`,
+    USER_DONATIONS: (userId) => `/admin/donations/user/${userId}`,
   },
 };
 
@@ -285,8 +288,14 @@ const apiServices = {
       const response = await api.get(API_ENDPOINTS.ADMIN.USERS);
       return response.data;
     },
+    createUser: async (userData) => {
+      const response = await api.post(API_ENDPOINTS.ADMIN.USERS, userData);
+      return response.data;
+    },
     updateUserRole: async (userId, role) => {
-      const response = await api.put(API_ENDPOINTS.ADMIN.UPDATE_USER_ROLE(userId), { role });
+      const response = await api.put(API_ENDPOINTS.ADMIN.UPDATE_USER_ROLE(userId), null, {
+        params: { new_role: role }
+      });
       return response.data;
     },
     getBorrowRequests: async () => {
@@ -307,6 +316,24 @@ const apiServices = {
     },
     approveDonation: async (donationId) => {
       const response = await api.post(API_ENDPOINTS.ADMIN.APPROVE_DONATION(donationId));
+      return response.data;
+    },
+    updateUserStatus: async (userId, isActive) => {
+      const response = await api.put(API_ENDPOINTS.ADMIN.UPDATE_USER_STATUS(userId), null, {
+        params: { is_active: isActive }
+      });
+      return response.data;
+    },
+    getUserBorrows: async (userId) => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.USER_BORROWS(userId));
+      return response.data;
+    },
+    getUserDonations: async (userId) => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.USER_DONATIONS(userId));
+      return response.data;
+    },
+    getUserStats: async (userId) => {
+      const response = await api.get(`/admin/users/${userId}/stats`);
       return response.data;
     }
   }
