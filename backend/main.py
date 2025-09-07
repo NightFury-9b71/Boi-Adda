@@ -16,12 +16,11 @@ app = FastAPI(
 # Configure CORS - Allow frontend URL from environment
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 origins = [
+    "https://boi-adda.onrender.com",
     "http://localhost:5173",
     "http://localhost:3000",
-    frontend_url,
-    "https://boi-adda.onrender.com",
-    "https://boi-adda-frontend.onrender.com",  # Keep old URL for compatibility
-]
+    frontend_url
+    ]
 
 app.add_middleware(
     CORSMiddleware,
