@@ -25,7 +25,7 @@ import AdminDonationManagement from './pages/admin/AdminDonationManagement';
 import AdminBookManagement from './pages/admin/AdminBookManagement';
 
 // API Configuration
-const API_BASE_URL = 'https://boi-adda-backend.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -514,7 +514,7 @@ const Header = () => {
             </div>
           </div>
 
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
+          {/* <div className="hidden md:flex flex-1 max-w-md mx-8">
             <form onSubmit={handleSearch} className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -525,15 +525,28 @@ const Header = () => {
                 className="w-full pl-10 pr-4 py-2 bg-green-700 text-white placeholder-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </form>
-          </div>
+          </div> */}
 
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-yellow-400 rounded-full flex items-center justify-center text-green-800 font-semibold">
-                {user?.name?.charAt(0) || 'ব'}
+            <button 
+              onClick={() => navigate('/profile')}
+              className="flex items-center space-x-2 hover:bg-green-700 rounded-lg px-3 py-2 transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full flex items-center justify-center overflow-hidden">
+                {user?.profile_image ? (
+                  <img 
+                    src={user.profile_image} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-yellow-400 rounded-full flex items-center justify-center text-green-800 font-semibold">
+                    {user?.name?.charAt(0) || 'ব'}
+                  </div>
+                )}
               </div>
               <span className="hidden sm:block text-sm">{user?.name}</span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
