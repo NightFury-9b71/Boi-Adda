@@ -14,9 +14,18 @@ app = FastAPI(
     description="API for Book Adda - A library management system for promoting knowledge sharing",
     version="1.0.0",
 )
+
+# Conditionally mount static files if the directory exists
 backend_dir = os.path.dirname(os.path.abspath(__file__))
 build_dir = os.path.join(backend_dir, '..', 'dist')
-app.mount("/static", StaticFiles(directory=os.path.join(build_dir, 'static')), name="static")
+static_dir = os.path.join(build_dir, 'static')
+
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    print(f"✓ Static files mounted from: {static_dir}")
+else:
+    print(f"⚠ Static files directory not found: {static_dir}")
+    print("This is normal during API-only deployment or development.")
 
 # Configure CORS - Allow frontend URL from environment
 origins = ['https://boi-adda.onrender.com',
@@ -44,6 +53,21 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "বই আড্ডা API"}
+
+# Static files info endpoint
+@app.get("/static-info")
+async def static_info():
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    build_dir = os.path.join(backend_dir, '..', 'dist')
+    static_dir = os.path.join(build_dir, 'static')
+    
+    return {
+        "static_dir": static_dir,
+        "exists": os.path.exists(static_dir),
+        "backend_dir": backend_dir,
+        "build_dir": build_dir,
+        "files": os.listdir(static_dir) if os.path.exists(static_dir) else []
+    }
 
 # Include routers
 app.include_router(auth.router)
