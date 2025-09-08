@@ -851,6 +851,10 @@ const AppRoutes = () => {
         element={!isAuthenticated ? <LandingWrapper /> : <Navigate to="/dashboard" replace />} 
       />
       
+      {/* Public Book Browsing Routes */}
+      <Route path="/books" element={<BooksLibrary />} />
+      <Route path="/books/:id" element={<BookDetailsPage />} />
+      
       {/* Protected Routes with Layout */}
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />

@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:production": "VITE_API_BASE_URL=https://boi-adda-backend.onrender.com vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
