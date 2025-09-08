@@ -694,26 +694,27 @@ const Sidebar = () => {
       
       {/* User Profile Section */}
       <div className="p-4 border-b border-gray-200 bg-gradient-to-b from-green-50 to-white">
-        <div className="flex items-center space-x-3">
-          <div className="h-12 w-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+        <div className="flex items-center space-x-3 cursor-pointer transition-all duration-300 hover:scale-105 rounded-lg p-2 hover:bg-white hover:shadow-lg"
+             onClick={() => navigate('/profile')}>
+          <div className="h-12 w-12 rounded-full flex items-center justify-center overflow-hidden shadow-md transition-all duration-300 hover:shadow-xl hover:shadow-yellow-400/50 hover:scale-110">
             {user?.profile_image ? (
               <img 
                 src={user.profile_image} 
                 alt="Profile" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-all duration-300 hover:brightness-110"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-green-800 font-bold text-lg">
+              <div className="w-full h-full bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-green-800 font-bold text-lg transition-all duration-300 hover:from-yellow-300 hover:to-yellow-400 hover:shadow-lg hover:shadow-yellow-400/60">
                 {user?.name?.charAt(0) || 'ব'}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="text-sm font-semibold text-gray-900 truncate transition-all duration-300 hover:text-green-700 hover:drop-shadow-md">{user?.name}</p>
+            <p className="text-xs text-gray-500 truncate transition-all duration-300 hover:text-green-600 hover:drop-shadow-sm">{user?.email}</p>
             <div className="flex items-center mt-1">
-              <div className={`h-2 w-2 rounded-full mr-2 ${user?.is_active ? 'bg-green-400' : 'bg-gray-400'}`}></div>
-              <span className="text-xs text-gray-600">
+              <div className={`h-2 w-2 rounded-full mr-2 transition-all duration-300 ${user?.is_active ? 'bg-green-400 hover:bg-green-500 hover:shadow-md hover:shadow-green-400/50' : 'bg-gray-400'}`}></div>
+              <span className="text-xs text-gray-600 transition-all duration-300 hover:text-gray-800">
                 {user?.role === 'admin' ? 'প্রশাসক' : user?.role === 'librarian' ? 'গ্রন্থাগারিক' : 'সদস্য'}
               </span>
             </div>
