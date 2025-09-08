@@ -508,44 +508,33 @@ const Header = () => {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <div className="flex items-center ml-2 lg:ml-0">
+            {/* Only show logo on mobile when sidebar is hidden */}
+            <div className="flex items-center ml-2 lg:hidden">
               <BookOpen className="h-8 w-8 text-yellow-400" />
               <span className="ml-2 text-xl font-bold">বই আড্ডা</span>
             </div>
           </div>
 
-          {/* <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="বই খুঁজুন..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-green-700 text-white placeholder-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-            </form>
-          </div> */}
-
-          <div className="flex items-center space-x-4">
+          {/* Only show profile on mobile when sidebar is hidden */}
+          <div className="flex items-center space-x-4 lg:hidden">
             <button 
               onClick={() => navigate('/profile')}
-              className="flex items-center space-x-2 hover:bg-green-700 rounded-lg px-3 py-2 transition-colors"
+              className="flex items-center space-x-2 rounded-lg px-3 py-2 transition-colors duration-300"
             >
-              <div className="h-8 w-8 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="h-8 w-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-yellow-400/50 hover:scale-110">
                 {user?.profile_image ? (
                   <img 
                     src={user.profile_image} 
                     alt="Profile" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-all duration-300 hover:brightness-110 hover:shadow-lg hover:shadow-yellow-400/60"
                   />
                 ) : (
-                  <div className="w-full h-full bg-yellow-400 rounded-full flex items-center justify-center text-green-800 font-semibold">
+                  <div className="w-full h-full bg-yellow-400 rounded-full flex items-center justify-center text-green-800 font-semibold transition-all duration-300 hover:bg-yellow-300 hover:shadow-lg hover:shadow-yellow-400/60 hover:scale-110">
                     {user?.name?.charAt(0) || 'ব'}
                   </div>
                 )}
               </div>
-              <span className="hidden sm:block text-sm">{user?.name}</span>
+              <span className="hidden sm:block text-sm transition-all duration-300 hover:text-yellow-200 hover:drop-shadow-lg hover:scale-105">{user?.name}</span>
             </button>
           </div>
         </div>
@@ -695,7 +684,43 @@ const Sidebar = () => {
 
   return (
     <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 bg-white shadow-lg">
-      <div className="h-16 bg-gradient-to-r from-green-800 to-green-900"></div>
+      {/* Header Section */}
+      <div className="h-16 bg-gradient-to-r from-green-800 to-green-900 flex items-center justify-center">
+        <div className="flex items-center">
+          <BookOpen className="h-8 w-8 text-yellow-400" />
+          <span className="ml-2 text-xl font-bold text-white">বই আড্ডা</span>
+        </div>
+      </div>
+      
+      {/* User Profile Section */}
+      <div className="p-4 border-b border-gray-200 bg-gradient-to-b from-green-50 to-white">
+        <div className="flex items-center space-x-3">
+          <div className="h-12 w-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+            {user?.profile_image ? (
+              <img 
+                src={user.profile_image} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-green-800 font-bold text-lg">
+                {user?.name?.charAt(0) || 'ব'}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <div className="flex items-center mt-1">
+              <div className={`h-2 w-2 rounded-full mr-2 ${user?.is_active ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+              <span className="text-xs text-gray-600">
+                {user?.role === 'admin' ? 'প্রশাসক' : user?.role === 'librarian' ? 'গ্রন্থাগারিক' : 'সদস্য'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <nav className="mt-2 pt-6 px-4 space-y-6 overflow-y-auto flex-1">
         <div className="space-y-2">
           <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">মূল মেনু</h3>
