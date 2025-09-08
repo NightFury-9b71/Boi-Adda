@@ -35,6 +35,8 @@ app.add_middleware(
         "https://boi-adda.netlify.app",  # Production frontend
         "https://boi-adda-frontend.onrender.com",  # Alternative production URL
         "https://boi-adda.onrender.com",  # Main production frontend
+        "https://boi-adda-57qj.onrender.com",  # Possible Render auto-generated URL
+        "https://boi-adda-0r8m.onrender.com",  # Another possible Render URL pattern
     ],
     allow_credentials=True,
     allow_methods=["*"],

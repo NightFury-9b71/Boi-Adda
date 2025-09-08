@@ -30,11 +30,13 @@ else:
 # Configure CORS - Allow frontend URL from environment
 origins = [
     'https://boi-adda.onrender.com',
+    'https://boi-adda-frontend.onrender.com',
+    'https://boi-adda-57qj.onrender.com',  # Possible auto-generated URLs
+    'https://boi-adda-0r8m.onrender.com',
     'http://localhost:5173',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
-    "*",  # Allow all origins temporarily for debugging
 ]
 
 # Add any additional origins from environment

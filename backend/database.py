@@ -8,7 +8,19 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///boi_adda.db")
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-engine = create_engine(DATABASE_URL, echo=False)  # Disable echo in production
+# SQLite-specific connection parameters for thread safety
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL, 
+        echo=False,
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 20
+        },
+        pool_pre_ping=True
+    )
+else:
+    engine = create_engine(DATABASE_URL, echo=False)
 
 def create_tables():
     SQLModel.metadata.create_all(engine)
