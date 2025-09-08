@@ -32,14 +32,14 @@ const BooksLibrary = () => {
   // API calls
   const { data: books = [], isLoading: booksLoading } = useQuery({
     queryKey: ['books'],
-    queryFn: apiServices.books.getBooks,
+    queryFn: () => apiServices.books.getBooks(),
     retry: 1,
     staleTime: 2 * 60 * 1000,
   });
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
-    queryFn: apiServices.categories.getCategories,
+    queryFn: () => apiServices.categories.getCategories(),
     retry: 1,
     staleTime: 5 * 60 * 1000,
   });
@@ -47,7 +47,7 @@ const BooksLibrary = () => {
   // Get user's current borrows to check for active requests
   const { data: userBorrows = [], isLoading: borrowsLoading } = useQuery({
     queryKey: ['userBorrows', user?.id],
-    queryFn: apiServices.borrows.getBorrows,
+    queryFn: () => apiServices.borrows.getBorrows(),
     enabled: !!user,
     retry: 1,
     staleTime: 30 * 1000, // Refresh every 30 seconds for real-time updates
