@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from datetime import datetime
 from ..models import Borrow, Donation, BookCopy, Book, User, Category
 from ..schemas import BorrowOut, DonationOut, UserOut, UserCreate
 from ..enums import BorrowStatus, DonationStatus, CopyStatus, UserRole
@@ -63,8 +64,9 @@ def approve_borrow_first_step(borrow_id: int, session: Session = Depends(get_ses
     if borrow.status != BorrowStatus.pending:
         raise HTTPException(400, f"Can only approve pending requests. Current status: {borrow.status}")
     
-    # Update borrow status to approved
+    # Update borrow status to approved and set approved_at
     borrow.status = BorrowStatus.approved
+    borrow.approved_at = datetime.now()  # Set the approval timestamp
     
     # Update book copy status to reserved
     book_copy = session.get(BookCopy, borrow.book_copy_id)
@@ -80,6 +82,7 @@ def approve_borrow_first_step(borrow_id: int, session: Session = Depends(get_ses
         "message": "Borrow request approved (Step 1/2)",
         "borrow_id": borrow_id,
         "status": borrow.status,
+        "approved_at": borrow.approved_at,
         "note": "User has been notified. Book is reserved for pickup.",
         "approved_by": admin_user.name
     }
@@ -94,8 +97,9 @@ def handover_book_second_step(borrow_id: int, session: Session = Depends(get_ses
     if borrow.status != BorrowStatus.approved:
         raise HTTPException(400, f"Can only handover approved requests. Current status: {borrow.status}")
     
-    # Update borrow status to active
+    # Update borrow status to active and set handed_over_at
     borrow.status = BorrowStatus.active
+    borrow.handed_over_at = datetime.now()  # Set the handover timestamp
     
     # Update book copy status to borrowed
     book_copy = session.get(BookCopy, borrow.book_copy_id)
@@ -111,6 +115,7 @@ def handover_book_second_step(borrow_id: int, session: Session = Depends(get_ses
         "message": "Book handed over successfully (Step 2/2)",
         "borrow_id": borrow_id,
         "status": borrow.status,
+        "handed_over_at": borrow.handed_over_at,
         "note": "Book is now actively borrowed by user.",
         "handed_over_by": admin_user.name
     }
@@ -156,8 +161,9 @@ def mark_book_returned(borrow_id: int, session: Session = Depends(get_session), 
     if borrow.status != BorrowStatus.active:
         raise HTTPException(400, f"Can only return active borrows. Current status: {borrow.status}")
     
-    # Update borrow status to returned
+    # Update borrow status to returned and set returned_at
     borrow.status = BorrowStatus.returned
+    borrow.returned_at = datetime.now()  # Set the return timestamp
     
     # Update book copy status to available
     book_copy = session.get(BookCopy, borrow.book_copy_id)
@@ -173,6 +179,7 @@ def mark_book_returned(borrow_id: int, session: Session = Depends(get_session), 
         "message": "Book returned successfully",
         "borrow_id": borrow_id,
         "status": borrow.status,
+        "returned_at": borrow.returned_at,
         "note": "Book is now available for other users.",
         "processed_by": admin_user.name
     }
@@ -232,8 +239,9 @@ def approve_donation_first_step(donation_id: int, session: Session = Depends(get
     if donation.status != DonationStatus.pending:
         raise HTTPException(400, f"Can only approve pending requests. Current status: {donation.status}")
     
-    # Update donation status to approved
+    # Update donation status to approved and set approved_at
     donation.status = DonationStatus.approved
+    donation.approved_at = datetime.now()  # Set the approval timestamp
     
     session.add(donation)
     session.commit()
@@ -243,6 +251,7 @@ def approve_donation_first_step(donation_id: int, session: Session = Depends(get
         "message": "Donation request approved (Step 1/2)",
         "donation_id": donation_id,
         "status": donation.status,
+        "approved_at": donation.approved_at,
         "note": "User has been notified. Waiting for physical book delivery.",
         "approved_by": admin_user.name
     }
@@ -257,8 +266,9 @@ def complete_donation_second_step(donation_id: int, session: Session = Depends(g
     if donation.status != DonationStatus.approved:
         raise HTTPException(400, f"Can only complete approved donations. Current status: {donation.status}")
     
-    # Update donation status to completed
+    # Update donation status to completed and set completed_at
     donation.status = DonationStatus.completed
+    donation.completed_at = datetime.now()  # Set the completion timestamp
     
     # If there's a book copy associated, ensure it's available
     if donation.book_copy_id:
@@ -275,7 +285,8 @@ def complete_donation_second_step(donation_id: int, session: Session = Depends(g
         "message": "Donation completed successfully (Step 2/2)",
         "donation_id": donation_id,
         "status": donation.status,
-        "note": "Physical book received and added to library inventory.",
+        "completed_at": donation.completed_at,
+        "note": "Book has been received and is now available in the library.",
         "completed_by": admin_user.name
     }
 

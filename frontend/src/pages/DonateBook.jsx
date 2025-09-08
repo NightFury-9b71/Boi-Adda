@@ -223,6 +223,36 @@ const DonateBook = () => {
     }
   };
 
+  const getDateLabel = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'জমা দেওয়া হয়েছে';
+      case 'approved':
+        return 'অনুমোদিত হয়েছে';
+      case 'completed':
+        return 'সম্পন্ন হয়েছে';
+      case 'rejected':
+        return 'প্রত্যাখ্যাত হয়েছে';
+      default:
+        return 'তারিখ';
+    }
+  };
+
+  const getDisplayDate = (donation) => {
+    switch (donation.status) {
+      case 'pending':
+        return donation.created_at;
+      case 'approved':
+        return donation.approved_at || donation.created_at;
+      case 'completed':
+        return donation.completed_at || donation.approved_at || donation.created_at;
+      case 'rejected':
+        return donation.updated_at || donation.created_at; // Use updated_at for rejection date
+      default:
+        return donation.created_at;
+    }
+  };
+
   const getDonationStatusBadge = (status) => {
     const statusConfig = {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, text: 'অপেক্ষমান' },
@@ -317,7 +347,7 @@ const DonateBook = () => {
 
       {/* Donation Form Modal */}
       {showDonationForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h3 className="text-xl font-semibold text-gray-900">বই দানের ফর্ম</h3>
@@ -704,9 +734,12 @@ const DonateBook = () => {
                   </p>
                   <div className="flex items-center space-x-4">
                     {getDonationStatusBadge(donation.status)}
-                    <span className="text-xs text-gray-500">
-                      {new Date(donation.created_at).toLocaleDateString('bn-BD')}
-                    </span>
+                    <div className="text-xs text-gray-500">
+                      <div>{getDateLabel(donation.status)}</div>
+                      <div className="font-medium">
+                        {new Date(getDisplayDate(donation)).toLocaleDateString('bn-BD')}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 

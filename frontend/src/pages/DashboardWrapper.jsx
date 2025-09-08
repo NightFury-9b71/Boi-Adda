@@ -24,11 +24,12 @@ const DashboardWrapper = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { data: books = [], isLoading: booksLoading } = useQuery({
-    queryKey: ['books'],
-    queryFn: apiServices.books.getBooks,
+  const { data: userBorrows = [], isLoading: borrowsLoading } = useQuery({
+    queryKey: ['userBorrows', user?.id],
+    queryFn: apiServices.borrows.getBorrows,
+    enabled: !!user,
     retry: 1,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Extract user activity stats with fallback
@@ -49,13 +50,10 @@ const DashboardWrapper = () => {
     rejected: 0
   };
 
-  // Get recent books from API (first 4)
-  const recentBooks = books.slice(0, 4).map(book => ({
-    id: book.id,
-    title: book.title,
-    author: book.author,
-    status: book.total_copies > 0 ? "উপলব্ধ" : "ধার দেওয়া"
-  }));
+  // Get user's active and pending borrows
+  const currentBorrows = userBorrows.filter(borrow => 
+    ['pending', 'approved', 'active'].includes(borrow.status)
+  ).slice(0, 4); // Show only first 4
 
   return (
     <div className="space-y-6">
@@ -186,18 +184,18 @@ const DashboardWrapper = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Books */}
+        {/* Current Borrows */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">সাম্প্রতিক বই</h2>
+            <h2 className="text-xl font-semibold text-gray-900">আমার বর্তমান ধার</h2>
             <button 
-              onClick={() => navigate('/books')}
+              onClick={() => navigate('/history')}
               className="text-green-600 hover:text-green-700 text-sm font-medium"
             >
               সব দেখুন →
             </button>
           </div>
-          {booksLoading ? (
+          {borrowsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="animate-pulse flex items-center space-x-3 p-3">
@@ -206,45 +204,65 @@ const DashboardWrapper = () => {
                     <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                     <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                   </div>
-                  <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
+                  <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
                 </div>
               ))}
             </div>
-          ) : recentBooks.length > 0 ? (
+          ) : currentBorrows.length > 0 ? (
             <div className="space-y-3">
-              {recentBooks.map((book) => (
-                <div key={book.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
-                     onClick={() => navigate(`/books/${book.id}`)}>
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-8 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center">
-                      <BookOpen className="h-4 w-4 text-green-600" />
+              {currentBorrows.map((borrow) => {
+                const book = borrow.book_copy?.book || {};
+                const getStatusInfo = (status) => {
+                  switch (status) {
+                    case 'pending':
+                      return { text: 'অপেক্ষমাণ', color: 'bg-yellow-100 text-yellow-800' };
+                    case 'approved':
+                      return { text: 'অনুমোদিত', color: 'bg-blue-100 text-blue-800' };
+                    case 'active':
+                      return { text: 'সক্রিয়', color: 'bg-green-100 text-green-800' };
+                    default:
+                      return { text: 'অজানা', color: 'bg-gray-100 text-gray-800' };
+                  }
+                };
+                
+                const statusInfo = getStatusInfo(borrow.status);
+                
+                return (
+                  <div key={borrow.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                       onClick={() => navigate(`/books/${book.id}`)}>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-8 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center">
+                        <BookOpen className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{book.title || 'অজানা বই'}</p>
+                        <p className="text-sm text-gray-600">{book.author || 'অজানা লেখক'}</p>
+                        <p className="text-xs text-gray-500">
+                          আবেদন: {new Date(borrow.created_at).toLocaleDateString('bn-BD')}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{book.title}</p>
-                      <p className="text-sm text-gray-600">{book.author}</p>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                        {statusInfo.text}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">#{borrow.id}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    book.status === 'উপলব্ধ' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {book.status}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8">
               <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <BookOpen className="h-6 w-6 text-gray-400" />
+                <BookMarked className="h-6 w-6 text-gray-400" />
               </div>
-              <p className="text-gray-500 text-sm">কোন বই পাওয়া যায়নি</p>
+              <p className="text-gray-500 text-sm">কোন সক্রিয় ধার নেই</p>
               <button
                 onClick={() => navigate('/books')}
                 className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
               >
-                সব বই দেখুন →
+                বই খুঁজুন →
               </button>
             </div>
           )}

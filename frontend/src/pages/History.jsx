@@ -28,14 +28,18 @@ const History = () => {
     queryKey: ['borrowHistory'],
     queryFn: apiServices.borrows.getBorrowHistory,
     retry: 1,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000, // Refresh every 30 seconds for real-time updates
+    refetchInterval: 60 * 1000, // Auto-refetch every minute
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
   const { data: donationHistory = [], isLoading: donationsLoading } = useQuery({
     queryKey: ['donationHistory'],
     queryFn: apiServices.donations.getDonationHistory,
     retry: 1,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000, // Refresh every 30 seconds for real-time updates
+    refetchInterval: 60 * 1000, // Auto-refetch every minute
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
   // Cancel mutations
@@ -68,7 +72,29 @@ const History = () => {
   // Combine and filter data - transform API data to match UI expectations
   const transformBorrowHistory = borrowHistory.map(borrow => {
     console.log('Borrow data:', borrow); // Debug log
+    console.log('Borrow approved_at:', borrow.approved_at);
+    console.log('Borrow handed_over_at:', borrow.handed_over_at);
+    console.log('Borrow returned_at:', borrow.returned_at);
     const book = borrow.book_copy?.book || {};
+    
+    // Now we have specific date fields from the backend migration
+    // Use the actual timestamp fields for each status transition
+    // If the new fields are null, fallback to updated_at for current status
+    let approvedDate = borrow.approved_at;       // When admin approved
+    let handoverDate = borrow.handed_over_at;    // When book was handed over
+    let returnDate = borrow.returned_at;         // When book was returned
+    
+    // Fallback logic for existing records that don't have the new date fields populated
+    if (!approvedDate && (borrow.status === 'approved' || borrow.status === 'active' || borrow.status === 'returned')) {
+      approvedDate = borrow.updated_at; // Fallback to updated_at
+    }
+    if (!handoverDate && (borrow.status === 'active' || borrow.status === 'returned')) {
+      handoverDate = borrow.updated_at; // Fallback to updated_at
+    }
+    if (!returnDate && borrow.status === 'returned') {
+      returnDate = borrow.updated_at; // Fallback to updated_at
+    }
+    
     return {
       id: borrow.id,
       type: 'borrow',
@@ -84,15 +110,34 @@ const History = () => {
       },
       status: borrow.status,
       requestDate: borrow.created_at,
-      approvedDate: borrow.status !== 'pending' ? borrow.updated_at : null,
+      approvedDate: approvedDate,
+      handoverDate: handoverDate,
+      returnDate: returnDate,
       dueDate: borrow.book_copy?.due_date || null,
-      returnDate: borrow.book_copy?.return_date || null
+      updatedAt: borrow.updated_at // Keep reference to updated_at for rejected status
     };
   });
 
   const transformDonationHistory = donationHistory.map(donation => {
     console.log('Donation data:', donation); // Debug log
+    console.log('Donation approved_at:', donation.approved_at);
+    console.log('Donation completed_at:', donation.completed_at);
     const book = donation.book_copy?.book || {};
+    
+    // Now we have specific date fields from the backend migration
+    // Use the actual timestamp fields for each status transition
+    // If the new fields are null, fallback to updated_at for current status
+    let approvedDate = donation.approved_at;     // When admin approved
+    let completedDate = donation.completed_at;   // When donation was completed
+    
+    // Fallback logic for existing records that don't have the new date fields populated
+    if (!approvedDate && (donation.status === 'approved' || donation.status === 'completed')) {
+      approvedDate = donation.updated_at; // Fallback to updated_at
+    }
+    if (!completedDate && donation.status === 'completed') {
+      completedDate = donation.updated_at; // Fallback to updated_at
+    }
+    
     return {
       id: donation.id,
       type: 'donation',
@@ -108,8 +153,9 @@ const History = () => {
       },
       status: donation.status,
       requestDate: donation.created_at,
-      approvedDate: donation.status !== 'pending' ? donation.updated_at : null,
-      completedDate: donation.status === 'completed' ? donation.updated_at : null
+      approvedDate: approvedDate,
+      completedDate: completedDate,
+      updatedAt: donation.updated_at // Keep reference to updated_at for rejected status
     };
   });
 
@@ -426,45 +472,128 @@ const History = () => {
                         </div>
                         
                         {/* Transaction Details */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm bg-gray-50 rounded-lg p-3">
-                          <div>
-                            <span className="text-gray-500 block">অনুরোধের তারিখ:</span>
-                            <p className="font-medium text-gray-900">{formatDateWithTime(item.requestDate)}</p>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">লেনদেনের বিবরণ</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                            {/* Request Date - Always shown */}
+                            <div>
+                              <span className="text-gray-500 block">অনুরোধের তারিখ:</span>
+                              <p className="font-medium text-gray-900">{formatDateWithTime(item.requestDate)}</p>
+                            </div>
+                            
+                            {/* Status Update Date - Show the current status date when available */}
+                            {item.approvedDate && (
+                              <div>
+                                <span className="text-gray-500 block">অনুমোদনের তারিখ:</span>
+                                <p className="font-medium text-blue-600">{formatDateWithTime(item.approvedDate)}</p>
+                              </div>
+                            )}
+                            
+                            {item.type === 'borrow' && item.handoverDate && (
+                              <div>
+                                <span className="text-gray-500 block">হস্তান্তরের তারিখ:</span>
+                                <p className="font-medium text-green-600">{formatDateWithTime(item.handoverDate)}</p>
+                              </div>
+                            )}
+                            
+                            {item.type === 'borrow' && item.returnDate && (
+                              <div>
+                                <span className="text-gray-500 block">ফেরতের তারিখ:</span>
+                                <p className="font-medium text-green-600">{formatDateWithTime(item.returnDate)}</p>
+                              </div>
+                            )}
+                            
+                            {item.type === 'donation' && item.completedDate && (
+                              <div>
+                                <span className="text-gray-500 block">সম্পন্নের তারিখ:</span>
+                                <p className="font-medium text-green-600">{formatDateWithTime(item.completedDate)}</p>
+                              </div>
+                            )}
+                            
+                            {/* Show rejected date using updated_at */}
+                            {item.status === 'rejected' && (
+                              <div>
+                                <span className="text-gray-500 block">প্রত্যাখ্যানের তারিখ:</span>
+                                <p className="font-medium text-red-600">{formatDateWithTime(item.updatedAt)}</p>
+                              </div>
+                            )}
+                            
+                            {/* Show last updated for pending status */}
+                            {item.status === 'pending' && item.updatedAt !== item.requestDate && (
+                              <div>
+                                <span className="text-gray-500 block">সর্বশেষ আপডেট:</span>
+                                <p className="font-medium text-gray-600">{formatDateWithTime(item.updatedAt)}</p>
+                              </div>
+                            )}
+                            
+                            {/* Due Date - Show for active borrows */}
+                            {item.type === 'borrow' && item.dueDate && item.status === 'active' && (
+                              <div>
+                                <span className="text-gray-500 block">ফেরতের শেষ তারিখ:</span>
+                                <p className={`font-medium ${
+                                  new Date(item.dueDate) < new Date()
+                                    ? 'text-red-600'
+                                    : 'text-orange-600'
+                                }`}>
+                                  {formatDate(item.dueDate)}
+                                  {new Date(item.dueDate) < new Date() && (
+                                    <span className="block text-xs text-red-500">সময় শেষ!</span>
+                                  )}
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* Status-specific messages */}
+                            {item.status === 'pending' && (
+                              <div className="md:col-span-2 lg:col-span-3">
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                                  <span className="text-yellow-800 text-xs font-medium">
+                                    ⏳ আপনার অনুরোধ প্রশাসকের অনুমোদনের জন্য অপেক্ষা করছে
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {item.status === 'approved' && item.type === 'borrow' && (
+                              <div className="md:col-span-2 lg:col-span-3">
+                                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                                  <span className="text-blue-800 text-xs font-medium">
+                                    📚 অনুরোধ অনুমোদিত! দয়া করে লাইব্রেরিতে এসে বইটি নিয়ে যান
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {item.status === 'approved' && item.type === 'donation' && (
+                              <div className="md:col-span-2 lg:col-span-3">
+                                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                                  <span className="text-blue-800 text-xs font-medium">
+                                    🎁 দান অনুরোধ অনুমোদিত! দয়া করে লাইব্রেরিতে এসে বইটি জমা দিন
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {item.status === 'active' && (
+                              <div className="md:col-span-2 lg:col-span-3">
+                                <div className="bg-green-50 border border-green-200 rounded p-2">
+                                  <span className="text-green-800 text-xs font-medium">
+                                    ✅ বইটি আপনার কাছে রয়েছে। নির্ধারিত সময়ে ফেরত দিন
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {item.status === 'rejected' && (
+                              <div className="md:col-span-2 lg:col-span-3">
+                                <div className="bg-red-50 border border-red-200 rounded p-2">
+                                  <span className="text-red-800 text-xs font-medium">
+                                    ❌ অনুরোধ প্রত্যাখ্যাত হয়েছে
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          
-                          {item.approvedDate && (
-                            <div>
-                              <span className="text-gray-500 block">অনুমোদনের তারিখ:</span>
-                              <p className="font-medium text-gray-900">{formatDateWithTime(item.approvedDate)}</p>
-                            </div>
-                          )}
-                          
-                          {item.type === 'borrow' && item.dueDate && (
-                            <div>
-                              <span className="text-gray-500 block">ফেরতের শেষ তারিখ:</span>
-                              <p className={`font-medium ${
-                                item.status === 'active' && new Date(item.dueDate) < new Date()
-                                  ? 'text-red-600'
-                                  : 'text-gray-900'
-                              }`}>
-                                {formatDate(item.dueDate)}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {item.returnDate && (
-                            <div>
-                              <span className="text-gray-500 block">ফেরতের তারিখ:</span>
-                              <p className="font-medium text-green-600">{formatDateWithTime(item.returnDate)}</p>
-                            </div>
-                          )}
-                          
-                          {item.completedDate && (
-                            <div>
-                              <span className="text-gray-500 block">সম্পন্নের তারিখ:</span>
-                              <p className="font-medium text-green-600">{formatDateWithTime(item.completedDate)}</p>
-                            </div>
-                          )}
                         </div>
 
                         {/* Actions */}

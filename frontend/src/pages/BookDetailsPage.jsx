@@ -54,18 +54,64 @@ const BookDetailsPage = () => {
     queryFn: apiServices.borrows.getBorrows,
     enabled: !!user,
     retry: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 30 * 1000, // Refresh every 30 seconds for real-time updates
+    refetchInterval: 60 * 1000, // Auto-refetch every minute
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
-  // Helper function to check if user has an active borrow for this book
-  const hasActiveBorrowForBook = () => {
-    if (!user || !userBorrows || userBorrows.length === 0) return false;
+  // Helper function to get borrow status for this book
+  const getBorrowStatusForBook = () => {
+    if (!user || !userBorrows || userBorrows.length === 0) return null;
     
-    return userBorrows.some(borrow => {
+    const borrow = userBorrows.find(borrow => {
       const borrowBookId = borrow.book_copy?.book?.id || borrow.book_copy?.book_id;
       const isActiveStatus = ['pending', 'approved', 'active'].includes(borrow.status);
       return borrowBookId === parseInt(id) && isActiveStatus;
     });
+    
+    return borrow ? borrow.status : null;
+  };
+
+  // Helper function to check if user has an active borrow for this book
+  const hasActiveBorrowForBook = () => {
+    return getBorrowStatusForBook() !== null;
+  };
+
+  // Helper function to get status display info
+  const getBorrowStatusDisplay = () => {
+    const status = getBorrowStatusForBook();
+    
+    switch (status) {
+      case 'pending':
+        return {
+          text: 'অনুরোধ করা হয়েছে',
+          description: 'আপনার ধার অনুরোধ বিবেচনাধীন আছে',
+          className: 'bg-yellow-50 border-yellow-200',
+          textColor: 'text-yellow-800',
+          iconColor: 'text-yellow-600',
+          icon: Clock
+        };
+      case 'approved':
+        return {
+          text: 'অনুমোদিত - নিতে আসুন',
+          description: 'আপনার অনুরোধ অনুমোদিত হয়েছে। দয়া করে লাইব্রেরিতে এসে বইটি নিয়ে যান',
+          className: 'bg-blue-50 border-blue-200',
+          textColor: 'text-blue-800',
+          iconColor: 'text-blue-600',
+          icon: CheckCircle
+        };
+      case 'active':
+        return {
+          text: 'আপনার কাছে আছে',
+          description: 'এই বইটি বর্তমানে আপনার কাছে রয়েছে',
+          className: 'bg-green-50 border-green-200',
+          textColor: 'text-green-800',
+          iconColor: 'text-green-600',
+          icon: CheckCircle
+        };
+      default:
+        return null;
+    }
   };
 
   const handleBorrowRequest = async () => {
@@ -210,8 +256,6 @@ const BookDetailsPage = () => {
   if (!book) {
     return null;
   }
-
-  const hasActiveRequest = hasActiveBorrowForBook();
 
   return (
     <div className="space-y-6">
@@ -370,35 +414,45 @@ const BookDetailsPage = () => {
             
             {book.total_copies > 0 ? (
               <div className="space-y-4">
-                {hasActiveRequest ? (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                      <Clock className="h-5 w-5 text-yellow-600 mr-2" />
-                      <span className="text-yellow-800 font-medium">অনুরোধ করা হয়েছে</span>
-                    </div>
-                    <p className="text-yellow-700 text-sm mt-1">
-                      আপনার ধার অনুরোধ বিবেচনাধীন আছে
-                    </p>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleBorrowRequest}
-                    disabled={isBorrowLoading}
-                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {isBorrowLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        অনুরোধ পাঠানো হচ্ছে...
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="h-5 w-5 mr-2" />
-                        ধার নিন
-                      </>
-                    )}
-                  </button>
-                )}
+                {(() => {
+                  const statusDisplay = getBorrowStatusDisplay();
+                  if (statusDisplay) {
+                    const IconComponent = statusDisplay.icon;
+                    return (
+                      <div className={`border rounded-lg p-4 ${statusDisplay.className}`}>
+                        <div className="flex items-center">
+                          <IconComponent className={`h-5 w-5 mr-2 ${statusDisplay.iconColor}`} />
+                          <span className={`font-medium ${statusDisplay.textColor}`}>
+                            {statusDisplay.text}
+                          </span>
+                        </div>
+                        <p className={`text-sm mt-1 ${statusDisplay.textColor.replace('800', '700')}`}>
+                          {statusDisplay.description}
+                        </p>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <button
+                        onClick={handleBorrowRequest}
+                        disabled={isBorrowLoading}
+                        className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      >
+                        {isBorrowLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            অনুরোধ পাঠানো হচ্ছে...
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="h-5 w-5 mr-2" />
+                            ধার নিন
+                          </>
+                        )}
+                      </button>
+                    );
+                  }
+                })()}
                 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <div className="flex items-center text-green-800 text-sm">

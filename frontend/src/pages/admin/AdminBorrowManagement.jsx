@@ -139,6 +139,40 @@ const AdminBorrowManagement = () => {
     return new Date(dateString).toLocaleDateString('bn-BD');
   };
 
+  const getDisplayDate = (borrow) => {
+    switch (borrow.status) {
+      case 'pending':
+        return borrow.created_at;
+      case 'approved':
+        return borrow.approved_at || borrow.created_at;
+      case 'active':
+        return borrow.handed_over_at || borrow.approved_at || borrow.created_at;
+      case 'returned':
+        return borrow.returned_at || borrow.handed_over_at || borrow.approved_at || borrow.created_at;
+      case 'rejected':
+        return borrow.updated_at || borrow.created_at;
+      default:
+        return borrow.created_at;
+    }
+  };
+
+  const getDateLabel = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'অনুরোধ';
+      case 'approved':
+        return 'অনুমোদন';
+      case 'active':
+        return 'হস্তান্তর';
+      case 'returned':
+        return 'ফেরত';
+      case 'rejected':
+        return 'প্রত্যাখ্যান';
+      default:
+        return 'তারিখ';
+    }
+  };
+
   const handleApprove = (borrowId) => {
     approveBorrowMutation.mutate(borrowId);
   };
@@ -400,7 +434,10 @@ const AdminBorrowManagement = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(borrow.created_at)}
+                      <div>
+                        <div className="text-xs text-gray-400">{getDateLabel(borrow.status)}</div>
+                        <div className="font-medium">{formatDate(getDisplayDate(borrow))}</div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">

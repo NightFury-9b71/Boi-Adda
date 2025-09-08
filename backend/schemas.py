@@ -142,6 +142,9 @@ class BorrowOut(BaseModel):
     book_copy_id: Optional[int]
     created_at: datetime
     updated_at: datetime
+    approved_at: Optional[datetime] = None
+    handed_over_at: Optional[datetime] = None
+    returned_at: Optional[datetime] = None
     book_copy: Optional[BookCopyOut] = None
     user: Optional[UserOut] = None
 
@@ -167,6 +170,8 @@ class DonationOut(BaseModel):
     book_copy_id: Optional[int]
     created_at: datetime
     updated_at: datetime
+    approved_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     book_copy: Optional[BookCopyOut] = None
     user: Optional[UserOut] = None
 

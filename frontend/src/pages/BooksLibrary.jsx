@@ -50,18 +50,55 @@ const BooksLibrary = () => {
     queryFn: apiServices.borrows.getBorrows,
     enabled: !!user,
     retry: 1,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 30 * 1000, // Refresh every 30 seconds for real-time updates
+    refetchInterval: 60 * 1000, // Auto-refetch every minute
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
-  // Helper function to check if user has an active borrow for a book
-  const hasActiveBorrowForBook = (bookId) => {
-    if (!user || !userBorrows || userBorrows.length === 0) return false;
+  // Helper function to get borrow status for a book
+  const getBorrowStatusForBook = (bookId) => {
+    if (!user || !userBorrows || userBorrows.length === 0) return null;
     
-    return userBorrows.some(borrow => {
+    const borrow = userBorrows.find(borrow => {
       const borrowBookId = borrow.book_copy?.book?.id || borrow.book_copy?.book_id;
       const isActiveStatus = ['pending', 'approved', 'active'].includes(borrow.status);
       return borrowBookId === bookId && isActiveStatus;
     });
+    
+    return borrow ? borrow.status : null;
+  };
+
+  // Helper function to check if user has an active borrow for a book
+  const hasActiveBorrowForBook = (bookId) => {
+    return getBorrowStatusForBook(bookId) !== null;
+  };
+
+  // Helper function to get status button/text for borrow
+  const getBorrowStatusDisplay = (bookId) => {
+    const status = getBorrowStatusForBook(bookId);
+    
+    switch (status) {
+      case 'pending':
+        return {
+          text: 'অপেক্ষমাণ',
+          className: 'bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full',
+          canCancel: true
+        };
+      case 'approved':
+        return {
+          text: 'অনুমোদিত - নিতে আসুন',
+          className: 'bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full',
+          canCancel: true
+        };
+      case 'active':
+        return {
+          text: 'আপনার কাছে আছে',
+          className: 'bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full',
+          canCancel: false
+        };
+      default:
+        return null;
+    }
   };
 
   // Filter and sort books
@@ -393,22 +430,34 @@ const BooksLibrary = () => {
                         <span>বিস্তারিত</span>
                       </button>
                       
-                      {book.total_copies > 0 && !hasActiveBorrowForBook(book.id) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleBorrowRequest(book);
-                          }}
-                          className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
-                        >
-                          ধার নিন
-                        </button>
-                      )}
-                      {hasActiveBorrowForBook(book.id) && (
-                        <span className="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full">
-                          অনুরোধ করা হয়েছে
-                        </span>
-                      )}
+                      {(() => {
+                        const statusDisplay = getBorrowStatusDisplay(book.id);
+                        if (statusDisplay) {
+                          return (
+                            <span className={statusDisplay.className}>
+                              {statusDisplay.text}
+                            </span>
+                          );
+                        } else if (book.total_copies > 0) {
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBorrowRequest(book);
+                              }}
+                              className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
+                            >
+                              ধার নিন
+                            </button>
+                          );
+                        } else {
+                          return (
+                            <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                              স্টকে নেই
+                            </span>
+                          );
+                        }
+                      })()}
                     </div>
                   </div>
                 </>
@@ -505,22 +554,34 @@ const BooksLibrary = () => {
                           <span>দেখুন</span>
                         </button>
                         
-                        {book.total_copies > 0 && !hasActiveBorrowForBook(book.id) && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBorrowRequest(book);
-                            }}
-                            className="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition-colors"
-                          >
-                            ধার নিন
-                          </button>
-                        )}
-                        {hasActiveBorrowForBook(book.id) && (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded">
-                            অনুরোধকৃত
-                          </span>
-                        )}
+                        {(() => {
+                          const statusDisplay = getBorrowStatusDisplay(book.id);
+                          if (statusDisplay) {
+                            return (
+                              <span className={statusDisplay.className}>
+                                {statusDisplay.text}
+                              </span>
+                            );
+                          } else if (book.total_copies > 0) {
+                            return (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBorrowRequest(book);
+                                }}
+                                className="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                              >
+                                ধার নিন
+                              </button>
+                            );
+                          } else {
+                            return (
+                              <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded">
+                                স্টকে নেই
+                              </span>
+                            );
+                          }
+                        })()}
                       </div>
                     </div>
                   </div>

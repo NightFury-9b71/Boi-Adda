@@ -82,6 +82,9 @@ class Borrow(SQLModel, table = True):
     status : BorrowStatus
     created_at : datetime = Field(default_factory=get_current_time)
     updated_at : datetime = Field(default_factory=get_current_time)
+    approved_at : Optional[datetime] = None  # When admin approved the request
+    handed_over_at : Optional[datetime] = None  # When book was physically handed over
+    returned_at : Optional[datetime] = None  # When book was returned by user
     
     user_id : Optional[int] = Field(default=None, foreign_key="user.id")
     book_copy_id: Optional[int] = Field(default=None, foreign_key="bookcopy.id")
@@ -94,6 +97,8 @@ class Donation(SQLModel, table = True):
     status : DonationStatus
     created_at : datetime = Field(default_factory=get_current_time)
     updated_at : datetime = Field(default_factory=get_current_time)
+    approved_at : Optional[datetime] = None  # When admin approved the donation
+    completed_at : Optional[datetime] = None  # When donation was completed
 
     user_id : Optional[int] = Field(default=None, foreign_key="user.id")
     book_copy_id: Optional[int] = Field(default=None, foreign_key="bookcopy.id")
