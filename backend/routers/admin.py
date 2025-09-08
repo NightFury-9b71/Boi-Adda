@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from ..models import Borrow, Donation, BookCopy, Book, User
+from ..models import Borrow, Donation, BookCopy, Book, User, Category
 from ..schemas import BorrowOut, DonationOut, UserOut, UserCreate
 from ..enums import BorrowStatus, DonationStatus, CopyStatus, UserRole
 from ..database import get_session
@@ -539,11 +539,43 @@ def get_book_statistics(session: Session = Depends(get_session), admin_user: Use
     """Get detailed book and book copy statistics"""
     books = session.exec(select(Book)).all()
     book_copies = session.exec(select(BookCopy)).all()
+    categories = session.exec(select(Category)).all()
+    
+    # Get category-wise book distribution
+    category_distribution = []
+    total_books_categorized = 0
+    
+    for category in categories:
+        category_books = [b for b in books if b.category_id == category.id]
+        book_count = len(category_books)
+        total_books_categorized += book_count
+        
+        if book_count > 0:
+            category_distribution.append({
+                "name": category.name,
+                "value": book_count,
+                "percentage": 0  # Will be calculated after loop
+            })
+    
+    # Add uncategorized books
+    uncategorized_books = [b for b in books if not b.category_id]
+    if uncategorized_books:
+        category_distribution.append({
+            "name": "অবিন্যস্ত",
+            "value": len(uncategorized_books),
+            "percentage": 0
+        })
+        total_books_categorized += len(uncategorized_books)
+    
+    # Calculate percentages
+    for category in category_distribution:
+        category["percentage"] = (category["value"] / total_books_categorized * 100) if total_books_categorized > 0 else 0
     
     stats = {
         "books": {
             "total_titles": len(books),
-            "average_copies_per_book": len(book_copies) / len(books) if books else 0
+            "average_copies_per_book": len(book_copies) / len(books) if books else 0,
+            "category_distribution": category_distribution
         },
         "copies": {
             "total_copies": len(book_copies),
@@ -561,6 +593,108 @@ def get_book_statistics(session: Session = Depends(get_session), admin_user: Use
     }
     
     return stats
+
+@router.get("/stats/trends")
+def get_trends_data(session: Session = Depends(get_session), admin_user: User = Depends(require_admin)):
+    """Get monthly trends data for charts"""
+    from datetime import datetime, timedelta
+    
+    # Get data for the last 6 months
+    months_data = []
+    current_date = datetime.now()
+    
+    for i in range(5, -1, -1):  # Last 6 months
+        target_date = current_date.replace(day=1) - timedelta(days=30*i)
+        month_start = target_date.replace(day=1)
+        next_month = month_start.replace(month=month_start.month % 12 + 1) if month_start.month < 12 else month_start.replace(year=month_start.year + 1, month=1)
+        
+        # Count borrows in this month
+        monthly_borrows = session.exec(
+            select(Borrow).where(
+                Borrow.created_at >= month_start,
+                Borrow.created_at < next_month
+            )
+        ).all()
+        
+        # Count donations in this month
+        monthly_donations = session.exec(
+            select(Donation).where(
+                Donation.created_at >= month_start,
+                Donation.created_at < next_month
+            )
+        ).all()
+        
+        # Count returns (borrows that were returned in this month)
+        monthly_returns = len([b for b in monthly_borrows if b.status == BorrowStatus.returned])
+        
+        month_name_mapping = {
+            1: "জানুয়ারি", 2: "ফেব্রুয়ারি", 3: "মার্চ", 4: "এপ্রিল",
+            5: "মে", 6: "জুন", 7: "জুলাই", 8: "আগস্ট",
+            9: "সেপ্টেম্বর", 10: "অক্টোবর", 11: "নভেম্বর", 12: "ডিসেম্বর"
+        }
+        
+        months_data.append({
+            "month": month_name_mapping[month_start.month],
+            "borrows": len(monthly_borrows),
+            "donations": len(monthly_donations),
+            "returns": monthly_returns
+        })
+    
+    return {
+        "monthly_trends": months_data
+    }
+
+@router.get("/stats/user-activity")
+def get_user_activity_data(session: Session = Depends(get_session), admin_user: User = Depends(require_admin)):
+    """Get weekly user activity data"""
+    from datetime import datetime, timedelta
+    
+    # Get data for the last 7 days
+    weekly_activity = []
+    current_date = datetime.now()
+    
+    day_name_mapping = {
+        0: "সোম", 1: "মঙ্গল", 2: "বুধ", 3: "বৃহস্পতি",
+        4: "শুক্র", 5: "শনি", 6: "রবি"
+    }
+    
+    for i in range(7):
+        target_date = current_date - timedelta(days=6-i)
+        day_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        # Count unique users who made borrows or donations on this day
+        daily_borrows = session.exec(
+            select(Borrow).where(
+                Borrow.created_at >= day_start,
+                Borrow.created_at < day_end
+            )
+        ).all()
+        
+        daily_donations = session.exec(
+            select(Donation).where(
+                Donation.created_at >= day_start,
+                Donation.created_at < day_end
+            )
+        ).all()
+        
+        # Get unique user IDs
+        unique_users = set()
+        for borrow in daily_borrows:
+            if borrow.user_id:
+                unique_users.add(borrow.user_id)
+        for donation in daily_donations:
+            if donation.user_id:
+                unique_users.add(donation.user_id)
+        
+        weekly_activity.append({
+            "day": day_name_mapping[target_date.weekday()],
+            "users": len(unique_users)
+        })
+    
+    return {
+        "user_activity": weekly_activity
+    }
 
 @router.get("/stats/borrows")
 def get_borrow_statistics(session: Session = Depends(get_session), admin_user: User = Depends(require_admin)):

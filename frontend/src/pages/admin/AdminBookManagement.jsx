@@ -25,7 +25,8 @@ import {
   Image as ImageIcon,
   FileText,
   Users,
-  BarChart3
+  BarChart3,
+  Camera
 } from 'lucide-react';
 import { apiServices } from '../../App';
 
@@ -409,11 +410,23 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
   const [formData, setFormData] = useState({
     title: book?.title || '',
     author: book?.author || '',
-    cover: book?.cover || '',
+    cover: book?.cover || 'cover-1.jpg',
     category_id: book?.category_id || '',
     published_year: book?.published_year || new Date().getFullYear(),
-    pages: book?.pages || ''
+    pages: book?.pages || '',
+    total_copies: book?.total_copies || 1
   });
+
+  // Image upload state
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [useCustomImage, setUseCustomImage] = useState(false);
+
+  const availableCovers = [
+    'cover-1.jpg', 'cover-2.jpg', 'cover-3.jpg', 'cover-4.jpg', 'cover-5.jpg',
+    'cover-6.jpg', 'cover-7.jpg', 'cover-8.jpg', 'cover-9.jpg', 'cover-10.jpg',
+    'cover-11.jpg', 'cover-12.jpg', 'cover-13.jpg', 'cover-14.jpg', 'cover-15.jpg'
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -423,11 +436,22 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
       return;
     }
 
+    if (!formData.pages || formData.pages < 1) {
+      toast.error('সঠিক পৃষ্ঠা সংখ্যা দিন');
+      return;
+    }
+
+    if (formData.published_year < 1000 || formData.published_year > new Date().getFullYear()) {
+      toast.error('সঠিক প্রকাশনা বছর দিন');
+      return;
+    }
+
     const submitData = {
       ...formData,
       category_id: formData.category_id ? parseInt(formData.category_id) : null,
       published_year: parseInt(formData.published_year),
-      pages: parseInt(formData.pages) || 0
+      pages: parseInt(formData.pages),
+      total_copies: parseInt(formData.total_copies) || 1
     };
 
     onSubmit(submitData);
@@ -441,9 +465,51 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
     }));
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('অনুগ্রহ করে একটি ছবি ফাইল নির্বাচন করুন');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('ছবির সাইজ ৫ মেগাবাইটের চেয়ে ছোট হতে হবে');
+        return;
+      }
+
+      setUploadedImage(file);
+      setUseCustomImage(true);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCameraCapture = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = handleImageUpload;
+    input.click();
+  };
+
+  const removeCustomImage = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
+    setUseCustomImage(false);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-md w-full">
+      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900">
@@ -458,71 +524,78 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              বইয়ের নাম *
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              required
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Instructions */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-900 mb-1">বই যোগ করার নির্দেশনা</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• বইটির সঠিক ও সম্পূর্ণ তথ্য প্রদান করুন</li>
+                  <li>• স্পষ্ট ও উন্নত মানের কভার ছবি ব্যবহার করুন</li>
+                  <li>• সঠিক বিভাগ নির্বাচন করুন</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              লেখক *
-            </label>
-            <input
-              type="text"
-              name="author"
-              value={formData.author}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              কভার ছবির লিংক
-            </label>
-            <input
-              type="url"
-              name="cover"
-              value={formData.cover}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              বিভাগ
-            </label>
-            <select
-              name="category_id"
-              value={formData.category_id}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            >
-              <option value="">বিভাগ নির্বাচন করুন</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                প্রকাশনার বছর
+                বইয়ের নাম *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="বইয়ের সম্পূর্ণ নাম লিখুন..."
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                লেখক *
+              </label>
+              <input
+                type="text"
+                name="author"
+                value={formData.author}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="লেখকের নাম লিখুন..."
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                বিভাগ
+              </label>
+              <select
+                name="category_id"
+                value={formData.category_id}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">বিভাগ নির্বাচন করুন</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                প্রকাশনা বছর *
               </label>
               <input
                 type="number"
@@ -530,14 +603,15 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 value={formData.published_year}
                 onChange={handleInputChange}
                 min="1000"
-                max="2030"
+                max={new Date().getFullYear()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                required
               />
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                পৃষ্ঠা সংখ্যা
+                পৃষ্ঠা সংখ্যা *
               </label>
               <input
                 type="number"
@@ -546,7 +620,170 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 onChange={handleInputChange}
                 min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="পৃষ্ঠা"
+                required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                কপি সংখ্যা *
+              </label>
+              <input
+                type="number"
+                name="total_copies"
+                value={formData.total_copies}
+                onChange={handleInputChange}
+                min="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="কপি"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Cover Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              কভার নির্বাচন করুন
+            </label>
+            
+            {/* Upload Instructions */}
+            <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                💡 <strong>টিপস:</strong> বইয়ের সামনের কভারের একটি স্পষ্ট ছবি তুলুন। ছবিটি ৫ মেগাবাইটের চেয়ে ছোট হতে হবে।
+              </p>
+            </div>
+            
+            {/* Upload Options */}
+            <div className="mb-4 space-y-3">
+              <div className="flex flex-wrap gap-3">
+                {/* Upload from Device */}
+                <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200">
+                  <Upload className="h-4 w-4" />
+                  <span>ডিভাইস থেকে আপলোড</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Camera Capture */}
+                <button
+                  type="button"
+                  onClick={handleCameraCapture}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors border border-green-200"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  <span>ক্যামেরা ব্যবহার করুন</span>
+                </button>
+
+                {/* Remove Custom Image */}
+                {useCustomImage && (
+                  <button
+                    type="button"
+                    onClick={removeCustomImage}
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors border border-red-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>কাস্টম ছবি মুছুন</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Custom Image Preview */}
+              {useCustomImage && imagePreview && (
+                <div className="mt-3">
+                  <p className="text-sm text-gray-600 mb-2">আপলোড করা ছবি:</p>
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt="Custom book cover"
+                      className="w-20 h-24 object-cover rounded-lg border-2 border-blue-500"
+                    />
+                    <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+                      <CheckCircle className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    ফাইল: {uploadedImage?.name} ({(uploadedImage?.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Default Cover Options */}
+            {!useCustomImage && (
+              <div>
+                <p className="text-sm text-gray-600 mb-2">অথবা নিচের থেকে একটি কভার নির্বাচন করুন:</p>
+                <div className="grid grid-cols-5 gap-3 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                  {availableCovers.map((cover) => (
+                    <div
+                      key={cover}
+                      onClick={() => setFormData(prev => ({ ...prev, cover }))}
+                      className={`cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
+                        formData.cover === cover 
+                          ? 'border-green-500 ring-2 ring-green-200' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <img
+                        src={`/book-covers/${cover}`}
+                        alt={`Cover ${cover}`}
+                        className="w-full h-16 object-cover"
+                        onError={(e) => {
+                          e.target.src = '/vite.svg';
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Preview */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3">প্রিভিউ</h4>
+            <div className="flex items-start space-x-4">
+              <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                {useCustomImage && imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Custom cover preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={`/book-covers/${formData.cover}`}
+                    alt="Selected cover"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = '/vite.svg';
+                    }}
+                  />
+                )}
+              </div>
+              <div>
+                <h5 className="font-medium text-gray-900">
+                  {formData.title || 'বইয়ের নাম'}
+                </h5>
+                <p className="text-sm text-gray-600">
+                  {formData.author || 'লেখকের নাম'}
+                </p>
+                <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                  <span>{formData.published_year}</span>
+                  <span>{formData.pages} পৃষ্ঠা</span>
+                  <span>{formData.total_copies} কপি</span>
+                  {useCustomImage && (
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                      কাস্টম কভার
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -561,9 +798,10 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
-              {isLoading ? 'প্রক্রিয়াকরণ...' : (isEdit ? 'আপডেট' : 'যোগ করুন')}
+              <Book className="h-4 w-4" />
+              <span>{isLoading ? 'প্রক্রিয়াকরণ...' : (isEdit ? 'আপডেট' : 'যোগ করুন')}</span>
             </button>
           </div>
         </form>

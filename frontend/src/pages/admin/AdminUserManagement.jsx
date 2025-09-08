@@ -421,7 +421,7 @@ const UserDetailsModal = ({ user, onClose }) => {
   // Fetch user stats
   const { data: userStats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['admin', 'userStats', user.id],
-    queryFn: () => apiServices.admin.getUserStats(user.id),
+    queryFn: () => apiServices.admin.getSpecificUserStats(user.id),
     enabled: !!user.id,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,

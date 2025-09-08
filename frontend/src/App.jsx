@@ -23,6 +23,7 @@ import AdminUserManagement from './pages/admin/AdminUserManagement';
 import AdminBorrowManagement from './pages/admin/AdminBorrowManagement';
 import AdminDonationManagement from './pages/admin/AdminDonationManagement';
 import AdminBookManagement from './pages/admin/AdminBookManagement';
+import AdminStatistics from './pages/admin/AdminStatistics';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -121,6 +122,13 @@ const API_ENDPOINTS = {
   // Admin endpoints
   ADMIN: {
     DASHBOARD_STATS: '/admin/dashboard/stats',
+    STATS_OVERVIEW: '/admin/stats/overview',
+    STATS_USERS: '/admin/stats/users',
+    STATS_BOOKS: '/admin/stats/books',
+    STATS_BORROWS: '/admin/stats/borrows',
+    STATS_DONATIONS: '/admin/stats/donations',
+    STATS_TRENDS: '/admin/stats/trends',
+    STATS_USER_ACTIVITY: '/admin/stats/user-activity',
     USERS: '/admin/users',
     UPDATE_USER_ROLE: (userId) => `/admin/users/${userId}/role`,
     UPDATE_USER_STATUS: (userId) => `/admin/users/${userId}/status`,
@@ -298,6 +306,26 @@ const apiServices = {
       const response = await api.get(API_ENDPOINTS.ADMIN.DASHBOARD_STATS);
       return response.data;
     },
+    getOverviewStats: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_OVERVIEW);
+      return response.data;
+    },
+    getUserStats: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_USERS);
+      return response.data;
+    },
+    getBookStats: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_BOOKS);
+      return response.data;
+    },
+    getBorrowStats: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_BORROWS);
+      return response.data;
+    },
+    getDonationStats: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_DONATIONS);
+      return response.data;
+    },
     getUsers: async () => {
       const response = await api.get(API_ENDPOINTS.ADMIN.USERS);
       return response.data;
@@ -362,8 +390,16 @@ const apiServices = {
       const response = await api.get(API_ENDPOINTS.ADMIN.USER_DONATIONS(userId));
       return response.data;
     },
-    getUserStats: async (userId) => {
+    getSpecificUserStats: async (userId) => {
       const response = await api.get(`/admin/users/${userId}/stats`);
+      return response.data;
+    },
+    getTrendsData: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_TRENDS);
+      return response.data;
+    },
+    getUserActivityData: async () => {
+      const response = await api.get(API_ENDPOINTS.ADMIN.STATS_USER_ACTIVITY);
       return response.data;
     }
   }
@@ -562,6 +598,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
 
   const adminItems = [
     { path: '/admin/dashboard', label: 'অ্যাডমিন ড্যাশবোর্ড', icon: BarChart3 },
+    { path: '/admin/statistics', label: 'পরিসংখ্যান', icon: TrendingUp },
     { path: '/admin/users', label: 'ব্যবহারকারী', icon: Users },
     { path: '/admin/borrows', label: 'ধার ব্যবস্থাপনা', icon: BookMarked },
     { path: '/admin/donations', label: 'দান ব্যবস্থাপনা', icon: HeartHandshake },
@@ -676,6 +713,7 @@ const Sidebar = () => {
 
   const adminItems = [
     { path: '/admin/dashboard', label: 'অ্যাডমিন ড্যাশবোর্ড', icon: BarChart3 },
+    { path: '/admin/statistics', label: 'পরিসংখ্যান', icon: TrendingUp },
     { path: '/admin/users', label: 'ব্যবহারকারী', icon: Users },
     { path: '/admin/borrows', label: 'ধার ব্যবস্থাপনা', icon: BookMarked },
     { path: '/admin/donations', label: 'দান ব্যবস্থাপনা', icon: HeartHandshake },
@@ -825,6 +863,7 @@ const AppRoutes = () => {
           <Route path="borrows" element={<AdminBorrowManagement />} />
           <Route path="donations" element={<AdminDonationManagement />} />
           <Route path="books" element={<AdminBookManagement />} />
+          <Route path="statistics" element={<AdminStatistics />} />
         </Route>
       </Route>
       
