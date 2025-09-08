@@ -70,6 +70,13 @@ SEED_CATEGORIES = [
 
 SEED_BOOKS = [
     {
+        "title": "To Kill a Mockingbird",
+        "author": "Harper Lee",
+        "cover": "/book-covers/to-kill-mockingbird.jpg",
+        "published_year": 1960,
+        "pages": 281
+    },
+    {
         "title": "পদ্মা নদীর মাঝি",
         "author": "মানিক বন্দ্যোপাধ্যায়",
         "cover": "/book-covers/cover-1.jpg",
@@ -77,105 +84,133 @@ SEED_BOOKS = [
         "pages": 250
     },
     {
-        "title": "আরণ্যক",
-        "author": "বিভূতিভূষণ বন্দ্যোপাধ্যায়",
-        "cover": "/book-covers/cover-2.jpg",
-        "published_year": 1939,
-        "pages": 180
+        "title": "1984",
+        "author": "George Orwell",
+        "cover": "/book-covers/1984.jpg",
+        "published_year": 1949,
+        "pages": 328
     },
     {
         "title": "গীতাঞ্জলি",
         "author": "রবীন্দ্রনাথ ঠাকুর",
-        "cover": "/book-covers/cover-3.jpg",
+        "cover": "/book-covers/cover-2.jpg",
         "published_year": 1910,
         "pages": 120
     },
     {
-        "title": "সূর্যদীঘল বাড়ি",
-        "author": "আবু ইসহাক",
+        "title": "The Great Gatsby",
+        "author": "F. Scott Fitzgerald",
+        "cover": "/book-covers/cover-3.jpg",
+        "published_year": 1925,
+        "pages": 180
+    },
+    {
+        "title": "হিমু সমগ্র",
+        "author": "হুমায়ূন আহমেদ",
         "cover": "/book-covers/cover-4.jpg",
-        "published_year": 1955,
-        "pages": 200
+        "published_year": 1990,
+        "pages": 800
     },
     {
-        "title": "মুক্তিযুদ্ধের ইতিহাস",
-        "author": "ড. মুনতাসীর মামুন",
-        "cover": "/book-covers/cover-5.jpg",
-        "published_year": 1985,
-        "pages": 350
-    },
-    {
-        "title": "ঠাকুরমার ঝুলি",
-        "author": "দক্ষিণারঞ্জন মিত্র মজুমদার",
-        "cover": "/book-covers/cover-6.jpg",
-        "published_year": 1907,
-        "pages": 150
-    },
-    {
-        "title": "বিজ্ঞানের জয়যাত্রা",
-        "author": "ড. আব্দুল্লাহ আল মুতী",
-        "cover": "/book-covers/cover-7.jpg",
-        "published_year": 1992,
-        "pages": 280
+        "title": "Pride and Prejudice",
+        "author": "Jane Austen",
+        "cover": "/book-covers/pride-prejudice.jpg",
+        "published_year": 1813,
+        "pages": 432
     },
     {
         "title": "লালসালু",
         "author": "সৈয়দ ওয়ালীউল্লাহ",
-        "cover": "/book-covers/cover-8.jpg",
+        "cover": "/book-covers/cover-5.jpg",
         "published_year": 1948,
         "pages": 160
     },
     {
-        "title": "কুরআন মজিদ",
-        "author": "আল্লাহ তায়ালা",
-        "cover": "/book-covers/cover-9.jpg",
-        "published_year": 610,
-        "pages": 604
+        "title": "The Alchemist",
+        "author": "Paulo Coelho",
+        "cover": "/book-covers/alchemist.jpg",
+        "published_year": 1988,
+        "pages": 163
     },
     {
-        "title": "আমার দেখা নয়াচীন",
+        "title": "অসমাপ্ত আত্মজীবনী",
         "author": "শেখ মুজিবুর রহমান",
-        "cover": "/book-covers/cover-10.jpg",
-        "published_year": 2020,
-        "pages": 170
+        "cover": "/book-covers/cover-6.jpg",
+        "published_year": 2012,
+        "pages": 368
     }
 ]
 
 # Additional books for variety
 SEED_BOOKS_2 = [
     {
-        "title": "কাকতাড়ুয়া",
-        "author": "সেলিনা হোসেন",
-        "cover": "/book-covers/cover-11.jpg",
-        "published_year": 1992,
-        "pages": 220
+        "title": "Harry Potter and the Philosopher's Stone",
+        "author": "J.K. Rowling",
+        "cover": "/book-covers/harry-potter-philosophers-stone.jpg",
+        "published_year": 1997,
+        "pages": 223
     },
     {
-        "title": "হাজার বছর ধরে",
-        "author": "জহির রায়হান",
-        "cover": "/book-covers/cover-12.jpg",
-        "published_year": 1964,
-        "pages": 190
+        "title": "দেবদাস",
+        "author": "শরৎচন্দ্র চট্টোপাধ্যায়",
+        "cover": "/book-covers/cover-7.jpg",
+        "published_year": 1917,
+        "pages": 180
     },
     {
-        "title": "মধ্যাহ্ন",
-        "author": "মানিক বন্দ্যোপাধ্যায়",
-        "cover": "/book-covers/cover-13.jpg",
-        "published_year": 1945,
-        "pages": 170
-    },
-    {
-        "title": "রূপসী বাংলা",
-        "author": "জীবনানন্দ দাশ",
-        "cover": "/book-covers/cover-14.jpg",
-        "published_year": 1957,
-        "pages": 140
+        "title": "The Catcher in the Rye",
+        "author": "J.D. Salinger",
+        "cover": "/book-covers/catcher-in-rye.jpg",
+        "published_year": 1951,
+        "pages": 277
     },
     {
         "title": "চিলেকোঠার সেপাই",
         "author": "আখতারুজ্জামান ইলিয়াস",
-        "cover": "/book-covers/cover-15.jpg",
+        "cover": "/book-covers/cover-8.jpg",
         "published_year": 1986,
         "pages": 280
+    },
+    {
+        "title": "One Hundred Years of Solitude",
+        "author": "Gabriel García Márquez",
+        "cover": "/book-covers/hundred-years-solitude.jpg",
+        "published_year": 1967,
+        "pages": 417
+    },
+    {
+        "title": "মিসির আলি সমগ্র",
+        "author": "হুমায়ূন আহমেদ",
+        "cover": "/book-covers/cover-9.jpg",
+        "published_year": 1985,
+        "pages": 600
+    },
+    {
+        "title": "Lord of the Flies",
+        "author": "William Golding",
+        "cover": "/book-covers/lord-of-flies.jpg",
+        "published_year": 1954,
+        "pages": 224
+    },
+    {
+        "title": "কাকতাড়ুয়া",
+        "author": "সেলিনা হোসেন",
+        "cover": "/book-covers/cover-10.jpg",
+        "published_year": 1992,
+        "pages": 220
+    },
+    {
+        "title": "Brave New World",
+        "author": "Aldous Huxley",
+        "cover": "/book-covers/brave-new-world.jpg",
+        "published_year": 1932,
+        "pages": 268
+    },
+    {
+        "title": "রূপসী বাংলা",
+        "author": "জীবনানন্দ দাশ",
+        "cover": "/book-covers/cover-11.jpg",
+        "published_year": 1957,
+        "pages": 140
     }
 ]
