@@ -16,6 +16,7 @@ import ProfilePage from './pages/ProfilePage';
 import BooksLibrary from './pages/BooksLibrary';
 import DashboardWrapper from './pages/DashboardWrapper';
 import LandingWrapper from './pages/LandingWrapper';
+import NotFound from './pages/NotFound';
 
 // Import admin components
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -867,8 +868,8 @@ const AppRoutes = () => {
         </Route>
       </Route>
       
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+      {/* 404 Not Found */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
