@@ -1,4 +1,57 @@
-# React + Vite
+# Boi Adda Frontend
+
+A React-based frontend for the Boi Adda book sharing platform.
+
+## Environment Setup
+
+The application uses environment variables for configuration:
+
+### Development
+- Copy `.env.development` or create `.env.local` for local overrides
+- Default API URL: `http://localhost:8000`
+
+### Production
+- Uses `.env.production` for production builds
+- Default production API URL: `https://boi-adda-backend.onrender.com`
+- Can be overridden with environment variables in deployment platform
+
+### Environment Variables
+
+- `VITE_API_BASE_URL`: Backend API base URL
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Production Build
+
+```bash
+npm run build
+```
+
+The build script will automatically use the production environment configuration.
+
+## Deployment
+
+For Render deployment:
+1. Set `VITE_API_BASE_URL` environment variable in Render dashboard if different from default
+2. Use `build.sh` as the build command
+3. Use `dist` as the publish directory
+
+## API Integration
+
+The frontend communicates with a FastAPI backend and includes:
+- Authentication with JWT tokens
+- Book management
+- User profiles
+- Donation system
+- Borrowing system
+- Admin dashboard
+
+All API calls are handled through axios with automatic token management.+ Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

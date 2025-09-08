@@ -28,9 +28,21 @@ else:
     print("This is normal during API-only deployment or development.")
 
 # Configure CORS - Allow frontend URL from environment
-origins = ['https://boi-adda.onrender.com',
-           'http://localhost:5173',
-           ]
+origins = [
+    'https://boi-adda.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+]
+
+# Add any additional origins from environment
+additional_origins = os.environ.get("ADDITIONAL_ORIGINS", "").split(",")
+for origin in additional_origins:
+    if origin.strip():
+        origins.append(origin.strip())
+
+print(f"🌐 CORS origins: {origins}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,7 +55,12 @@ app.add_middleware(
 
 
 # Create database tables
-create_tables()
+try:
+    create_tables()
+    print("✓ Database tables created successfully")
+except Exception as e:
+    print(f"⚠ Warning: Database table creation failed: {e}")
+    print("This might be normal if tables already exist.")
 
 # Health check endpoint
 @app.get("/")
@@ -80,21 +97,71 @@ app.include_router(donations.router)
 app.include_router(database.router)
 app.include_router(admin.router)
 
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    print("🎉 বই আড্ডা API started successfully!")
+    print(f"📚 Available at: http://0.0.0.0:{os.environ.get('PORT', 8000)}")
+    print("📋 Available routes:")
+    print("  - GET  /          (Root)")
+    print("  - GET  /health    (Health check)")
+    print("  - GET  /docs      (API documentation)")
+    print("  - POST /auth/...  (Authentication)")
+    print("  - GET  /admin/... (Admin routes)")
+    
+@app.on_event("shutdown")
+async def shutdown_event():
+    print("👋 বই আড্ডা API shutting down...")
+
 # 404 handler for API routes
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "message": "এন্ডপয়েন্ট পাওয়া যায়নি",
-            "detail": f"The requested API endpoint '{request.url.path}' was not found.",
-            "path": str(request.url.path),
-            "method": request.method,
-            "status_code": 404
-        }
-    )
+    # Check if this is an API request
+    if request.url.path.startswith('/api') or request.url.path.startswith('/admin') or request.url.path.startswith('/auth'):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "message": "এন্ডপয়েন্ট পাওয়া যায়নি",
+                "detail": f"The requested API endpoint '{request.url.path}' was not found.",
+                "path": str(request.url.path),
+                "method": request.method,
+                "status_code": 404
+            }
+        )
+    else:
+        # For non-API routes, return a simple 404
+        return JSONResponse(
+            status_code=404,
+            content={"message": "Page not found", "status_code": 404}
+        )
+
+# Add a catch-all route for debugging
+@app.get("/debug/routes")
+async def debug_routes():
+    """Debug endpoint to see all available routes"""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path'):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods) if hasattr(route, 'methods') else ['GET']
+            })
+    return {"total_routes": len(routes), "routes": routes}
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
+    host = os.environ.get("HOST", "0.0.0.0")
+    environment = os.environ.get("ENVIRONMENT", "development")
+    
+    print(f"🚀 Starting server on {host}:{port}")
+    print(f"📍 Environment: {environment}")
+    print(f"🔧 Reload: {environment == 'development'}")
+    
+    uvicorn.run(
+        "backend.main:app" if environment == "production" else "main:app",
+        host=host,
+        port=port,
+        reload=environment == "development",
+        log_level="info"
+    )
