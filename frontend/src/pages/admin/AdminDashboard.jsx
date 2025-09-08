@@ -75,7 +75,9 @@ const AdminDashboard = () => {
       borrows: borrows?.length || 0,
       donations: donations?.length || 0,
       borrowsError,
-      donationsError
+      donationsError,
+      sampleBorrow: borrows?.[0],
+      sampleDonation: donations?.[0]
     });
   }
 
@@ -456,7 +458,7 @@ const AdminDashboard = () => {
                     {borrow.user?.name || 'অজানা ব্যবহারকারী'}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {borrow.book?.title || 'অজানা বই'}
+                    {borrow.book_copy?.book?.title || 'অজানা বই'}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">
@@ -508,7 +510,7 @@ const AdminDashboard = () => {
                     {donation.user?.name || 'অজানা দাতা'}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {donation.book_title}
+                    {donation.book_copy?.book?.title || 'অজানা বই'}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">
