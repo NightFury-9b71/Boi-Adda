@@ -2,7 +2,7 @@ from sqlmodel import create_engine, Session, SQLModel
 import os
 
 # Use environment variable for database URL, fallback to local SQLite
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///boi_adda.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///boi_adda.db")
 
 # Handle PostgreSQL URL format for Render (if using PostgreSQL)
 if DATABASE_URL.startswith("postgres://"):
