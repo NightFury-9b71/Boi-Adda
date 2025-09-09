@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
-from .enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
+from enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
 
 # Authentication Schemas
 class UserLogin(BaseModel):

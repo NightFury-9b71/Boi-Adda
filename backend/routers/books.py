@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, func
-from ..models import Book, BookCopy, User, Donation, Borrow
-from ..schemas import BookCreate, BookOut
-from ..enums import CopyStatus, BorrowStatus
-from ..database import get_session
-from ..auth import get_current_user, require_admin, require_librarian_or_admin
+from models import Book, BookCopy, User, Donation, Borrow
+from schemas import BookCreate, BookOut
+from enums import CopyStatus, BorrowStatus
+from database import get_session
+from auth import get_current_user, require_admin, require_librarian_or_admin
 
 router = APIRouter(prefix="/books", tags=["Books"])
 

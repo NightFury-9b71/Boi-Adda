@@ -1,7 +1,7 @@
 from sqlmodel import Field, Relationship, SQLModel
 from typing import Optional
 from datetime import datetime
-from .enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
+from enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
 
 def get_current_time():
     return datetime.now()

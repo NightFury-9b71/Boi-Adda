@@ -5,9 +5,9 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import Session, select
-from .models import User
-from .enums import UserRole
-from .database import get_session
+from models import User
+from enums import UserRole
+from database import get_session
 
 # Security configuration
 SECRET_KEY = "your-secret-key-here-change-in-production"  # Change this in production!

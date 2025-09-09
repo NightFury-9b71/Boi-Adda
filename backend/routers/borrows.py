@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from ..models import User, BookCopy, Borrow, Book
-from ..schemas import BorrowCreate, BorrowOut
-from ..enums import CopyStatus, BorrowStatus
-from ..database import get_session
-from ..auth import get_current_user
+from models import User, BookCopy, Borrow, Book
+from schemas import BorrowCreate, BorrowOut
+from enums import CopyStatus, BorrowStatus
+from database import get_session
+from auth import get_current_user
 
 router = APIRouter(prefix="/borrows", tags=["Borrows"])
 

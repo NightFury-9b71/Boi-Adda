@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import create_tables
-from .routers import users, categories, books, book_copies, borrows, donations, database, admin, auth
+from database import create_tables
+from routers import users, categories, books, book_copies, borrows, donations, database, admin, auth
 import os
 
 app = FastAPI(

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from backend.models import User, Book, Category, BookCopy, Borrow, Donation
-from backend.enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
-from backend.seed_data import SEED_USERS, SEED_CATEGORIES, SEED_BOOKS, SEED_BOOKS_2, get_random_cover
-from ..database import get_session
-from ..auth import get_password_hash
+from models import User, Book, Category, BookCopy, Borrow, Donation
+from enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
+from seed_data import SEED_USERS, SEED_CATEGORIES, SEED_BOOKS, SEED_BOOKS_2, get_random_cover
+from database import get_session
+from auth import get_password_hash
 import random
 
 router = APIRouter(prefix="/database", tags=["Database"])

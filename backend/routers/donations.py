@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from ..models import User, Book, BookCopy, Donation
-from ..schemas import DonationCreate, DonationWithNewBookCreate, DonationOut
-from ..enums import CopyStatus, DonationStatus
-from ..database import get_session
-from ..auth import get_current_user
+from models import User, Book, BookCopy, Donation
+from schemas import DonationCreate, DonationWithNewBookCreate, DonationOut
+from enums import CopyStatus, DonationStatus
+from database import get_session
+from auth import get_current_user
 
 router = APIRouter(prefix="/donations", tags=["Donations"])
 

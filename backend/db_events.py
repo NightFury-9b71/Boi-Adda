@@ -1,6 +1,6 @@
 from sqlalchemy import event
 from sqlmodel import Session, select
-from .models import Book, BookCopy, Borrow
+from models import Book, BookCopy, Borrow
 
 def update_book_counters(session: Session, book_id: int):
     """Update total_copies and times_borrowed for a book"""

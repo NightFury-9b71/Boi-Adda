@@ -2,17 +2,17 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlmodel import Session, select
-from ..models import User
-from ..schemas import UserLogin, UserRegister, Token, UserOut
-from ..auth import (
+from models import User
+from schemas import UserLogin, UserRegister, Token, UserOut
+from auth import (
     authenticate_user, 
     create_access_token, 
     get_password_hash, 
     ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_user
 )
-from ..database import get_session
-from ..enums import UserRole
+from database import get_session
+from enums import UserRole
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

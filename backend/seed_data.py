@@ -1,4 +1,4 @@
-from .enums import UserRole
+from enums import UserRole
 import random
 
 def get_random_cover():
