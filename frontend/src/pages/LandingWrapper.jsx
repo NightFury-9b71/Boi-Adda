@@ -62,65 +62,6 @@ const TestimonialCard = ({ name, location, content, rating }) => (
   </div>
 );
 
-const LandingWrapper = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '', password: '', name: '', confirmPassword: '', address: '', phone: ''
-  });
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-
-  const { login, register, isLoading: isLoginLoading } = useAuth();
-  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
-  const navigate = useNavigate();
-
-  // Fetch real stats from API
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: apiServices.database.getOverviewStats,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (isLogin) {
-        if (!formData.email || !formData.password) {
-          toast.error('ইমেইল এবং পাসওয়ার্ড প্রয়োজন');
-          return;
-        }
-        await login(formData);
-        toast.success('সফলভাবে লগইন হয়েছে!');
-        navigate('/dashboard');
-      } else {
-        setIsRegisterLoading(true);
-        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-          toast.error('সকল ক্ষেত্র পূরণ করুন');
-          setIsRegisterLoading(false);
-          return;
-        }
-        if (formData.password !== formData.confirmPassword) {
-          toast.error('পাসওয়ার্ড মিল নেই');
-          setIsRegisterLoading(false);
-          return;
-        }
-        await register(formData);
-        toast.success('সফলভাবে নিবন্ধন হয়েছে!');
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      toast.error(error.message || 'একটি ত্রুটি ঘটেছে');
-    } finally {
-      setIsRegisterLoading(false);
-    }
-  };
-
   const LoginForm = ({ formData, setFormData, onSubmit, loading }) => (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -242,6 +183,66 @@ const LandingWrapper = () => {
       </p>
     </form>
   );
+
+
+const LandingWrapper = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '', password: '', name: '', confirmPassword: '', address: '', phone: ''
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  const { login, register, isLoading: isLoginLoading } = useAuth();
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Fetch real stats from API
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: apiServices.database.getOverviewStats,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (isLogin) {
+        if (!formData.email || !formData.password) {
+          toast.error('ইমেইল এবং পাসওয়ার্ড প্রয়োজন');
+          return;
+        }
+        await login(formData);
+        toast.success('সফলভাবে লগইন হয়েছে!');
+        navigate('/dashboard');
+      } else {
+        setIsRegisterLoading(true);
+        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+          toast.error('সকল ক্ষেত্র পূরণ করুন');
+          setIsRegisterLoading(false);
+          return;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          toast.error('পাসওয়ার্ড মিল নেই');
+          setIsRegisterLoading(false);
+          return;
+        }
+        await register(formData);
+        toast.success('সফলভাবে নিবন্ধন হয়েছে!');
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      toast.error(error.message || 'একটি ত্রুটি ঘটেছে');
+    } finally {
+      setIsRegisterLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
