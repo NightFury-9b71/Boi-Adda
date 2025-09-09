@@ -703,11 +703,18 @@ const LandingWrapper = () => {
           </div>
           <div className="border-t border-gray-800 pt-6 sm:pt-8 text-center">
             <p className="text-gray-500 text-xs sm:text-sm">
-              © ২০২৫ বই আড্ডা। সকল অধিকার সংরক্ষিত। <span className="text-green-400 ml-2">♥</span> দিয়ে তৈরি JUST-এ
+              © ২০২৫ বই আড্ডা। সকল অধিকার সংরক্ষিত।
+              <span className="text-green-400 ml-2">♥</span> দিয়ে তৈরি JUST-এ
+            </p>
+            <p className="text-gray-400 text-xs mt-2">
+              Developed by Abdullah Al Noman
+              | Email: nomanstine@gmail.com
             </p>
           </div>
+
         </div>
       </footer>
+
     </div>
   );
 };
