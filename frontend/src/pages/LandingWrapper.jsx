@@ -10,39 +10,66 @@ import {
   RefreshCw,
   TrendingUp,
   ArrowRight,
-  Play,
   CheckCircle,
   Shield,
   Clock,
   Menu,
   X,
   Search,
-  Zap,
-  Globe,
-  Star,
-  MessageCircle,
-  Download,
-  Award,
-  Mail,
-  MapPin,
-  Phone
+  Star
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiServices } from '../App';
 
+// Animated Counter Component
+const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let startTime;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = (currentTime - startTime) / duration;
+      if (progress < 1) {
+        setCount(Math.floor(end * progress));
+        requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [end, duration]);
+  return <span>{count.toLocaleString()}{suffix}</span>;
+};
+
+// Testimonial Card Component
+const TestimonialCard = ({ name, location, content, rating }) => (
+  <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+    <div className="flex items-center space-x-1 mb-3 sm:mb-4">
+      {[...Array(5)].map((_, i) => (
+        <Star key={i} className={`h-3 w-3 sm:h-4 sm:w-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+      ))}
+    </div>
+    <p className="text-gray-700 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">"{content}"</p>
+    <div className="flex items-center space-x-3">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+        {name.charAt(0)}
+      </div>
+      <div>
+        <p className="font-medium text-gray-900 text-sm sm:text-base">{name}</p>
+        <p className="text-xs sm:text-sm text-gray-600">{location}</p>
+      </div>
+    </div>
+  </div>
+);
+
 const LandingWrapper = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    confirmPassword: '',
-    address: '',
-    phone: ''
+    email: '', password: '', name: '', confirmPassword: '', address: '', phone: ''
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  
+
   const { login, register, isLoading: isLoginLoading } = useAuth();
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const navigate = useNavigate();
@@ -50,7 +77,7 @@ const LandingWrapper = () => {
   // Fetch real stats from API
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboardStats'],
-    queryFn: apiServices.admin.getDashboardStats,
+    queryFn: apiServices.database.getOverviewStats,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -62,69 +89,38 @@ const LandingWrapper = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       if (isLogin) {
         if (!formData.email || !formData.password) {
           toast.error('ইমেইল এবং পাসওয়ার্ড প্রয়োজন');
           return;
         }
-        
-        await login(formData.email, formData.password);
+        await login(formData);
         toast.success('সফলভাবে লগইন হয়েছে!');
         navigate('/dashboard');
       } else {
         setIsRegisterLoading(true);
-        
         if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
           toast.error('সকল ক্ষেত্র পূরণ করুন');
           setIsRegisterLoading(false);
           return;
         }
-        
         if (formData.password !== formData.confirmPassword) {
           toast.error('পাসওয়ার্ড মিল নেই');
           setIsRegisterLoading(false);
           return;
         }
-        
-        await register(formData.email, formData.password, formData.name, formData.address, formData.phone);
+        await register(formData);
         toast.success('সফলভাবে নিবন্ধন হয়েছে!');
         navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Authentication error:', error);
       toast.error(error.message || 'একটি ত্রুটি ঘটেছে');
     } finally {
       setIsRegisterLoading(false);
     }
   };
 
-  // Animated Counter Component
-  const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
-    const [count, setCount] = useState(0);
-    
-    useEffect(() => {
-      let startTime;
-      const animate = (currentTime) => {
-        if (!startTime) startTime = currentTime;
-        const progress = (currentTime - startTime) / duration;
-        
-        if (progress < 1) {
-          setCount(Math.floor(end * progress));
-          requestAnimationFrame(animate);
-        } else {
-          setCount(end);
-        }
-      };
-      
-      requestAnimationFrame(animate);
-    }, [end, duration]);
-    
-    return <span>{count.toLocaleString()}{suffix}</span>;
-  };
-
-  // Login Form Component
   const LoginForm = ({ formData, setFormData, onSubmit, loading }) => (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -132,7 +128,7 @@ const LandingWrapper = () => {
           type="email"
           placeholder="ইমেইল"
           value={formData.email}
-          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          onChange={e => setFormData({ ...formData, email: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           required
         />
@@ -142,7 +138,7 @@ const LandingWrapper = () => {
           type="password"
           placeholder="পাসওয়ার্ড"
           value={formData.password}
-          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          onChange={e => setFormData({ ...formData, password: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           required
         />
@@ -167,7 +163,6 @@ const LandingWrapper = () => {
     </form>
   );
 
-  // Registration Form Component
   const RegistrationForm = ({ formData, setFormData, onSubmit, loading }) => (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -175,7 +170,7 @@ const LandingWrapper = () => {
           type="text"
           placeholder="পুরো নাম"
           value={formData.name}
-          onChange={(e) => setFormData({...formData, name: e.target.value})}
+          onChange={e => setFormData({ ...formData, name: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           required
         />
@@ -185,7 +180,7 @@ const LandingWrapper = () => {
           type="email"
           placeholder="ইমেইল"
           value={formData.email}
-          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          onChange={e => setFormData({ ...formData, email: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           required
         />
@@ -195,7 +190,7 @@ const LandingWrapper = () => {
           type="tel"
           placeholder="ফোন নম্বর"
           value={formData.phone}
-          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+          onChange={e => setFormData({ ...formData, phone: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
         />
       </div>
@@ -204,7 +199,7 @@ const LandingWrapper = () => {
           type="text"
           placeholder="ঠিকানা"
           value={formData.address}
-          onChange={(e) => setFormData({...formData, address: e.target.value})}
+          onChange={e => setFormData({ ...formData, address: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
         />
       </div>
@@ -213,7 +208,7 @@ const LandingWrapper = () => {
           type="password"
           placeholder="পাসওয়ার্ড"
           value={formData.password}
-          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          onChange={e => setFormData({ ...formData, password: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           required
         />
@@ -223,7 +218,7 @@ const LandingWrapper = () => {
           type="password"
           placeholder="পাসওয়ার্ড নিশ্চিত করুন"
           value={formData.confirmPassword}
-          onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+          onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           required
         />
@@ -248,30 +243,9 @@ const LandingWrapper = () => {
     </form>
   );
 
-  // Testimonial Card Component
-  const TestimonialCard = ({ name, location, content, avatar, rating }) => (
-    <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
-      <div className="flex items-center space-x-1 mb-3 sm:mb-4">
-        {[...Array(5)].map((_, i) => (
-          <Star key={i} className={`h-3 w-3 sm:h-4 sm:w-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-        ))}
-      </div>
-      <p className="text-gray-700 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">"{content}"</p>
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
-          {name.charAt(0)}
-        </div>
-        <div>
-          <p className="font-medium text-gray-900 text-sm sm:text-base">{name}</p>
-          <p className="text-xs sm:text-sm text-gray-600">{location}</p>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
+      {/* Top Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         scrollY > 50 ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
       }`}>
@@ -287,8 +261,7 @@ const LandingWrapper = () => {
                 scrollY > 50 ? 'bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent' : 'text-white'
               }`}>বই আড্ডা</span>
             </div>
-            
-            {/* Desktop Menu */}
+            {/* Desktop */}
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className={`transition-colors font-medium ${
                 scrollY > 50 ? 'text-gray-700 hover:text-green-600' : 'text-white/90 hover:text-white'
@@ -311,8 +284,7 @@ const LandingWrapper = () => {
                 বই লাইব্রেরি
               </button>
             </div>
-
-            {/* Mobile Menu Button */}
+            {/* Mobile */}
             <div className="md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -324,7 +296,6 @@ const LandingWrapper = () => {
               </button>
             </div>
           </div>
-
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
@@ -347,7 +318,7 @@ const LandingWrapper = () => {
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-green-600 via-green-700 to-green-800 min-h-screen flex items-center overflow-hidden">
-        {/* Animated Background Elements */}
+        {/* Animated Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-20 left-4 sm:left-10 opacity-10">
             <BookOpen className="h-16 w-16 sm:h-24 sm:w-24 lg:h-32 lg:w-32 text-white animate-pulse" />
@@ -359,27 +330,25 @@ const LandingWrapper = () => {
             <Heart className="h-10 w-10 sm:h-16 sm:w-16 lg:h-20 lg:w-20 text-white animate-pulse" />
           </div>
         </div>
-        
+
         <div className="absolute inset-0 bg-black opacity-10"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Left side - Content */}
+            {/* Left Content */}
             <div className="text-white space-y-4 sm:space-y-6">
               <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-full px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm">
                 <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                <span className="hidden sm:inline">বাংলাদেশের #১ বই শেয়ারিং প্ল্যাটফর্ম</span>
-                <span className="sm:hidden">#১ বই শেয়ারিং প্ল্যাটফর্ম</span>
+                <span>
+                  JUST-এর #১ বই শেয়ারিং প্ল্যাটফর্ম {/* JUST's #1 book sharing platform */}
+                </span>
               </div>
-              
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
                 জ্ঞান ভাগাভাগির
                 <span className="block text-green-200 bg-gradient-to-r from-green-200 to-white bg-clip-text text-transparent">নতুন মাধ্যম</span>
               </h1>
-              
               <p className="text-base sm:text-lg lg:text-xl text-green-100 leading-relaxed max-w-2xl">
-                বই আড্ডায় আপনি বই ধার দিতে পারেন, ধার নিতে পারেন এবং দান করতে পারেন। আমাদের স্মার্ট প্ল্যাটফর্মে যোগ দিয়ে জ্ঞানের আলো ছড়িয়ে দিন সবার মধ্যে।
+                বই আড্ডা'র মাধ্যমে আপনি বই ধার দিতে, ধার নিতে ও দান করতে পারেন—শুধুমাত্র যশোর বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের জন্য। আমাদের স্মার্ট, নিরাপদ প্ল্যাটফর্মে যোগ দিন।
               </p>
-
               {/* Key Benefits */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 my-6 sm:my-8">
                 <div className="flex items-center space-x-2">
@@ -392,43 +361,56 @@ const LandingWrapper = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-300 flex-shrink-0" />
-                  <span className="text-green-100 text-sm sm:text-base">সারাদেশে নেটওয়ার্ক</span>
+                  <span className="text-green-100 text-sm sm:text-base">JUST ক্যাম্পাসের জন্য</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-300 flex-shrink-0" />
                   <span className="text-green-100 text-sm sm:text-base">২৪/৭ সাপোর্ট</span>
                 </div>
               </div>
-              
-              {/* Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Counters */}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div className="text-center lg:text-left">
                   <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">
-                    {statsLoading ? '...' : stats?.total_members?.toLocaleString() || '—'}+
+                    {statsLoading ? '...' : <AnimatedCounter end={stats?.users ?? 0} />}
                   </div>
                   <p className="text-green-200 text-xs sm:text-sm">সক্রিয় সদস্য</p>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">
-                    {statsLoading ? '...' : stats?.total_books?.toLocaleString() || '—'}+
+                    {statsLoading ? '...' : <AnimatedCounter end={stats?.categories ?? 0} />}
                   </div>
-                  <p className="text-green-200 text-xs sm:text-sm">বই সংগ্রহ</p>
+                  <p className="text-green-200 text-xs sm:text-sm">বইয়ের বিভাগ</p>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">
-                    {statsLoading ? '...' : stats?.total_exchanges?.toLocaleString() || '—'}+
+                    {statsLoading ? '...' : <AnimatedCounter end={stats?.books ?? 0} />}
                   </div>
-                  <p className="text-green-200 text-xs sm:text-sm">বই এক্সচেঞ্জ</p>
+                  <p className="text-green-200 text-xs sm:text-sm">মোট বই</p>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">
-                    {statsLoading ? '...' : stats?.total_cities?.toLocaleString() || '—'}+
+                    {statsLoading ? '...' : <AnimatedCounter end={stats?.book_copies ?? 0} />}
                   </div>
-                  <p className="text-green-200 text-xs sm:text-sm">শহর</p>
+                  <p className="text-green-200 text-xs sm:text-sm">বইয়ের কপি</p>
+                </div>
+                <div className="text-center lg:text-left">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">
+                    {statsLoading ? '...' : <AnimatedCounter end={stats?.borrows ?? 0} />}
+                  </div>
+                  <p className="text-green-200 text-xs sm:text-sm">বই ধার</p>
+                </div>
+                <div className="text-center lg:text-left">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">
+                    {statsLoading ? '...' : <AnimatedCounter end={stats?.donations ?? 0} />}
+                  </div>
+                  <p className="text-green-200 text-xs sm:text-sm">বই দান</p>
                 </div>
               </div>
-
-              {/* Call to Action Buttons */}
+              <div className="mt-2 text-xs text-green-200">
+                শুধুমাত্র যশোর বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় (JUST) কমিউনিটির জন্য
+              </div>
+              {/* CTA */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                 <button
                   onClick={() => navigate('/books')}
@@ -446,11 +428,9 @@ const LandingWrapper = () => {
                 </button>
               </div>
             </div>
-
             {/* Right side - Auth Forms */}
             <div id="auth-form" className="lg:pl-8 mt-8 lg:mt-0">
               <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8 backdrop-blur-sm bg-white/95">
-                {/* Header */}
                 <div className="text-center mb-6 sm:mb-8">
                   <div className="flex items-center justify-center mb-4">
                     <div className="bg-gradient-to-br from-green-400 to-green-600 p-2.5 sm:p-3 rounded-full">
@@ -458,30 +438,26 @@ const LandingWrapper = () => {
                     </div>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">যোগ দিন</h2>
-                  <p className="text-gray-600 text-sm sm:text-base">জ্ঞান ভাগাভাগির মাধ্যম</p>
+                  <p className="text-gray-600 text-sm sm:text-base">জ্ঞান ভাগাভাগির মাধ্যম • শুধু JUST</p>
                   <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 mt-3 text-xs sm:text-sm text-gray-500">
                     <div className="flex items-center space-x-1">
                       <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span>৮,৫০০+ সদস্য</span>
+                      <span>{statsLoading ? '...' : <AnimatedCounter end={stats?.users ?? 0} />} সদস্য</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span>১২,০০০+ বই</span>
+                      <span>{statsLoading ? '...' : <AnimatedCounter end={stats?.books ?? 0} />} বই</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Tab Switcher */}
                 <div className="flex mb-6 bg-gray-100 rounded-lg p-1 relative">
                   <div 
                     className={`absolute top-1 bottom-1 w-1/2 bg-green-600 rounded-md transition-transform duration-300 ${isLogin ? 'transform translate-x-0' : 'transform translate-x-full'}`}
-                  ></div>
+                  />
                   <button
                     onClick={() => setIsLogin(true)}
                     className={`flex-1 py-2 px-4 text-center rounded-md transition-colors relative z-10 ${
-                      isLogin
-                        ? 'text-white'
-                        : 'text-gray-700 hover:text-green-600'
+                      isLogin ? 'text-white' : 'text-gray-700 hover:text-green-600'
                     }`}
                   >
                     লগইন
@@ -489,16 +465,12 @@ const LandingWrapper = () => {
                   <button
                     onClick={() => setIsLogin(false)}
                     className={`flex-1 py-2 px-4 text-center rounded-md transition-colors relative z-10 ${
-                      !isLogin
-                        ? 'text-white'
-                        : 'text-gray-700 hover:text-green-600'
+                      !isLogin ? 'text-white' : 'text-gray-700 hover:text-green-600'
                     }`}
                   >
                     নিবন্ধন
                   </button>
                 </div>
-
-                {/* Form Container */}
                 <div className="relative">
                   {isLogin ? (
                     <LoginForm 
@@ -516,8 +488,6 @@ const LandingWrapper = () => {
                     />
                   )}
                 </div>
-
-                {/* Trust Indicators */}
                 <div className="mt-4 sm:mt-6 text-center">
                   <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 text-xs text-gray-500">
                     <div className="flex items-center space-x-1">
@@ -548,10 +518,9 @@ const LandingWrapper = () => {
               কেন বই আড্ডা বেছে নেবেন?
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              বই ভাগাভাগির জন্য বাংলাদেশের সবচেয়ে নির্ভরযোগ্য এবং সুবিধাজনক প্ল্যাটফর্ম
+              বই ভাগাভাগির জন্য JUST-এর সবচেয়ে নির্ভরযোগ্য এবং সুবিধাজনক প্ল্যাটফর্ম
             </p>
           </div>
-          
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow text-center group">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
@@ -559,123 +528,27 @@ const LandingWrapper = () => {
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">বই শেয়ার করুন</h3>
               <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
-                আপনার পড়া বই অন্যদের সাথে শেয়ার করুন এবং নতুন বই আবিষ্কার করুন। সহজ এবং নিরাপদ উপায়ে বই আদান-প্রদান করুন।
+                নিজের পড়া বই শেয়ার করুন এবং নতুন বই আবিষ্কার করুন। সহজ, নিরাপদ ও ক্যাম্পাস-ভিত্তিক আদান-প্রদান।
               </p>
             </div>
-            
             <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow text-center group">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
                 <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">বই এক্সচেঞ্জ</h3>
               <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
-                আপনার বই দিয়ে অন্যের বই নিন। স্মার্ট ম্যাচিং সিস্টেমের মাধ্যমে উপযুক্ত বই খুঁজে পান।
+                আপনার বই দিয়ে অন্যের বই নিন। স্মার্ট ক্যাম্পাস-ম্যাচিং সিস্টেম।
               </p>
             </div>
-            
             <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow text-center group sm:col-span-2 lg:col-span-1">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
                 <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">বই দান করুন</h3>
               <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
-                গরীব শিক্ষার্থীদের জন্য বই দান করুন এবং জ্ঞানের আলো ছড়িয়ে দিন। সমাজের কল্যাণে অংশগ্রহণ করুন।
+                দরিদ্র শিক্ষার্থীদের জন্য বই দান করুন; JUST কমিউনিটিতে কল্যাণ ছড়িয়ে দিন।
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Books Section */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">জনপ্রিয় বইসমূহ</h2>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              আমাদের লাইব্রেরিতে থাকা কিছু জনপ্রিয় বই দেখুন
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
-            {/* Sample Book Cards */}
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100 overflow-hidden cursor-pointer group"
-                 onClick={() => navigate('/books')}>
-              <div className="h-36 sm:h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-blue-600 group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="p-3 sm:p-4">
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">হুমায়ূন আহমেদ</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">বিভিন্ন লেখক</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    উপলব্ধ
-                  </span>
-                  <span className="text-xs text-gray-500">১২০+ বই</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100 overflow-hidden cursor-pointer group"
-                 onClick={() => navigate('/books')}>
-              <div className="h-36 sm:h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-purple-600 group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="p-3 sm:p-4">
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">একাডেমিক বই</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">বিভিন্ন বিষয়</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    উপলব্ধ
-                  </span>
-                  <span className="text-xs text-gray-500">৮৫+ বই</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100 overflow-hidden cursor-pointer group"
-                 onClick={() => navigate('/books')}>
-              <div className="h-36 sm:h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-                <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-green-600 group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="p-3 sm:p-4">
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">উপন্যাস</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">বাংলা ও ইংরেজি</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    উপলব্ধ
-                  </span>
-                  <span className="text-xs text-gray-500">২০০+ বই</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100 overflow-hidden cursor-pointer group"
-                 onClick={() => navigate('/books')}>
-              <div className="h-36 sm:h-48 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-orange-600 group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="p-3 sm:p-4">
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">সায়েন্স ফিকশন</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">বিজ্ঞান কল্পকাহিনী</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    উপলব্ধ
-                  </span>
-                  <span className="text-xs text-gray-500">৫০+ বই</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <button
-              onClick={() => navigate('/books')}
-              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-xl flex items-center space-x-2 mx-auto text-sm sm:text-base"
-            >
-              <Search className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span>সব বই দেখুন</span>
-              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
           </div>
         </div>
       </section>
@@ -684,98 +557,86 @@ const LandingWrapper = () => {
       <section id="how-it-works" className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">কিভাবে কাজ করে</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              কিভাবে কাজ করে
+            </h2>
             <p className="text-lg sm:text-xl text-gray-600">মাত্র তিনটি সহজ ধাপে শুরু করুন</p>
           </div>
-          
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-white text-lg sm:text-2xl font-bold">
-                ১
-              </div>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-white text-lg sm:text-2xl font-bold">১</div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">নিবন্ধন করুন</h3>
-              <p className="text-gray-600 text-sm sm:text-base px-2">বিনামূল্যে অ্যাকাউন্ট তৈরি করুন এবং আপনার প্রোফাইল সম্পূর্ণ করুন</p>
+              <p className="text-gray-600 text-sm sm:text-base px-2">বিনামূল্যে অ্যাকাউন্ট তৈরি করুন এবং JUST প্রোফাইল সম্পূর্ণ করুন</p>
             </div>
-            
             <div className="text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-white text-lg sm:text-2xl font-bold">
-                ২
-              </div>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-white text-lg sm:text-2xl font-bold">২</div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">বই যোগ করুন</h3>
-              <p className="text-gray-600 text-sm sm:text-base px-2">আপনার বই তালিকায় যোগ করুন এবং অন্যদের বই ব্রাউজ করুন</p>
+              <p className="text-gray-600 text-sm sm:text-base px-2">নিজের বই তালিকায় যোগ করুন এবং অন্যদের বই ব্রাউজ করুন</p>
             </div>
-            
             <div className="text-center sm:col-span-2 lg:col-span-1">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-white text-lg sm:text-2xl font-bold">
-                ৩
-              </div>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-white text-lg sm:text-2xl font-bold">৩</div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">আদান-প্রদান করুন</h3>
-              <p className="text-gray-600 text-sm sm:text-base px-2">বই শেয়ার, এক্সচেঞ্জ বা দান করুন এবং জ্ঞানের বিনিময় করুন</p>
+              <p className="text-gray-600 text-sm sm:text-base px-2">বই শেয়ার, এক্সচেঞ্জ বা দান করুন; JUST-এ জ্ঞানের বিনিময় করুন</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 sm:py-20 bg-gradient-to-br from-green-50 to-blue-50">
+      {/* <section id="testimonials" className="py-16 sm:py-20 bg-gradient-to-br from-green-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
-              সদস্যদের মতামত
-            </h2>
-            <p className="text-lg sm:text-xl text-gray-600 px-4">আমাদের কমিউনিটির সদস্যরা কী বলছেন</p>
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">সদস্যদের মতামত</h2>
+            <p className="text-lg sm:text-xl text-gray-600 px-4">
+              আমাদের JUST কমিউনিটির সদস্যরা কী বলছেন
+            </p>
           </div>
-          
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <TestimonialCard 
               name="রাহুল আহমেদ"
-              location="ঢাকা, বাংলাদেশ"
-              content="বই আড্ডা ব্যবহার করে আমি অনেক নতুন বই পড়তে পারেছি। খুবই সহজ এবং নিরাপদ প্ল্যাটফর্ম।"
+              location="JUST, বাংলাদেশ"
+              content="বই আড্ডা ব্যবহার করে আমি অসাধারণ বই পড়তে পারছি। ক্যাম্পাসের ভিতরে সহজ ও নিরাপদ!"
               rating={5}
             />
             <TestimonialCard 
               name="সামিরা খান"
-              location="চট্টগ্রাম, বাংলাদেশ"
-              content="চমৎকার উদ্যোগ! আমার পুরানো বইগুলো অন্যদের কাজে আসছে এবং আমিও নতুন বই পাচ্ছি।"
+              location="JUST, বাংলাদেশ"
+              content="আমার পুরানো বইগুলো আরেকজনের কাজে আসছে—নতুন বন্ধু পেয়েছি।"
               rating={5}
             />
             <TestimonialCard 
               name="মাহবুব হাসান"
-              location="সিলেট, বাংলাদেশ"
-              content="বই দান করার মাধ্যমে অনেক শিক্ষার্থীকে সাহায্য করতে পারছি। এটি সত্যিই অসাধারণ একটি প্ল্যাটফর্ম।"
+              location="JUST, বাংলাদেশ"
+              content="দরিদ্র ভাই-বোনের জন্য বই দান করতে পাচ্ছি। এটি দুর্দান্ত!"
               rating={5}
             />
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* FAQ Section */}
       <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">প্রায়শই জিজ্ঞাসিত প্রশ্ন</h2>
-            <p className="text-lg sm:text-xl text-gray-600 px-4">আপনার সব প্রশ্নের উত্তর এখানে</p>
+            <p className="text-lg sm:text-xl text-gray-600 px-4">কমিউনিটির প্রশ্নের উত্তর</p>
           </div>
-          
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">বই আড্ডা কি সম্পূর্ণ বিনামূল্যে?</h3>
-              <p className="text-gray-600 text-sm sm:text-base">হ্যাঁ, বই আড্ডা সম্পূর্ণ বিনামূল্যে। নিবন্ধন, বই শেয়ার এবং এক্সচেঞ্জ সবকিছুই বিনামূল্যে।</p>
+              <p className="text-gray-600 text-sm sm:text-base">হ্যাঁ, বই আড্ডা শুধুমাত্র JUST-এ বিনামূল্যে। নিবন্ধন, বই আদান-প্রদান এবং দান সবই ফ্রি।</p>
             </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+            {/* <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">কিভাবে বই এক্সচেঞ্জ করব?</h3>
-              <p className="text-gray-600 text-sm sm:text-base">আপনার পছন্দের বইটি খুঁজে নিন, এক্সচেঞ্জ রিকোয়েস্ট পাঠান এবং মালিকের সাথে যোগাযোগ করুন।</p>
-            </div>
-            
+              <p className="text-gray-600 text-sm sm:text-base">ক্যাম্পাসের সদস্যদের মধ্যে বই খুঁজুন, এক্সচেঞ্জ রিকোয়েস্ট পাঠান ও মালিকের সাথে যোগাযোগ করুন।</p>
+            </div> */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">বই ফেরত দিতে হবে কি?</h3>
-              <p className="text-gray-600 text-sm sm:text-base">এটি বই মালিকের উপর নির্ভর করে। কেউ স্থায়ীভাবে দেয়, আবার কেউ নির্দিষ্ট সময়ের জন্য দেয়।</p>
+              <p className="text-gray-600 text-sm sm:text-base"> অবশ্যই। জ্ঞানের বিনিময়ই আমাদের একমাত্র লক্ষ্য। আপনি বই ফেরত দিলে অন্যজন নিতে পারবে। </p>
             </div>
-            
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">কি ধরনের বই শেয়ার করতে পারি?</h3>
-              <p className="text-gray-600 text-sm sm:text-base">যেকোনো ধরনের শিক্ষামূলক বই, উপন্যাস, গল্প, কবিতা - সব ধরনের বই শেয়ার করতে পারেন।</p>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">কী ধরনের বই শেয়ার করতে পারি?</h3>
+              <p className="text-gray-600 text-sm sm:text-base">JUST-এর ছাত্রছাত্রীদের সকল ঐচ্ছিক শিক্ষামূলক বই, উপন্যাস, গল্প, কবিতা, বিজ্ঞান — সব ধরনের বই।</p>
             </div>
           </div>
         </div>
@@ -786,8 +647,9 @@ const LandingWrapper = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 sm:p-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">আপডেট পেতে থাকুন</h2>
-            <p className="text-green-100 mb-6 sm:mb-8 text-base sm:text-lg px-4">নতুন বই এবং বিশেষ অফারের খবর সবার আগে পান</p>
-            
+            <p className="text-green-100 mb-6 sm:mb-8 text-base sm:text-lg px-4">
+              JUST কমিউনিটির বই ও অফারের নতুন খবর সবার আগে পান
+            </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-md mx-auto">
               <input
                 type="email"
@@ -798,9 +660,8 @@ const LandingWrapper = () => {
                 সাবস্ক্রাইব করুন
               </button>
             </div>
-            
             <p className="text-green-200 text-xs sm:text-sm mt-3 sm:mt-4 px-4">
-              আমরা আপনার ইমেইল শেয়ার করি না এবং যেকোনো সময় আনসাবস্ক্রাইব করতে পারবেন।
+              চলমান ই-মেইল সাবস্ক্রিপশন। ব্যক্তিগত তথ্য শেয়ার করি না।
             </p>
           </div>
         </div>
@@ -818,10 +679,9 @@ const LandingWrapper = () => {
                 <span className="text-xl sm:text-2xl font-bold">বই আড্ডা</span>
               </div>
               <p className="text-gray-400 mb-4 max-w-md text-sm sm:text-base">
-                জ্ঞান ভাগাভাগির মাধ্যমে একটি শিক্ষিত ও সচেতন সমাজ গড়ার প্ল্যাটফর্ম।
+                জ্ঞান ভাগাভাগির মাধ্যমে JUST-এ শিক্ষিত ও সচেতন সমাজ গড়ার প্ল্যাটফর্ম।
               </p>
             </div>
-            
             <div>
               <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4">দ্রুত লিঙ্ক</h3>
               <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
@@ -831,7 +691,6 @@ const LandingWrapper = () => {
                 <li><a href="#community" className="text-gray-400 hover:text-white transition-colors">কমিউনিটি</a></li>
               </ul>
             </div>
-            
             <div>
               <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4">সাপোর্ট</h3>
               <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
@@ -842,11 +701,9 @@ const LandingWrapper = () => {
               </ul>
             </div>
           </div>
-          
           <div className="border-t border-gray-800 pt-6 sm:pt-8 text-center">
             <p className="text-gray-500 text-xs sm:text-sm">
-              © ২০২৫ বই আড্ডা। সকল অধিকার সংরক্ষিত। 
-              <span className="text-green-400 ml-2">♥</span> দিয়ে তৈরি বাংলাদেশে
+              © ২০২৫ বই আড্ডা। সকল অধিকার সংরক্ষিত। <span className="text-green-400 ml-2">♥</span> দিয়ে তৈরি JUST-এ
             </p>
           </div>
         </div>

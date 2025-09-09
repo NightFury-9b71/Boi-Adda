@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient
 import { toast, Toaster } from 'sonner';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, useParams, Outlet } from 'react-router-dom';
-import { BookOpen, User, HistoryIcon, Settings2, Bell, Menu, X, Home, Search, Gift, RefreshCw, Archive, Award, BookMarked, Clock, CheckCircle, AlertCircle, LogOut, Edit3, Download, Trash2, Lock, ChevronRight, BarChart3, Users, HeartHandshake, Library, TrendingUp, Cog, Star, MapPin, Phone, Mail, Calendar, Eye, Heart, Share2, MessageCircle, Filter, SortAsc, Plus, Construction } from 'lucide-react';
+import { BookOpen, User, HistoryIcon, Settings2, Bell, Menu, X, Home, Search, Gift, RefreshCw, Archive, Award, BookMarked, Clock, CheckCircle, AlertCircle, LogOut, Edit3, Download, Trash2, Lock, ChevronRight, BarChart3, Users, HeartHandshake, Library, TrendingUp, Cog, Star, MapPin, Phone, Mail, Calendar, Eye, Heart, Share2, MessageCircle, Filter, SortAsc, Plus, Construction, Database } from 'lucide-react';
 
 // Import page components
 import ComingSoon from './pages/ComingSoon';
@@ -79,6 +79,10 @@ api.interceptors.response.use(
 
 // API Endpoints
 const API_ENDPOINTS = {
+
+  DATABASE: {
+    STATS: '/database/stats',
+  },
   // Auth endpoints
   AUTH: {
     LOGIN: '/auth/login',
@@ -155,6 +159,14 @@ const API_ENDPOINTS = {
 
 // API Services
 const apiServices = {
+
+  database:{
+    getOverviewStats: async() => {
+      const response = await api.get(API_ENDPOINTS.DATABASE.STATS);
+      return response.data.total_records;
+    }
+  },
+
   auth: {
     login: async (credentials) => {
       const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
@@ -850,13 +862,16 @@ const AppRoutes = () => {
         path="/login" 
         element={!isAuthenticated ? <LandingWrapper /> : <Navigate to="/dashboard" replace />} 
       />
-      
-      {/* Public Book Browsing Routes */}
-      <Route path="/books" element={<BooksLibrary />} />
-      <Route path="/books/:id" element={<BookDetailsPage />} />
-      
+
+      <Route path="/" element={<PublicLayout />}>
+        <Route path="books" element={<BooksLibrary />} />
+        <Route path="books/:id" element={<BookDetailsPage />} />
+      </Route>
+            
       {/* Protected Routes with Layout */}
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        {/* <Route path="/books" element={<BooksLibrary />} />
+        <Route path="/books/:id" element={<BookDetailsPage />} /> */}
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardWrapper />} />
         <Route path="books" element={<BooksLibrary />} />
@@ -926,6 +941,16 @@ const Layout = ({ children }) => {
     </div>
   );
 };
+
+const PublicLayout = ({children}) => {
+  return(
+    <main className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children || <Outlet />}
+      </div>
+    </main>
+  )
+}
 
 // Root Application Component
 const Application = () => {

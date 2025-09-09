@@ -201,10 +201,6 @@ const BooksLibrary = () => {
     }
   };
 
-  const handleLoginPrompt = () => {
-    navigate('/login');
-  };
-
   if (booksLoading || categoriesLoading) {
     return (
       <div className="space-y-6">
@@ -236,90 +232,60 @@ const BooksLibrary = () => {
 
   return (
     <div className="space-y-6">
-      {/* Public Access Header for Non-Authenticated Users */}
-      {!user && (
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl p-6 sm:p-8 shadow-xl">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0 text-center md:text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-2">📚 বই লাইব্রেরি ব্রাউজ করুন</h2>
-              <p className="text-green-100 text-base sm:text-lg">
-                আমাদের বিস্তৃত বই সংগ্রহ দেখুন। বই ধার নিতে চাইলে লগইন করুন।
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-              <button
-                onClick={() => navigate('/')}
-                className="border-2 border-white text-white px-6 py-3 rounded-full font-semibold hover:bg-white hover:text-green-700 transition-all transform hover:scale-105"
-              >
-                হোমে ফিরুন
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="bg-white text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-green-50 transition-all transform hover:scale-105 shadow-lg"
-              >
-                লগইন করুন
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
-      <div className="bg-white rounded-xl p-6 sm:p-8 shadow-lg border border-gray-100">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">
-              বই লাইব্রেরি
-            </h1>
-            <p className="text-gray-600 mt-1 text-base sm:text-lg">
-              🔍 মোট <span className="font-semibold text-green-600">{sortedBooks.length}</span> টি বই পাওয়া গেছে
+            <h1 className="text-2xl font-bold text-gray-900">বই লাইব্রেরি</h1>
+            <p className="text-gray-600 mt-1">
+              মোট {sortedBooks.length} টি বই পাওয়া গেছে
             </p>
           </div>
           
           {user?.role === 'admin' && (
             <button
               onClick={() => navigate('/admin/books/add')}
-              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-full hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 flex items-center space-x-2 shadow-lg"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               <span>নতুন বই যোগ করুন</span>
             </button>
           )}
         </div>
 
         {/* Search and Filters */}
-        <div className="space-y-6">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+        <div className="space-y-4">
+          <form onSubmit={handleSearch} className="flex gap-4">
             <div className="flex-1 relative">
-              <Search className="h-5 w-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder="বইয়ের নাম বা লেখকের নাম লিখুন..."
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <button
               type="submit"
-              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-full hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 font-semibold shadow-lg"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
-              🔍 খুঁজুন
+              খুঁজুন
             </button>
           </form>
 
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-gray-50 p-4 rounded-xl">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex items-center space-x-3 bg-white p-3 rounded-lg shadow-sm">
-                <Filter className="h-5 w-5 text-green-600" />
+              <div className="flex items-center space-x-2">
+                <Filter className="h-4 w-4 text-gray-500" />
                 <select
                   value={selectedCategory}
                   onChange={(e) => {
                     setSelectedCategory(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white min-w-40"
+                  className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="all">সব ক্যাটাগরি</option>
                   {categories.map((category) => (
@@ -330,40 +296,32 @@ const BooksLibrary = () => {
                 </select>
               </div>
 
-              <div className="bg-white p-3 rounded-lg shadow-sm">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white min-w-48"
-                >
-                  <option value="newest">🆕 নতুন আগে</option>
-                  <option value="oldest">📅 পুরাতন আগে</option>
-                  <option value="title">📚 বইয়ের নাম অনুযায়ী</option>
-                  <option value="author">✍️ লেখকের নাম অনুযায়ী</option>
-                  <option value="popular">⭐ জনপ্রিয়তা অনুযায়ী</option>
-                </select>
-              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="newest">নতুন আগে</option>
+                <option value="oldest">পুরাতন আগে</option>
+                <option value="title">বইয়ের নাম অনুযায়ী</option>
+                <option value="author">লেখকের নাম অনুযায়ী</option>
+                <option value="popular">জনপ্রিয়তা অনুযায়ী</option>
+              </select>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center space-x-1 bg-white rounded-lg p-1 shadow-sm">
+            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-3 rounded-lg transition-all ${viewMode === 'grid' 
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md transform scale-105' 
-                  : 'hover:bg-gray-100 text-gray-600'
-                }`}
+                className={`p-1 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
               >
-                <Grid3X3 className="h-5 w-5" />
+                <Grid3X3 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-3 rounded-lg transition-all ${viewMode === 'list' 
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md transform scale-105' 
-                  : 'hover:bg-gray-100 text-gray-600'
-                }`}
+                className={`p-1 rounded ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
               >
-                <List className="h-5 w-5" />
+                <List className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -373,13 +331,13 @@ const BooksLibrary = () => {
       {/* Books Display */}
       {paginatedBooks.length > 0 ? (
         <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          : "space-y-6"
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          : "space-y-4"
         }>
           {paginatedBooks.map((book) => (
             <div
               key={book.id}
-              className={`bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all transform hover:scale-[1.02] cursor-pointer group ${
+              className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${
                 viewMode === 'list' ? 'flex' : ''
               }`}
               onClick={() => handleBookClick(book.id)}
@@ -387,77 +345,72 @@ const BooksLibrary = () => {
               {viewMode === 'grid' ? (
                 <>
                   <div className="relative">
-                    <div className="w-full h-48 sm:h-56 bg-gradient-to-br from-blue-50 to-blue-100 rounded-t-xl overflow-hidden flex items-center justify-center">
+                    <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                       {book.cover ? (
                         <img
                           src={book.cover}
                           alt={book.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'flex';
                           }}
                         />
                       ) : null}
-                      <div className="flex flex-col items-center justify-center text-blue-400 p-4" style={{display: book.cover ? 'none' : 'flex'}}>
-                        <BookOpen className="h-16 w-16 mb-3" />
-                        <span className="text-sm text-center font-medium text-blue-600">{book.title}</span>
+                      <div className="flex flex-col items-center justify-center text-gray-400" style={{display: book.cover ? 'none' : 'flex'}}>
+                        <BookOpen className="h-12 w-12 mb-2" />
+                        <span className="text-sm text-center px-2">{book.title}</span>
                       </div>
                     </div>
-                    <div className="absolute top-3 right-3 flex space-x-2">
+                    <div className="absolute top-2 right-2 flex space-x-1">
                       {book.total_copies > 0 ? (
-                        <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full shadow-lg backdrop-blur-sm font-medium">
-                          ✅ {book.total_copies} কপি
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          {book.total_copies} কপি
                         </span>
                       ) : (
-                        <span className="bg-red-500 text-white text-xs px-3 py-1 rounded-full shadow-lg backdrop-blur-sm font-medium">
-                          ❌ স্টকে নেই
+                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                          স্টকে নেই
                         </span>
                       )}
                     </div>
-                    <div className="absolute top-3 left-3">
-                      <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs px-2 py-1 rounded-full shadow-sm">
-                        📖 #{book.id}
-                      </span>
-                    </div>
                   </div>
                   
-                  <div className="p-4 sm:p-5">
-                    <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 text-lg group-hover:text-green-600 transition-colors">
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
                       {book.title}
                     </h3>
-                    <p className="text-gray-600 mb-3 font-medium">✍️ {book.author}</p>
+                    <p className="text-sm text-gray-600 mb-2">{book.author}</p>
                     
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4 bg-gray-50 p-2 rounded-lg">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                       <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4 text-purple-500" />
+                        <Calendar className="h-3 w-3" />
                         <span>{book.published_year}</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4 text-green-500" />
+                        <Users className="h-3 w-3" />
                         <span>{book.times_borrowed || 0} বার</span>
                       </div>
                     </div>
                     
                     {/* Donor Information */}
                     {book.donors && book.donors.length > 0 && (
-                      <div className="mb-4">
-                        <div className="flex items-center text-sm text-gray-600 mb-2">
-                          <Heart className="h-4 w-4 mr-1 text-red-500" />
-                          <span className="font-medium">দানকারী:</span>
+                      <div className="mb-3">
+                        <div className="flex items-center text-xs text-gray-600 mb-1">
+                          <Heart className="h-3 w-3 mr-1 text-red-500" />
+                          <span>দানকারী:</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {book.donors.slice(0, 2).map((donor) => (
                             <button
                               key={donor.id}
                               onClick={(e) => handleDonorClick(donor.id, e)}
-                              className="text-xs bg-gradient-to-r from-pink-100 to-pink-200 text-pink-800 px-3 py-1 rounded-full hover:from-pink-200 hover:to-pink-300 transition-all transform hover:scale-105 font-medium"
+                              className="text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-full hover:bg-pink-100 transition-colors"
                             >
-                              💝 {donor.name}
+                              {donor.name}
                             </button>
                           ))}
                           {book.donors.length > 2 && (
-                            <span className="text-xs text-gray-500 px-3 py-1 bg-gray-100 rounded-full">
+                            <span className="text-xs text-gray-500 px-2 py-1">
                               +{book.donors.length - 2} আরো
                             </span>
                           )}
@@ -465,15 +418,15 @@ const BooksLibrary = () => {
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center justify-between">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleBookClick(book.id);
                         }}
-                        className="text-green-600 hover:text-green-700 text-sm font-semibold flex items-center space-x-1 hover:bg-green-50 px-3 py-1 rounded-full transition-all"
+                        className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center space-x-1"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3 w-3" />
                         <span>বিস্তারিত</span>
                       </button>
                       
@@ -481,21 +434,9 @@ const BooksLibrary = () => {
                         const statusDisplay = getBorrowStatusDisplay(book.id);
                         if (statusDisplay) {
                           return (
-                            <span className={`${statusDisplay.className} font-medium`}>
+                            <span className={statusDisplay.className}>
                               {statusDisplay.text}
                             </span>
-                          );
-                        } else if (!user) {
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleLoginPrompt();
-                              }}
-                              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm px-4 py-2 rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 font-medium shadow-lg"
-                            >
-                              🔑 লগইন করুন
-                            </button>
                           );
                         } else if (book.total_copies > 0) {
                           return (
@@ -504,15 +445,15 @@ const BooksLibrary = () => {
                                 e.stopPropagation();
                                 handleBorrowRequest(book);
                               }}
-                              className="bg-gradient-to-r from-green-600 to-green-700 text-white text-sm px-4 py-2 rounded-full hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 font-medium shadow-lg"
+                              className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
                             >
-                              📖 ধার নিন
+                              ধার নিন
                             </button>
                           );
                         } else {
                           return (
-                            <span className="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-full font-medium">
-                              😔 স্টকে নেই
+                            <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                              স্টকে নেই
                             </span>
                           );
                         }
@@ -621,18 +562,6 @@ const BooksLibrary = () => {
                                 {statusDisplay.text}
                               </span>
                             );
-                          } else if (!user) {
-                            return (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleLoginPrompt();
-                                }}
-                                className="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                              >
-                                লগইন করুন
-                              </button>
-                            );
                           } else if (book.total_copies > 0) {
                             return (
                               <button
@@ -662,15 +591,15 @@ const BooksLibrary = () => {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl p-8 sm:p-12 text-center shadow-lg border border-gray-100">
-          <div className="h-20 w-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6">
-            <BookOpen className="h-10 w-10 text-blue-600" />
+        <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-gray-100">
+          <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">📚 কোন বই পাওয়া যায়নি</h3>
-          <p className="text-gray-600 mb-6 text-lg">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">কোন বই পাওয়া যায়নি</h3>
+          <p className="text-gray-600 mb-4">
             {searchQuery || selectedCategory !== 'all'
-              ? '🔍 আপনার অনুসন্ধান অনুযায়ী কোন বই পাওয়া যায়নি। অন্য কিছু খুঁজে দেখুন।'
-              : '📖 এখনো কোন বই যোগ করা হয়নি। শীঘ্রই নতুন বই যোগ করা হবে।'
+              ? 'আপনার অনুসন্ধান অনুযায়ী কোন বই পাওয়া যায়নি।'
+              : 'এখনো কোন বই যোগ করা হয়নি।'
             }
           </p>
           {(searchQuery || selectedCategory !== 'all') && (
@@ -680,9 +609,9 @@ const BooksLibrary = () => {
                 setSelectedCategory('all');
                 setCurrentPage(1);
               }}
-              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-full hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 font-semibold shadow-lg"
+              className="text-green-600 hover:text-green-700 font-medium"
             >
-              🔄 সব বই দেখুন
+              সব বই দেখুন
             </button>
           )}
         </div>
@@ -690,19 +619,19 @@ const BooksLibrary = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-          <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-            <p className="text-gray-600 font-medium">
-              📊 দেখানো হচ্ছে <span className="text-green-600 font-bold">{startIndex + 1}-{Math.min(startIndex + booksPerPage, sortedBooks.length)}</span> এর মধ্যে <span className="text-green-600 font-bold">{sortedBooks.length}</span> টি
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              {startIndex + 1}-{Math.min(startIndex + booksPerPage, sortedBooks.length)} এর মধ্যে {sortedBooks.length} টি
             </p>
             
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="p-3 border-2 border-gray-300 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 transition-all transform hover:scale-105"
+                className="p-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
               
               <div className="flex items-center space-x-1">
@@ -715,7 +644,7 @@ const BooksLibrary = () => {
                   
                   if (!isVisible) {
                     if (page === currentPage - 2 || page === currentPage + 2) {
-                      return <span key={page} className="px-3 py-2 text-gray-400 font-bold">...</span>;
+                      return <span key={page} className="px-2">...</span>;
                     }
                     return null;
                   }
@@ -724,10 +653,10 @@ const BooksLibrary = () => {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-4 py-2 rounded-full font-semibold transition-all transform hover:scale-105 ${
+                      className={`px-3 py-1 rounded-lg ${
                         currentPage === page
-                          ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg'
-                          : 'text-gray-600 hover:bg-green-50 hover:text-green-600'
+                          ? 'bg-green-600 text-white'
+                          : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       {page}
@@ -739,9 +668,9 @@ const BooksLibrary = () => {
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="p-3 border-2 border-gray-300 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 transition-all transform hover:scale-105"
+                className="p-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>

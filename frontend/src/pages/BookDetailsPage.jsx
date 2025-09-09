@@ -259,58 +259,30 @@ const BookDetailsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Public Access Header for Non-Authenticated Users */}
-      {!user && (
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl p-6 sm:p-8 shadow-xl">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0 text-center md:text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-2">📖 বইটি পছন্দ হয়েছে?</h2>
-              <p className="text-green-100 text-base sm:text-lg">
-                এই বইটি ধার নিতে চাইলে লগইন করুন এবং অনুরোধ পাঠান।
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-              <button
-                onClick={() => navigate('/books')}
-                className="border-2 border-white text-white px-6 py-3 rounded-full font-semibold hover:bg-white hover:text-green-700 transition-all transform hover:scale-105"
-              >
-                🔍 আরো বই দেখুন
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="bg-white text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-green-50 transition-all transform hover:scale-105 shadow-lg"
-              >
-                🔑 লগইন করুন
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-green-600 hover:text-green-700 font-semibold transition-all hover:bg-green-50 px-4 py-2 rounded-full transform hover:scale-105"
+        className="flex items-center text-green-600 hover:text-green-700 font-medium transition-colors"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
-        ⬅️ ফিরে যান
+        ফিরে যান
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Book Information */}
         <div className="lg:col-span-2 space-y-6">
           {/* Book Header */}
-          <div className="bg-white rounded-xl p-6 sm:p-8 shadow-xl border border-gray-100">
-            <div className="flex flex-col lg:flex-row gap-8">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row gap-6">
               {/* Book Cover */}
-              <div className="flex-shrink-0 mx-auto lg:mx-0">
-                <div className="relative group">
-                  <div className="w-64 h-96 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl overflow-hidden shadow-2xl group-hover:shadow-3xl transition-all duration-300">
+              <div className="flex-shrink-0 mx-auto md:mx-0">
+                <div className="relative">
+                  <div className="w-56 h-80 bg-gray-100 rounded-lg overflow-hidden shadow-lg">
                     {book.cover ? (
                       <img
                         src={book.cover}
                         alt={book.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -318,103 +290,85 @@ const BookDetailsPage = () => {
                       />
                     ) : null}
                     <div 
-                      className="w-full h-full flex flex-col items-center justify-center text-blue-400 p-6"
+                      className="w-full h-full flex flex-col items-center justify-center text-gray-400"
                       style={{display: book.cover ? 'none' : 'flex'}}
                     >
-                      <BookOpen className="h-20 w-20 mb-6" />
-                      <span className="text-lg text-center font-bold text-blue-600">{book.title}</span>
+                      <BookOpen className="h-16 w-16 mb-4" />
+                      <span className="text-sm text-center px-4 font-medium">{book.title}</span>
                     </div>
                   </div>
                   
                   {/* Availability Badge */}
-                  <div className="absolute -top-2 -right-2">
+                  <div className="absolute top-3 right-3">
                     {book.total_copies > 0 ? (
-                      <span className="bg-green-500 text-white text-sm px-4 py-2 rounded-full font-bold shadow-lg backdrop-blur-sm">
-                        ✅ {book.total_copies} কপি আছে
+                      <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium shadow-sm">
+                        {book.total_copies} কপি আছে
                       </span>
                     ) : (
-                      <span className="bg-red-500 text-white text-sm px-4 py-2 rounded-full font-bold shadow-lg backdrop-blur-sm">
-                        ❌ স্টকে নেই
+                      <span className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-medium shadow-sm">
+                        স্টকে নেই
                       </span>
                     )}
-                  </div>
-                  
-                  {/* Book ID Badge */}
-                  <div className="absolute -bottom-2 -left-2">
-                    <span className="bg-purple-500 text-white text-sm px-3 py-1 rounded-full font-medium shadow-lg">
-                      📖 #{book.id}
-                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Book Details */}
-              <div className="flex-1 space-y-6">
+              <div className="flex-1 space-y-4">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-4">
-                    {book.title}
-                  </h1>
-                  <div className="flex items-center text-xl text-gray-700 mb-6 bg-gray-50 p-4 rounded-lg">
-                    <User className="h-6 w-6 mr-3 text-blue-500" />
-                    <span className="font-semibold">লেখক: </span>
-                    <span className="ml-2 text-gray-900 font-bold">✍️ {book.author}</span>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{book.title}</h1>
+                  <div className="flex items-center text-lg text-gray-600 mb-4">
+                    <User className="h-5 w-5 mr-2" />
+                    <span>লেখক: {book.author}</span>
                   </div>
                 </div>
 
                 {/* Book Meta Information */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {category && (
-                    <div className="flex items-center text-gray-600 bg-blue-50 p-4 rounded-lg">
-                      <Tag className="h-6 w-6 mr-3 text-blue-500" />
-                      <div>
-                        <span className="font-semibold block text-sm text-gray-500">ক্যাটাগরি</span>
-                        <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                          📚 {category.name}
-                        </span>
-                      </div>
+                    <div className="flex items-center text-gray-600">
+                      <Tag className="h-5 w-5 mr-2 text-blue-500" />
+                      <span className="font-medium">ক্যাটাগরি:</span>
+                      <span className="ml-2 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-sm">
+                        {category.name}
+                      </span>
                     </div>
                   )}
                   
-                  <div className="flex items-center text-gray-600 bg-purple-50 p-4 rounded-lg">
-                    <Calendar className="h-6 w-6 mr-3 text-purple-500" />
-                    <div>
-                      <span className="font-semibold block text-sm text-gray-500">প্রকাশ</span>
-                      <span className="text-lg font-bold text-purple-600">📅 {book.published_year}</span>
-                    </div>
+                  <div className="flex items-center text-gray-600">
+                    <Calendar className="h-5 w-5 mr-2 text-purple-500" />
+                    <span className="font-medium">প্রকাশ:</span>
+                    <span className="ml-2">{book.published_year}</span>
                   </div>
                   
-                  <div className="flex items-center text-gray-600 bg-orange-50 p-4 rounded-lg">
-                    <FileText className="h-6 w-6 mr-3 text-orange-500" />
-                    <div>
-                      <span className="font-semibold block text-sm text-gray-500">পৃষ্ঠা</span>
-                      <span className="text-lg font-bold text-orange-600">📄 {book.pages} পৃষ্ঠা</span>
-                    </div>
+                  <div className="flex items-center text-gray-600">
+                    <FileText className="h-5 w-5 mr-2 text-orange-500" />
+                    <span className="font-medium">পৃষ্ঠা:</span>
+                    <span className="ml-2">{book.pages} পৃষ্ঠা</span>
                   </div>
                   
-                  <div className="flex items-center text-gray-600 bg-green-50 p-4 rounded-lg">
-                    <Users className="h-6 w-6 mr-3 text-green-500" />
-                    <div>
-                      <span className="font-semibold block text-sm text-gray-500">ধার</span>
-                      <span className="text-lg font-bold text-green-600">📊 {book.times_borrowed || 0} বার</span>
-                    </div>
+                  <div className="flex items-center text-gray-600">
+                    <Users className="h-5 w-5 mr-2 text-green-500" />
+                    <span className="font-medium">ধার:</span>
+                    <span className="ml-2">{book.times_borrowed || 0} বার</span>
                   </div>
                 </div>
 
                 {/* Book Statistics */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6">
-                  <h3 className="font-bold text-gray-900 mb-4 text-xl">📈 বইটির পরিসংখ্যান</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="text-center bg-white p-4 rounded-lg shadow-sm">
-                      <div className="text-3xl font-bold text-green-600 mb-1">{book.total_copies}</div>
-                      <div className="text-sm text-gray-600 font-medium">📚 উপলব্ধ কপি</div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3">বইটির পরিসংখ্যান</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{book.total_copies}</div>
+                      <div className="text-sm text-gray-600">উপলব্ধ কপি</div>
                     </div>
-                    <div className="text-center bg-white p-4 rounded-lg shadow-sm">
-                      <div className="text-3xl font-bold text-blue-600 mb-1">{book.times_borrowed || 0}</div>
-                      <div className="text-sm text-gray-600 font-medium">📊 মোট ধার</div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{book.times_borrowed || 0}</div>
+                      <div className="text-sm text-gray-600">মোট ধার</div>
                     </div>
-                    <div className="text-center bg-white p-4 rounded-lg shadow-sm">
-                      <div className="text-lg font-bold text-purple-600 mb-1">{formatDate(book.created_at)}</div>
-                      <div className="text-sm text-gray-600 font-medium">📅 যোগ করা হয়েছে</div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">{formatDate(book.created_at)}</div>
+                      <div className="text-sm text-gray-600">যোগ করা হয়েছে</div>
                     </div>
                   </div>
                 </div>
@@ -423,51 +377,31 @@ const BookDetailsPage = () => {
           </div>
 
           {/* Book Description/Additional Info */}
-          <div className="bg-white rounded-xl p-6 sm:p-8 shadow-xl border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              📝 বই সম্পর্কে
-            </h2>
-            <div className="prose prose-lg max-w-none">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border-l-4 border-blue-500">
-                <p className="text-gray-800 leading-relaxed text-lg">
-                  📚 "<span className="font-bold text-blue-600">{book.title}</span>" বইটি 
-                  <span className="font-semibold text-purple-600"> ✍️ {book.author}</span> এর লেখা একটি 
-                  <span className="font-medium text-green-600">{category?.name || 'বই'}</span>। 
-                  এই বইটি <span className="font-bold text-orange-600">📅 {book.published_year}</span> সালে প্রকাশিত হয়েছে এবং এতে মোট 
-                  <span className="font-bold text-red-600">📄 {book.pages} পৃষ্ঠা</span> রয়েছে।
-                  {book.times_borrowed > 0 && ` 📊 এই বইটি এ পর্যন্ত ${book.times_borrowed} বার ধার দেওয়া হয়েছে, যা এর জনপ্রিয়তার প্রমাণ।`}
-                </p>
-              </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">বই সম্পর্কে</h2>
+            <div className="prose prose-gray max-w-none">
+              <p className="text-gray-700 leading-relaxed">
+                "{book.title}" বইটি {book.author} এর লেখা একটি {category?.name || 'বই'}। 
+                এই বইটি {book.published_year} সালে প্রকাশিত হয়েছে এবং এতে মোট {book.pages} পৃষ্ঠা রয়েছে।
+                {book.times_borrowed > 0 && ` এই বইটি এ পর্যন্ত ${book.times_borrowed} বার ধার দেওয়া হয়েছে।`}
+              </p>
               
               {category?.description && (
-                <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border-l-4 border-green-500">
-                  <p className="text-green-800 font-bold text-lg mb-2 flex items-center">
-                    🏷️ ক্যাটাগরি সম্পর্কে:
-                  </p>
-                  <p className="text-green-700 text-base leading-relaxed">{category.description}</p>
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <p className="text-blue-800 font-medium">ক্যাটাগরি সম্পর্কে:</p>
+                  <p className="text-blue-700 mt-1">{category.description}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Reading Progress & Reviews (Future Feature) */}
-          <div className="bg-white rounded-xl p-6 sm:p-8 shadow-xl border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              💬 পাঠক মতামত
-            </h2>
-            <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-              <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <MessageCircle className="h-10 w-10 text-blue-500" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-700 mb-2">🚀 শীঘ্রই আসছে...</h3>
-              <p className="text-gray-600 text-lg mb-4">পাঠকরা শীঘ্রই এই বইটি সম্পর্কে মতামত দিতে পারবেন</p>
-              <div className="flex justify-center space-x-4 text-sm text-gray-500">
-                <span>⭐ রেটিং</span>
-                <span>•</span>
-                <span>📝 রিভিউ</span>
-                <span>•</span>
-                <span>💭 আলোচনা</span>
-              </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">পাঠক মতামত</h2>
+            <div className="text-center py-8">
+              <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">এই ফিচারটি শীঘ্রই আসছে...</p>
+              <p className="text-sm text-gray-500 mt-2">পাঠকরা শীঘ্রই এই বইটি সম্পর্কে মতামত দিতে পারবেন</p>
             </div>
           </div>
         </div>
@@ -475,45 +409,24 @@ const BookDetailsPage = () => {
         {/* Action Sidebar */}
         <div className="space-y-6">
           {/* Borrow Action */}
-          <div className="bg-white rounded-xl p-6 sm:p-8 shadow-xl border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              📚 বই ধার নিন
-            </h3>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">বই ধার নিন</h3>
             
-            {!user ? (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-6">
-                  <div className="flex items-center mb-3">
-                    <AlertCircle className="h-6 w-6 text-blue-600 mr-3" />
-                    <span className="text-blue-800 font-bold text-lg">🔑 লগইন প্রয়োজন</span>
-                  </div>
-                  <p className="text-blue-700 text-base leading-relaxed">
-                    বই ধার নিতে চাইলে প্রথমে লগইন করুন এবং আপনার অ্যাকাউন্ট তৈরি করুন
-                  </p>
-                </div>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 font-bold text-lg flex items-center justify-center shadow-lg"
-                >
-                  <User className="h-6 w-6 mr-3" />
-                  🔑 লগইন করুন
-                </button>
-              </div>
-            ) : book.total_copies > 0 ? (
-              <div className="space-y-6">
+            {book.total_copies > 0 ? (
+              <div className="space-y-4">
                 {(() => {
                   const statusDisplay = getBorrowStatusDisplay();
                   if (statusDisplay) {
                     const IconComponent = statusDisplay.icon;
                     return (
-                      <div className={`border-2 rounded-xl p-6 ${statusDisplay.className}`}>
-                        <div className="flex items-center mb-3">
-                          <IconComponent className={`h-6 w-6 mr-3 ${statusDisplay.iconColor}`} />
-                          <span className={`font-bold text-lg ${statusDisplay.textColor}`}>
-                            ✅ {statusDisplay.text}
+                      <div className={`border rounded-lg p-4 ${statusDisplay.className}`}>
+                        <div className="flex items-center">
+                          <IconComponent className={`h-5 w-5 mr-2 ${statusDisplay.iconColor}`} />
+                          <span className={`font-medium ${statusDisplay.textColor}`}>
+                            {statusDisplay.text}
                           </span>
                         </div>
-                        <p className={`text-base leading-relaxed ${statusDisplay.textColor.replace('800', '700')}`}>
+                        <p className={`text-sm mt-1 ${statusDisplay.textColor.replace('800', '700')}`}>
                           {statusDisplay.description}
                         </p>
                       </div>
@@ -523,17 +436,17 @@ const BookDetailsPage = () => {
                       <button
                         onClick={handleBorrowRequest}
                         disabled={isBorrowLoading}
-                        className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-xl hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                        className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                       >
                         {isBorrowLoading ? (
                           <>
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                            ⏳ অনুরোধ পাঠানো হচ্ছে...
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            অনুরোধ পাঠানো হচ্ছে...
                           </>
                         ) : (
                           <>
-                            <BookOpen className="h-6 w-6 mr-3" />
-                            📖 ধার নিন
+                            <BookOpen className="h-5 w-5 mr-2" />
+                            ধার নিন
                           </>
                         )}
                       </button>
@@ -541,75 +454,71 @@ const BookDetailsPage = () => {
                   }
                 })()}
                 
-                <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-4">
-                  <div className="flex items-center text-green-800 font-medium">
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    <span>✅ {book.total_copies} কপি উপলব্ধ</span>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex items-center text-green-800 text-sm">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <span>{book.total_copies} কপি উপলব্ধ</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-6">
-                <div className="flex items-center mb-3">
-                  <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
-                  <span className="text-red-800 font-bold text-lg">❌ স্টকে নেই</span>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                  <span className="text-red-800 font-medium">স্টকে নেই</span>
                 </div>
-                <p className="text-red-700 text-base leading-relaxed">
-                  এই বইটি বর্তমানে উপলব্ধ নেই। শীঘ্রই নতুন কপি যোগ করা হবে।
+                <p className="text-red-700 text-sm mt-1">
+                  এই বইটি বর্তমানে উপলব্ধ নেই
                 </p>
               </div>
             )}
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl p-6 sm:p-8 shadow-xl border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              ⚡ দ্রুত কার্যক্রম
-            </h3>
-            <div className="space-y-4">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">দ্রুত কার্যক্রম</h3>
+            <div className="space-y-3">
               <button
                 onClick={handleShare}
-                className="w-full flex items-center justify-center px-6 py-4 border-2 border-green-300 rounded-xl hover:bg-green-50 transition-all transform hover:scale-105 font-semibold text-green-700 shadow-sm"
+                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <Share2 className="h-5 w-5 mr-3" />
-                📤 শেয়ার করুন
+                <Share2 className="h-4 w-4 mr-2" />
+                শেয়ার করুন
               </button>
               
               <button
                 onClick={() => toast.info('এই ফিচারটি শীঘ্রই আসছে')}
-                className="w-full flex items-center justify-center px-6 py-4 border-2 border-blue-300 rounded-xl hover:bg-blue-50 transition-all transform hover:scale-105 font-semibold text-blue-700 shadow-sm"
+                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <Bookmark className="h-5 w-5 mr-3" />
-                🔖 বুকমার্ক করুন
+                <Bookmark className="h-4 w-4 mr-2" />
+                বুকমার্ক করুন
               </button>
               
               <button
                 onClick={() => navigate('/books')}
-                className="w-full flex items-center justify-center px-6 py-4 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all transform hover:scale-105 font-semibold shadow-sm"
+                className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                <Eye className="h-5 w-5 mr-3" />
-                🔍 আরো বই দেখুন
+                <Eye className="h-4 w-4 mr-2" />
+                আরো বই দেখুন
               </button>
             </div>
           </div>
 
           {/* Book Information Summary */}
-          <div className="bg-white rounded-xl p-6 sm:p-8 shadow-xl border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              ℹ️ বইয়ের তথ্য
-            </h3>
-            <div className="space-y-4 text-base">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">📖 আইডি:</span>
-                <span className="font-bold text-purple-600">#{book.id}</span>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">বইয়ের তথ্য</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">আইডি:</span>
+                <span className="font-medium">#{book.id}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">📅 যোগ হয়েছে:</span>
-                <span className="font-bold text-green-600">{formatDate(book.created_at)}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">যোগ হয়েছে:</span>
+                <span className="font-medium">{formatDate(book.created_at)}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-600 font-medium">🔄 আপডেট:</span>
-                <span className="font-bold text-blue-600">{formatDate(book.updated_at)}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">আপডেট:</span>
+                <span className="font-medium">{formatDate(book.updated_at)}</span>
               </div>
             </div>
           </div>
