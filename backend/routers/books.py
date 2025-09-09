@@ -38,14 +38,13 @@ def getBooks(session: Session = Depends(get_session)):
         
         # Only include books with available copies
         if available_copies_count > 0:
-            # Create a copy of the book data
+            # Create a dictionary with book data plus computed fields
             book_data = book.model_dump()
             book_data['total_copies'] = available_copies_count
             book_data['times_borrowed'] = times_borrowed
             
-            # Convert back to Book object for response
-            available_book = Book(**book_data)
-            available_books.append(available_book)
+            # Return dictionary - FastAPI will handle serialization to BookOut
+            available_books.append(book_data)
     
     return available_books
 
@@ -79,7 +78,8 @@ def getBook(id: int, session: Session = Depends(get_session)):
     book_data['total_copies'] = available_copies_count
     book_data['times_borrowed'] = times_borrowed
     
-    return Book(**book_data)
+    # Return dictionary - FastAPI will handle serialization to BookOut
+    return book_data
 
 @router.post("/", response_model=BookOut)
 def addBook(book: BookCreate, session: Session = Depends(get_session), current_user: User = Depends(require_librarian_or_admin)):
@@ -102,7 +102,29 @@ def addBook(book: BookCreate, session: Session = Depends(get_session), current_u
         session.commit()
         session.refresh(new_copy)
         
-        return existing_book
+        # Count current available copies for response
+        available_copies_count = session.exec(
+            select(func.count(BookCopy.id)).where(
+                BookCopy.book_id == existing_book.id,
+                BookCopy.status == CopyStatus.available
+            )
+        ).one()
+        
+        times_borrowed = session.exec(
+            select(func.count(Borrow.id)).where(
+                Borrow.book_copy_id.in_(
+                    select(BookCopy.id).where(BookCopy.book_id == existing_book.id)
+                ),
+                Borrow.status.in_([BorrowStatus.approved, BorrowStatus.active])
+            )
+        ).one()
+        
+        # Return book data with counts
+        book_data = existing_book.model_dump()
+        book_data['total_copies'] = available_copies_count
+        book_data['times_borrowed'] = times_borrowed
+        return book_data
+        
     else:
         # Create new book
         db_book = Book(**book.model_dump())
@@ -116,7 +138,11 @@ def addBook(book: BookCreate, session: Session = Depends(get_session), current_u
         session.commit()
         session.refresh(new_copy)
 
-        return db_book
+        # Return new book with initial counts
+        book_data = db_book.model_dump()
+        book_data['total_copies'] = 1  # Just created one copy
+        book_data['times_borrowed'] = 0  # Brand new book
+        return book_data
 
 @router.put("/{id}", response_model=BookOut)
 def updateBook(id: int, book_update: BookCreate, session: Session = Depends(get_session), current_user: User = Depends(require_librarian_or_admin)):
@@ -135,7 +161,28 @@ def updateBook(id: int, book_update: BookCreate, session: Session = Depends(get_
     session.commit()
     session.refresh(existing_book)
     
-    return existing_book
+    # Count current available copies for response
+    available_copies_count = session.exec(
+        select(func.count(BookCopy.id)).where(
+            BookCopy.book_id == existing_book.id,
+            BookCopy.status == CopyStatus.available
+        )
+    ).one()
+    
+    times_borrowed = session.exec(
+        select(func.count(Borrow.id)).where(
+            Borrow.book_copy_id.in_(
+                select(BookCopy.id).where(BookCopy.book_id == existing_book.id)
+            ),
+            Borrow.status.in_([BorrowStatus.approved, BorrowStatus.active])
+        )
+    ).one()
+    
+    # Return updated book data with counts
+    response_data = existing_book.model_dump()
+    response_data['total_copies'] = available_copies_count
+    response_data['times_borrowed'] = times_borrowed
+    return response_data
 
 @router.delete("/{id}")
 def deleteBook(id: int, session: Session = Depends(get_session), current_user: User = Depends(require_admin)):
@@ -146,7 +193,7 @@ def deleteBook(id: int, session: Session = Depends(get_session), current_user: U
     
     # Check if any copies are currently borrowed or reserved
     book_copies = session.exec(select(BookCopy).where(BookCopy.book_id == id)).all()
-    active_copies = [copy for copy in book_copies if copy.status != "available"]
+    active_copies = [copy for copy in book_copies if copy.status != CopyStatus.available]
     
     if active_copies:
         raise HTTPException(400, f"Cannot delete book with {len(active_copies)} active copies (borrowed/reserved)")
