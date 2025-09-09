@@ -277,7 +277,7 @@ const LandingWrapper = () => {
                 scrollY > 50 ? 'text-gray-700 hover:text-green-600' : 'text-white/90 hover:text-white'
               }`}>যোগ দিন</a>
               <button
-                onClick={() => navigate('/books')}
+                onClick={() => navigate('/unauthorized/books')}
                 className={`transition-colors font-medium ${
                   scrollY > 50 ? 'text-gray-700 hover:text-green-600' : 'text-white/90 hover:text-white'
                 }`}
@@ -306,7 +306,7 @@ const LandingWrapper = () => {
                 <a href="#testimonials" className="block px-3 py-2 text-gray-700 hover:text-green-600 transition-colors">রিভিউ</a>
                 <a href="#auth-form" className="block px-3 py-2 text-gray-700 hover:text-green-600 transition-colors">যোগ দিন</a>
                 <button
-                  onClick={() => navigate('/books')}
+                  onClick={() => navigate('/unauthorized/books')}
                   className="block w-full text-left px-3 py-2 text-gray-700 hover:text-green-600 transition-colors"
                 >
                   বই লাইব্রেরি
@@ -414,7 +414,7 @@ const LandingWrapper = () => {
               {/* CTA */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                 <button
-                  onClick={() => navigate('/books')}
+                  onClick={() => navigate('/unauthorized/books')}
                   className="bg-white text-green-700 px-6 sm:px-8 py-3 rounded-full font-semibold hover:bg-green-50 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 shadow-xl text-sm sm:text-base"
                 >
                   <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
