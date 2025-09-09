@@ -1,5 +1,4 @@
-from .models import User, Category, Book, BookCopy, Borrow, Donation
-from .enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
+from .enums import UserRole
 import random
 
 def get_random_cover():
