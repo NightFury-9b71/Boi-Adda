@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient
 import { toast, Toaster } from 'sonner';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, useParams, Outlet } from 'react-router-dom';
-import { BookOpen, User, HistoryIcon, Settings2, Bell, Menu, X, Home, Search, Gift, RefreshCw, Archive, Award, BookMarked, Clock, CheckCircle, AlertCircle, LogOut, Edit3, Download, Trash2, Lock, ChevronRight, BarChart3, Users, HeartHandshake, Library, TrendingUp, Cog, Star, MapPin, Phone, Mail, Calendar, Eye, Heart, Share2, MessageCircle, Filter, SortAsc, Plus, Construction, Database } from 'lucide-react';
+import { BookOpen, User, HistoryIcon, Settings2, Bell, Menu, X, Home, Search, Gift, RefreshCw, Archive, Award, BookMarked, Clock, CheckCircle, AlertCircle, LogOut, Edit3, Download, Trash2, Lock, ChevronRight, BarChart3, Users, HeartHandshake, Library, TrendingUp, Cog, Star, MapPin, Phone, Mail, Calendar, Eye, Heart, Share2, MessageCircle, Filter, SortAsc, Plus, Construction, Database, BookA } from 'lucide-react';
 
 // Import page components
 import ComingSoon from './pages/ComingSoon';
@@ -25,6 +25,7 @@ import AdminBorrowManagement from './pages/admin/AdminBorrowManagement';
 import AdminDonationManagement from './pages/admin/AdminDonationManagement';
 import AdminBookManagement from './pages/admin/AdminBookManagement';
 import AdminStatistics from './pages/admin/AdminStatistics';
+import AdminBookIssue from './pages/admin/AdminBookIssue';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -143,6 +144,7 @@ const API_ENDPOINTS = {
     USERS: '/admin/users',
     UPDATE_USER_ROLE: (userId) => `/admin/users/${userId}/role`,
     UPDATE_USER_STATUS: (userId) => `/admin/users/${userId}/status`,
+    ISSUE_BOOK: '/admin/issue',
     BORROW_REQUESTS: '/admin/borrows',
     APPROVE_BORROW: (borrowId) => `/admin/borrows/${borrowId}/approve`,
     HANDOVER_BOOK: (borrowId) => `/admin/borrows/${borrowId}/handover`,
@@ -353,14 +355,8 @@ const apiServices = {
       const response = await api.post(API_ENDPOINTS.ADMIN.USERS, userData);
       return response.data;
     },
-    updateUserRole: async (userId, role) => {
-      const response = await api.put(API_ENDPOINTS.ADMIN.UPDATE_USER_ROLE(userId), null, {
-        params: { new_role: role }
-      });
-      return response.data;
-    },
-    getBorrowRequests: async () => {
-      const response = await api.get(API_ENDPOINTS.ADMIN.BORROW_REQUESTS);
+    createIssue: async (issueData) => {
+      const response = await api.post(API_ENDPOINTS.ADMIN.ISSUE_BOOK, issueData);
       return response.data;
     },
     approveBorrow: async (borrowId) => {
@@ -734,6 +730,7 @@ const Sidebar = () => {
     { path: '/admin/dashboard', label: 'অ্যাডমিন ড্যাশবোর্ড', icon: BarChart3 },
     { path: '/admin/statistics', label: 'পরিসংখ্যান', icon: TrendingUp },
     { path: '/admin/users', label: 'ব্যবহারকারী', icon: Users },
+    { path: '/admin/issue', label: 'বই ইস্যু', icon: BookA },
     { path: '/admin/borrows', label: 'ধার ব্যবস্থাপনা', icon: BookMarked },
     { path: '/admin/donations', label: 'দান ব্যবস্থাপনা', icon: HeartHandshake },
     { path: '/admin/books', label: 'বই ব্যবস্থাপনা', icon: Library },
@@ -890,6 +887,7 @@ const AppRoutes = () => {
           <Route path="donations" element={<AdminDonationManagement />} />
           <Route path="books" element={<AdminBookManagement />} />
           <Route path="statistics" element={<AdminStatistics />} />
+          <Route path="issue" element={<AdminBookIssue />} />
         </Route>
       </Route>
       

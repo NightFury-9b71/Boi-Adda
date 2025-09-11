@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from datetime import datetime
 from models import Borrow, Donation, BookCopy, Book, User, Category
-from schemas import BorrowOut, DonationOut, UserOut, UserCreate
+from schemas import BorrowOut, DonationOut, UserOut, UserCreate, BorrowCreate
 from enums import BorrowStatus, DonationStatus, CopyStatus, UserRole
 from database import get_session
-from auth import require_admin, get_password_hash
+from auth import require_admin, get_password_hash, get_current_user
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -183,6 +184,76 @@ def mark_book_returned(borrow_id: int, session: Session = Depends(get_session), 
         "note": "Book is now available for other users.",
         "processed_by": admin_user.name
     }
+
+@router.post("/issue", response_model=BorrowOut)
+def issue_book(borrow: BorrowCreate, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    """Issue a book directly to a user (librarian only)"""
+    from enums import UserRole
+    
+    # Only librarians can issue books
+    if current_user.role not in [UserRole.librarian, UserRole.admin]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Only librarians can issue books directly"
+        )
+    
+    # Verify target user exists
+    target_user = session.get(User, borrow.user_id)
+    if not target_user:
+        raise HTTPException(404, "Target user not found")
+    
+    # Verify target user is active
+    if not target_user.is_active:
+        raise HTTPException(400, "Cannot issue book to inactive user")
+    
+    # Verify book copy exists and is available
+    book_copy = session.get(BookCopy, borrow.book_copy_id)
+    if not book_copy:
+        raise HTTPException(404, "Book copy not found")
+    
+    if book_copy.status not in [CopyStatus.available, CopyStatus.reserved]:
+        raise HTTPException(400, f"Book copy is not available for issuing (current status: {book_copy.status})")
+    
+    # Check if user already has an active borrow for this book copy
+    existing_borrow = session.exec(
+        select(Borrow).where(
+            Borrow.user_id == borrow.user_id,
+            Borrow.book_copy_id == borrow.book_copy_id,
+            Borrow.status.in_([BorrowStatus.pending, BorrowStatus.approved, BorrowStatus.active])
+        )
+    ).first()
+    
+    if existing_borrow:
+        raise HTTPException(400, "User already has an active borrow for this book copy")
+    
+    # Create borrow record with active status (direct issue)
+    db_borrow = Borrow(
+        user_id=borrow.user_id,
+        book_copy_id=borrow.book_copy_id,
+        status=BorrowStatus.active,  # Direct issue - skip pending/approved states
+        issued_date=datetime.utcnow(),
+        due_date=datetime.utcnow() + timedelta(days=14)  # 2 weeks default
+    )
+    session.add(db_borrow)
+    
+    # Update book copy status to borrowed
+    book_copy.status = CopyStatus.borrowed
+    session.add(book_copy)
+    
+    session.commit()
+    session.refresh(db_borrow)
+    
+    # Load nested relationships for response
+    if db_borrow.book_copy_id:
+        book_copy = session.get(BookCopy, db_borrow.book_copy_id)
+        if book_copy and book_copy.book_id:
+            book = session.get(Book, book_copy.book_id)
+            if book:
+                book_copy.book = book
+        db_borrow.book_copy = book_copy
+    
+    return db_borrow
+
 
 # ===== DONATION MANAGEMENT =====
 
