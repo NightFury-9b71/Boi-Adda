@@ -6,18 +6,13 @@ import {
   User, 
   Book, 
   Calendar, 
-  CheckCircle, 
   AlertCircle, 
   RefreshCw,
   BookOpen,
   Users,
-  Clock,
-  ArrowRight,
   BookMarked,
-  Eye,
   HandMetal,
-  Ban,
-  TrendingUp
+
 } from 'lucide-react';
 
 import { apiServices } from '../../api';

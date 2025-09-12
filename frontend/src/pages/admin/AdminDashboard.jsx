@@ -67,20 +67,6 @@ const AdminDashboard = () => {
   // Calculate statistics
   const isLoading = usersLoading || booksLoading || borrowsLoading || donationsLoading || categoriesLoading;
 
-  // Debug logging for development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Admin Dashboard Data:', {
-      users: users?.length || 0,
-      books: books?.length || 0,
-      borrows: borrows?.length || 0,
-      donations: donations?.length || 0,
-      borrowsError,
-      donationsError,
-      sampleBorrow: borrows?.[0],
-      sampleDonation: donations?.[0]
-    });
-  }
-
   const stats = {
     users: {
       total: (users || []).length,

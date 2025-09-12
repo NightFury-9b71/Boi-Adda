@@ -6,7 +6,7 @@ import {
   Search,
   AlertTriangle
 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../contexts/AuthContext';
 
 const NotFound = () => {
   const navigate = useNavigate();

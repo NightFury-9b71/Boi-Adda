@@ -430,14 +430,9 @@ const UserDetailsModal = ({ user, onClose }) => {
       toast.error('ব্যবহারকারীর পরিসংখ্যান লোড করতে সমস্যা হয়েছে');
     },
     onSuccess: (data) => {
-      console.log('User stats loaded successfully:', data);
+      toast.info('User stats loaded successfully');
     }
   });
-
-  // Debug logging
-  console.log('UserDetailsModal - userStats:', userStats);
-  console.log('UserDetailsModal - statsLoading:', statsLoading);
-  console.log('UserDetailsModal - statsError:', statsError);
 
   const getRoleName = (role) => {
     switch (role) {

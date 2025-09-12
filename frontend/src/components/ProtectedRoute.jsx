@@ -1,31 +1,39 @@
-import { useAuth } from "../App";
-import { Outlet } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { ROUTES } from '../constants/routes';
 
-// Protected Route Component
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
+// Loading component for better UX
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+  </div>
+);
+
+// Enhanced ProtectedRoute component with better error handling
+export const ProtectedRoute = ({ 
+  children, 
+  requireAdmin = false,
+  redirectTo = ROUTES.LOGIN,
+  fallback = <LoadingSpinner />
+}) => {
   const { isAuthenticated, isLoading, user } = useAuth();
-  
+
+  // Show loading while checking authentication
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-600 to-green-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">লোড হচ্ছে...</p>
-        </div>
-      </div>
-    );
+    return fallback;
   }
-  
+
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
-  
-  if (requireAdmin && user?.role !== 'admin' && user?.role !== 'librarian') {
-    return <Navigate to="/dashboard" replace />;
+
+  // Check admin requirements
+  if (requireAdmin && user?.role !== 'admin') {
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
-  
-  return children || <Outlet />;
+
+  return children;
 };
 
 export default ProtectedRoute;

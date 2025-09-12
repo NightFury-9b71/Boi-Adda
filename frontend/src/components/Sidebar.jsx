@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, User, HistoryIcon, X, Home, Gift, BookMarked, LogOut, BarChart3, Users, HeartHandshake, Library, TrendingUp, BookA } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../contexts/AuthContext';
 
 const navigationItems = [
   { path: '/dashboard', label: 'ড্যাশবোর্ড', icon: Home },

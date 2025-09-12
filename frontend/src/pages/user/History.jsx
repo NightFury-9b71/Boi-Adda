@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookMarked, Gift, HistoryIcon, Calendar, User, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiServices } from '../../api';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
 const History = () => {
@@ -72,10 +72,6 @@ const History = () => {
 
   // Combine and filter data - transform API data to match UI expectations
   const transformBorrowHistory = borrowHistory.map(borrow => {
-    console.log('Borrow data:', borrow); // Debug log
-    console.log('Borrow approved_at:', borrow.approved_at);
-    console.log('Borrow handed_over_at:', borrow.handed_over_at);
-    console.log('Borrow returned_at:', borrow.returned_at);
     const book = borrow.book_copy?.book || {};
     
     // Now we have specific date fields from the backend migration
@@ -120,9 +116,6 @@ const History = () => {
   });
 
   const transformDonationHistory = donationHistory.map(donation => {
-    console.log('Donation data:', donation); // Debug log
-    console.log('Donation approved_at:', donation.approved_at);
-    console.log('Donation completed_at:', donation.completed_at);
     const book = donation.book_copy?.book || {};
     
     // Now we have specific date fields from the backend migration
@@ -399,7 +392,7 @@ const History = () => {
         {sortedHistory.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {sortedHistory.map((item) => (
-              <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={`${item.type}-${item.id}`} className="p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-start space-x-4 mb-4">

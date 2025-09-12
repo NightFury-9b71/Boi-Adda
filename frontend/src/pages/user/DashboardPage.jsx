@@ -11,7 +11,7 @@ import {
   User 
 } from 'lucide-react';
 import { apiServices } from '../../api';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DashboardPage = () => {
   const { user } = useAuth();

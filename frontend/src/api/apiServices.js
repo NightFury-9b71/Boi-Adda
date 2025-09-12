@@ -186,7 +186,6 @@ const apiServices = {
     },
     getBorrowRequests: async () => {
       const response = await apiClient.get(API_ENDPOINTS.ADMIN.BORROW_REQUESTS);
-      console.log(response.data);
       return response.data;
     },
     getDonationStats: async () => {
@@ -199,6 +198,12 @@ const apiServices = {
     },
     createUser: async (userData) => {
       const response = await apiClient.post(API_ENDPOINTS.ADMIN.USERS, userData);
+      return response.data;
+    },
+    updateUserRole: async (userId, role) => {
+      const response = await apiClient.put(API_ENDPOINTS.ADMIN.UPDATE_USER_ROLE(userId), null, {
+        params: { new_role: role }
+      });
       return response.data;
     },
     createIssue: async (issueData) => {

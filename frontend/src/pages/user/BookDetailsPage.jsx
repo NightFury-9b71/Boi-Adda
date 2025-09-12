@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiServices } from '../../api';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext'
 
 const BookDetailsPage = () => {
   const { id } = useParams();
