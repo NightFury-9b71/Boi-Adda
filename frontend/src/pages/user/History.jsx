@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookMarked, Gift, HistoryIcon, Calendar, User, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth, apiServices } from '../App';
-import ConfirmationModal from '../components/ConfirmationModal';
+import { apiServices } from '../../api';
+import { useAuth } from '../../App';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const History = () => {
   const { user } = useAuth();

@@ -28,7 +28,7 @@ import {
   History,
   Settings
 } from 'lucide-react';
-import { apiServices } from '../../App';
+import { apiServices } from '../../api';;
 
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('week'); // week, month, year

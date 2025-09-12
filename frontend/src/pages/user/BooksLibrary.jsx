@@ -16,7 +16,8 @@ import {
   Heart
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth, apiServices } from '../App';
+import { apiServices } from '../../api';
+import { useAuth } from '../../App';
 
 const BooksLibrary = () => {
   const { user } = useAuth();

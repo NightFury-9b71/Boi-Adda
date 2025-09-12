@@ -19,7 +19,8 @@ import {
   Ban,
   TrendingUp
 } from 'lucide-react';
-import { apiServices } from '../../App';
+
+import { apiServices } from '../../api';
 
 const IssueBook = () => {
   const queryClient = useQueryClient();

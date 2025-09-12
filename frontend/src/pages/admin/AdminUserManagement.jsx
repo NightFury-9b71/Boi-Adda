@@ -22,7 +22,7 @@ import {
   Gift,
   Clock
 } from 'lucide-react';
-import { apiServices } from '../../App';
+import { apiServices } from '../../api';;
 
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();

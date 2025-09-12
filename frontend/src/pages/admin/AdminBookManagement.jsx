@@ -28,7 +28,7 @@ import {
   BarChart3,
   Camera
 } from 'lucide-react';
-import { apiServices } from '../../App';
+import { apiServices } from '../../api';;
 
 const AdminBookManagement = () => {
   const queryClient = useQueryClient();

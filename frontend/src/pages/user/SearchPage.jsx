@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Search, BookOpen, User, Calendar } from 'lucide-react';
-import { apiServices } from '../App';
+import { apiServices } from '../../api';;
 
 const SearchPage = () => {
   const location = useLocation();

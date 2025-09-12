@@ -19,7 +19,8 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
-import { useAuth, apiServices } from '../App';
+import { apiServices } from '../../api';
+import { useAuth } from '../../App';
 
 const ProfilePage = () => {
   const { user } = useAuth();

@@ -13,8 +13,9 @@ import {
   Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth, apiServices } from '../App';
-import ConfirmationModal from '../components/ConfirmationModal';
+import { apiServices } from '../../api';
+import { useAuth } from '../../App';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const DonateBook = () => {
   const { user } = useAuth();

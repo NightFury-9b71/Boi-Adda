@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { 
   BookOpen, 
   Search, 
-  Filter, 
   Clock, 
   CheckCircle, 
   XCircle, 
@@ -12,19 +11,13 @@ import {
   HandMetal,
   RefreshCw,
   Eye,
-  User,
   Calendar,
-  Book,
-  ArrowRight,
   CheckCheck,
-  Ban,
   RotateCcw,
   BookMarked,
-  Users,
-  TrendingUp,
-  Bookmark
+
 } from 'lucide-react';
-import { apiServices } from '../../App';
+import { apiServices } from '../../api';
 
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();

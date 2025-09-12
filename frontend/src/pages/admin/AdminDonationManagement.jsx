@@ -24,7 +24,7 @@ import {
   TrendingUp,
   Award
 } from 'lucide-react';
-import { apiServices } from '../../App';
+import { apiServices } from '../../api';;
 
 const AdminDonationManagement = () => {
   const queryClient = useQueryClient();

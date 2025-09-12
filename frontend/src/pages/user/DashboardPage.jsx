@@ -10,9 +10,10 @@ import {
   HistoryIcon, 
   User 
 } from 'lucide-react';
-import { useAuth, apiServices } from '../App';
+import { apiServices } from '../../api';
+import { useAuth } from '../../App';
 
-const DashboardWrapper = () => {
+const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -294,4 +295,4 @@ const DashboardWrapper = () => {
   );
 };
 
-export default DashboardWrapper;
+export default DashboardPage;

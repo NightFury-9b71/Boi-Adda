@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import ComingSoon from './ComingSoon';
+import ComingSoon from '../../components/ComingSoon';
 
 const UserProfilePage = () => {
   const { userId } = useParams();

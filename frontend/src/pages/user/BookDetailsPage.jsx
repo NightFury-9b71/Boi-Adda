@@ -22,7 +22,8 @@ import {
   Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth, apiServices } from '../App';
+import { apiServices } from '../../api';
+import { useAuth } from '../../App';
 
 const BookDetailsPage = () => {
   const { id } = useParams();

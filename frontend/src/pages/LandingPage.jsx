@@ -18,7 +18,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { apiServices } from '../App';
+import { apiServices } from '../api';;
 
 // Animated Counter Component
 const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
@@ -210,7 +210,7 @@ const RegistrationForm = ({ formData, setFormData, onSubmit, loading, setIsLogin
   </form>
 );
 
-const LandingWrapper = () => {
+const LandingPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -841,4 +841,4 @@ const LandingWrapper = () => {
   );
 };
 
-export default LandingWrapper;
+export default LandingPage;

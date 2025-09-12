@@ -42,7 +42,7 @@ import {
   AreaChart,
   Legend
 } from 'recharts';
-import { apiServices } from '../../App';
+import { apiServices } from '../../api';;
 
 const AdminStatistics = () => {
   const [timeRange, setTimeRange] = useState('month'); // week, month, year, all
