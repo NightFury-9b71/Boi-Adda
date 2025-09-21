@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session, select
 from models import User, Borrow, Donation
-from schemas import UserOut, UserUpdate
+from schemas import UserOut, UserUpdate, ImageUploadResponse
 from enums import BorrowStatus, DonationStatus
 from database import get_session
 from auth import get_current_user
+from cloudinary_service import upload_user_profile, upload_user_cover, delete_image
 import os
 from datetime import datetime
 
@@ -48,8 +49,12 @@ def get_my_stats(session: Session = Depends(get_session), current_user: User = D
     }
 
 @router.put("/me", response_model=UserOut)
-def update_my_profile(user_update: UserUpdate, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+async def update_my_profile(user_update: UserUpdate, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     """Update current user's profile"""
+    
+    # Store old public IDs for cleanup if needed
+    old_profile_public_id = current_user.profile_public_id
+    old_cover_public_id = current_user.cover_public_id
     
     # Update only provided fields
     if user_update.name is not None:
@@ -70,8 +75,18 @@ def update_my_profile(user_update: UserUpdate, session: Session = Depends(get_se
         current_user.date_of_birth = user_update.date_of_birth
     if user_update.profile_image is not None:
         current_user.profile_image = user_update.profile_image
+    if user_update.profile_public_id is not None:
+        current_user.profile_public_id = user_update.profile_public_id
     if user_update.cover_image is not None:
         current_user.cover_image = user_update.cover_image
+    if user_update.cover_public_id is not None:
+        current_user.cover_public_id = user_update.cover_public_id
+    
+    # Clean up old Cloudinary images if public IDs were removed
+    if old_profile_public_id and not current_user.profile_public_id:
+        await delete_image(old_profile_public_id)
+    if old_cover_public_id and not current_user.cover_public_id:
+        await delete_image(old_cover_public_id)
     
     current_user.updated_at = datetime.now()
     
@@ -81,67 +96,135 @@ def update_my_profile(user_update: UserUpdate, session: Session = Depends(get_se
     
     return current_user
 
-@router.post("/me/upload-profile-image")
-def upload_profile_image(file: UploadFile = File(...), session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    """Upload profile image for current user"""
+@router.post("/me/upload-profile-image", response_model=ImageUploadResponse)
+async def upload_profile_image(file: UploadFile = File(...), session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    """Upload profile image for current user to Cloudinary"""
     
     # Validate file type
-    if not file.content_type.startswith('image/'):
+    if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="File must be an image")
     
-    # Create user-covers directory if it doesn't exist
-    upload_dir = "../frontend/public/user-covers"
-    os.makedirs(upload_dir, exist_ok=True)
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
     
-    # Generate filename with user ID
-    file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-    filename = f"user-{current_user.id}-profile.{file_extension}"
-    file_path = os.path.join(upload_dir, filename)
-    
-    # Save file
-    with open(file_path, "wb") as buffer:
-        content = file.file.read()
-        buffer.write(content)
-    
-    # Update user's profile image path
-    current_user.profile_image = f"/user-covers/{filename}"
-    current_user.updated_at = datetime.now()
-    session.add(current_user)
-    session.commit()
-    session.refresh(current_user)
-    
-    return {"message": "Profile image uploaded successfully", "image_path": current_user.profile_image}
+    try:
+        # Delete old Cloudinary image if exists
+        if current_user.profile_public_id:
+            await delete_image(current_user.profile_public_id)
+        
+        # Upload to Cloudinary
+        upload_result = await upload_user_profile(
+            contents, 
+            current_user.id, 
+            current_user.name,
+            replace_existing=True
+        )
+        
+        # Update user's profile image
+        current_user.profile_public_id = upload_result["public_id"]
+        current_user.profile_image = upload_result["url"]
+        current_user.updated_at = datetime.now()
+        session.add(current_user)
+        session.commit()
+        session.refresh(current_user)
+        
+        return ImageUploadResponse(**upload_result)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload profile image: {str(e)}")
 
-@router.post("/me/upload-cover-image")
-def upload_cover_image(file: UploadFile = File(...), session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    """Upload cover image for current user"""
+@router.post("/me/upload-cover-image", response_model=ImageUploadResponse)
+async def upload_cover_image(file: UploadFile = File(...), session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    """Upload cover image for current user to Cloudinary"""
     
     # Validate file type
-    if not file.content_type.startswith('image/'):
+    if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="File must be an image")
     
-    # Create user-covers directory if it doesn't exist
-    upload_dir = "../frontend/public/user-covers"
-    os.makedirs(upload_dir, exist_ok=True)
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
     
-    # Generate filename with user ID
-    file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-    filename = f"user-{current_user.id}-cover.{file_extension}"
-    file_path = os.path.join(upload_dir, filename)
+    try:
+        # Delete old Cloudinary image if exists
+        if current_user.cover_public_id:
+            await delete_image(current_user.cover_public_id)
+        
+        # Upload to Cloudinary
+        upload_result = await upload_user_cover(
+            contents, 
+            current_user.id, 
+            current_user.name,
+            replace_existing=True
+        )
+        
+        # Update user's cover image
+        current_user.cover_public_id = upload_result["public_id"]
+        current_user.cover_image = upload_result["url"]
+        current_user.updated_at = datetime.now()
+        session.add(current_user)
+        session.commit()
+        session.refresh(current_user)
+        
+        return ImageUploadResponse(**upload_result)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload cover image: {str(e)}")
+
+@router.delete("/me/profile-image")
+async def delete_profile_image(session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    """Delete current user's profile image from Cloudinary"""
     
-    # Save file
-    with open(file_path, "wb") as buffer:
-        content = file.file.read()
-        buffer.write(content)
+    if not current_user.profile_public_id:
+        raise HTTPException(status_code=400, detail="No profile image to delete")
     
-    # Update user's cover image path
-    current_user.cover_image = f"/user-covers/{filename}"
-    current_user.updated_at = datetime.now()
-    session.add(current_user)
-    session.commit()
-    session.refresh(current_user)
+    try:
+        # Delete from Cloudinary
+        success = await delete_image(current_user.profile_public_id)
+        
+        if success:
+            # Reset profile image
+            current_user.profile_public_id = None
+            current_user.profile_image = None
+            current_user.updated_at = datetime.now()
+            session.add(current_user)
+            session.commit()
+            
+            return {"message": "Profile image deleted successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete image from Cloudinary")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete profile image: {str(e)}")
+
+@router.delete("/me/cover-image")
+async def delete_cover_image(session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    """Delete current user's cover image from Cloudinary"""
     
-    return {"message": "Cover image uploaded successfully", "image_path": current_user.cover_image}
+    if not current_user.cover_public_id:
+        raise HTTPException(status_code=400, detail="No cover image to delete")
+    
+    try:
+        # Delete from Cloudinary
+        success = await delete_image(current_user.cover_public_id)
+        
+        if success:
+            # Reset cover image
+            current_user.cover_public_id = None
+            current_user.cover_image = None
+            current_user.updated_at = datetime.now()
+            session.add(current_user)
+            session.commit()
+            
+            return {"message": "Cover image deleted successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete image from Cloudinary")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete cover image: {str(e)}")
 
 @router.get("/{user_id}", response_model=UserOut)
 def get_user_profile(user_id: int, session: Session = Depends(get_session)):

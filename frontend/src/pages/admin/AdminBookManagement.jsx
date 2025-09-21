@@ -28,7 +28,9 @@ import {
   BarChart3,
   Camera
 } from 'lucide-react';
-import { apiServices } from '../../api';;
+import { apiServices } from '../../api';
+import OptimizedImage from '../../components/OptimizedImage';
+import ImageUpload from '../../components/ImageUpload';
 
 const AdminBookManagement = () => {
   const queryClient = useQueryClient();
@@ -278,20 +280,14 @@ const AdminBookManagement = () => {
               <div key={book.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
                 {/* Book Cover */}
                 <div className="aspect-[3/4] bg-white rounded-md mb-4 overflow-hidden shadow-sm">
-                  {book.cover ? (
-                    <img
-                      src={book.cover}
-                      alt={book.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-full bg-gradient-to-br from-blue-200 to-blue-400 flex items-center justify-center text-blue-700 font-bold text-lg ${book.cover ? 'hidden' : 'flex'}`}>
-                    <Book className="h-12 w-12" />
-                  </div>
+                  <OptimizedImage
+                    publicId={book.cover_public_id || book.cover}
+                    alt={book.title}
+                    type="bookCover"
+                    size="small"
+                    className="w-full h-full object-cover"
+                    placeholderText="Book Cover"
+                  />
                 </div>
 
                 {/* Book Info */}
@@ -411,16 +407,14 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
     title: book?.title || '',
     author: book?.author || '',
     cover: book?.cover || 'cover-1.jpg',
+    cover_public_id: book?.cover_public_id || null,
     category_id: book?.category_id || '',
     published_year: book?.published_year || new Date().getFullYear(),
     pages: book?.pages || '',
     total_copies: book?.total_copies || 1
   });
 
-  // Image upload state
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [useCustomImage, setUseCustomImage] = useState(false);
+  const [useCustomImage, setUseCustomImage] = useState(!!book?.cover_public_id);
 
   const availableCovers = [
     'cover-1.jpg', 'cover-2.jpg', 'cover-3.jpg', 'cover-4.jpg', 'cover-5.jpg',
@@ -457,54 +451,28 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
     onSubmit(submitData);
   };
 
+  // Handle Cloudinary upload success
+  const handleUploadSuccess = (result) => {
+    setFormData(prev => ({
+      ...prev,
+      cover_public_id: result.publicId,
+      cover: result.secureUrl
+    }));
+    setUseCustomImage(true);
+    toast.success('ছবি সফলভাবে আপলোড হয়েছে!');
+  };
+
+  // Handle upload error
+  const handleUploadError = (error) => {
+    toast.error('ছবি আপলোড করতে সমস্যা হয়েছে: ' + error);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('অনুগ্রহ করে একটি ছবি ফাইল নির্বাচন করুন');
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('ছবির সাইজ ৫ মেগাবাইটের চেয়ে ছোট হতে হবে');
-        return;
-      }
-
-      setUploadedImage(file);
-      setUseCustomImage(true);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleCameraCapture = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment';
-    input.onchange = handleImageUpload;
-    input.click();
-  };
-
-  const removeCustomImage = () => {
-    setUploadedImage(null);
-    setImagePreview(null);
-    setUseCustomImage(false);
   };
 
   return (
@@ -648,83 +616,39 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
               কভার নির্বাচন করুন
             </label>
             
-            {/* Upload Instructions */}
-            <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                💡 <strong>টিপস:</strong> বইয়ের সামনের কভারের একটি স্পষ্ট ছবি তুলুন। ছবিটি ৫ মেগাবাইটের চেয়ে ছোট হতে হবে।
-              </p>
-            </div>
-            
-            {/* Upload Options */}
-            <div className="mb-4 space-y-3">
-              <div className="flex flex-wrap gap-3">
-                {/* Upload from Device */}
-                <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200">
-                  <Upload className="h-4 w-4" />
-                  <span>ডিভাইস থেকে আপলোড</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </label>
-
-                {/* Camera Capture */}
-                <button
-                  type="button"
-                  onClick={handleCameraCapture}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors border border-green-200"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  <span>ক্যামেরা ব্যবহার করুন</span>
-                </button>
-
-                {/* Remove Custom Image */}
-                {useCustomImage && (
-                  <button
-                    type="button"
-                    onClick={removeCustomImage}
-                    className="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors border border-red-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>কাস্টম ছবি মুছুন</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Custom Image Preview */}
-              {useCustomImage && imagePreview && (
-                <div className="mt-3">
-                  <p className="text-sm text-gray-600 mb-2">আপলোড করা ছবি:</p>
-                  <div className="relative inline-block">
-                    <img
-                      src={imagePreview}
-                      alt="Custom book cover"
-                      className="w-20 h-24 object-cover rounded-lg border-2 border-blue-500"
-                    />
-                    <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
-                      <CheckCircle className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    ফাইল: {uploadedImage?.name} ({(uploadedImage?.size / 1024 / 1024).toFixed(2)} MB)
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Cloudinary Image Upload */}
+            <ImageUpload
+              onUploadSuccess={handleUploadSuccess}
+              onUploadError={handleUploadError}
+              folder="book-covers"
+              maxSize={5 * 1024 * 1024} // 5MB
+              allowedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/webp']}
+              placeholder="বইয়ের কভারের ছবি আপলোড করুন"
+              showPreview={true}
+              transformations={{
+                width: 300,
+                height: 400,
+                crop: 'fill',
+                gravity: 'center'
+              }}
+              value={formData.cover_public_id}
+            />
 
             {/* Default Cover Options */}
-            {!useCustomImage && (
-              <div>
+            {!formData.cover_public_id && (
+              <div className="mt-4">
                 <p className="text-sm text-gray-600 mb-2">অথবা নিচের থেকে একটি কভার নির্বাচন করুন:</p>
                 <div className="grid grid-cols-5 gap-3 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
                   {availableCovers.map((cover) => (
                     <div
                       key={cover}
-                      onClick={() => setFormData(prev => ({ ...prev, cover }))}
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        cover,
+                        cover_public_id: null 
+                      }))}
                       className={`cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
-                        formData.cover === cover 
+                        formData.cover === cover && !formData.cover_public_id
                           ? 'border-green-500 ring-2 ring-green-200' 
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -749,10 +673,12 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             <h4 className="font-medium text-gray-900 mb-3">প্রিভিউ</h4>
             <div className="flex items-start space-x-4">
               <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                {useCustomImage && imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Custom cover preview"
+                {formData.cover_public_id ? (
+                  <OptimizedImage
+                    publicId={formData.cover_public_id}
+                    alt="Uploaded cover preview"
+                    type="bookCover"
+                    size="thumbnail"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -777,9 +703,9 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                   <span>{formData.published_year}</span>
                   <span>{formData.pages} পৃষ্ঠা</span>
                   <span>{formData.total_copies} কপি</span>
-                  {useCustomImage && (
+                  {formData.cover_public_id && (
                     <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                      কাস্টম কভার
+                      Cloudinary
                     </span>
                   )}
                 </div>
@@ -888,20 +814,14 @@ const BookDetailsModal = ({ book, categories, onClose }) => {
             {/* Book Cover */}
             <div className="md:w-48">
               <div className="aspect-[3/4] bg-white rounded-lg overflow-hidden shadow-md">
-                {book.cover ? (
-                  <img
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div className={`w-full h-full bg-gradient-to-br from-blue-200 to-blue-400 flex items-center justify-center text-blue-700 ${book.cover ? 'hidden' : 'flex'}`}>
-                  <Book className="h-16 w-16" />
-                </div>
+                <OptimizedImage
+                  publicId={book.cover_public_id || book.cover}
+                  alt={book.title}
+                  type="bookCover"
+                  size="default"
+                  className="w-full h-full object-cover"
+                  placeholderText="Book Cover"
+                />
               </div>
             </div>
 

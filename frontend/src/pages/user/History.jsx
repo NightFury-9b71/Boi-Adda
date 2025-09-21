@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const History = () => {
   const { user } = useAuth();
@@ -103,7 +104,8 @@ const History = () => {
         published_year: book.published_year || null,
         pages: book.pages || null,
         category: book.category || null,
-        image_url: book.cover || book.image_url || null
+        image_url: book.cover || book.image_url || null,
+        cover_public_id: book.cover_public_id || null
       },
       status: borrow.status,
       requestDate: borrow.created_at,
@@ -143,7 +145,8 @@ const History = () => {
         published_year: book.published_year || null,
         pages: book.pages || null,
         category: book.category || null,
-        image_url: book.cover || book.image_url || null
+        image_url: book.cover || book.image_url || null,
+        cover_public_id: book.cover_public_id || null
       },
       status: donation.status,
       requestDate: donation.created_at,
@@ -398,21 +401,14 @@ const History = () => {
                     <div className="flex items-start space-x-4 mb-4">
                       {/* Book Cover */}
                       <div className="w-16 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        {item.book.image_url ? (
-                          <img
-                            src={item.book.image_url}
-                            alt={item.book.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        <div className="w-full h-full bg-green-100 flex items-center justify-center" 
-                             style={{ display: item.book.image_url ? 'none' : 'flex' }}>
-                          <BookOpen className="h-6 w-6 text-green-600" />
-                        </div>
+                        <OptimizedImage
+                          publicId={item.book.cover_public_id || item.book.image_url}
+                          alt={item.book.title}
+                          type="bookCover"
+                          size="thumbnail"
+                          className="w-full h-full object-cover"
+                          placeholderText="Book"
+                        />
                       </div>
 
                       {/* Book Details */}

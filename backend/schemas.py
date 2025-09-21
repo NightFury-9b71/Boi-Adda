@@ -3,6 +3,25 @@ from typing import Optional
 from datetime import datetime
 from enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
 
+# Image Upload Schemas
+class ImageUploadResponse(BaseModel):
+    public_id: str
+    url: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    format: Optional[str] = None
+    bytes: Optional[int] = None
+
+class BookImageUploadRequest(BaseModel):
+    book_id: int
+    title: str
+    author: str
+
+class UserImageUploadRequest(BaseModel):
+    user_id: int
+    name: str
+    image_type: str  # "profile" or "cover"
+
 # Authentication Schemas
 class UserLogin(BaseModel):
     email: EmailStr
@@ -41,7 +60,9 @@ class UserOut(BaseModel):
     bio: Optional[str]
     date_of_birth: Optional[str]
     profile_image: Optional[str]
+    profile_public_id: Optional[str]  # Cloudinary public ID for profile image
     cover_image: Optional[str]
+    cover_public_id: Optional[str]    # Cloudinary public ID for cover image
     role: UserRole
     is_active: bool
     created_at: datetime
@@ -55,7 +76,9 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = None
     date_of_birth: Optional[str] = None
     profile_image: Optional[str] = None
+    profile_public_id: Optional[str] = None  # Cloudinary public ID for profile image
     cover_image: Optional[str] = None
+    cover_public_id: Optional[str] = None    # Cloudinary public ID for cover image
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
 
@@ -81,6 +104,7 @@ class BookCreate(BaseModel):
     title: str
     author: str
     cover: str
+    cover_public_id: Optional[str] = None  # Cloudinary public ID for book cover
     category_id: Optional[int] = None
     published_year: int
     pages: int
@@ -90,6 +114,7 @@ class BookOut(BaseModel):
     title: str
     author: str
     cover: str
+    cover_public_id: Optional[str]  # Cloudinary public ID for book cover
     category_id: Optional[int]
     published_year: int
     pages: int
@@ -103,6 +128,7 @@ class BookWithDonorOut(BaseModel):
     title: str
     author: str
     cover: str
+    cover_public_id: Optional[str]  # Cloudinary public ID for book cover
     category_id: Optional[int]
     published_year: int
     pages: int
@@ -159,6 +185,7 @@ class DonationWithNewBookCreate(BaseModel):
     title: str
     author: str
     cover: str
+    cover_public_id: Optional[str] = None  # Cloudinary public ID for book cover
     category_id: Optional[int] = None
     published_year: int
     pages: int

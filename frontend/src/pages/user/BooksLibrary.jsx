@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const BooksLibrary = () => {
   const { user } = useAuth();
@@ -347,7 +348,15 @@ const BooksLibrary = () => {
                 <>
                   <div className="relative">
                     <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                      {book.cover ? (
+                      {book.cover_public_id ? (
+                        <OptimizedImage
+                          publicId={book.cover_public_id}
+                          alt={book.title}
+                          type="bookCover"
+                          size="medium"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : book.cover ? (
                         <img
                           src={book.cover}
                           alt={book.title}
@@ -358,7 +367,7 @@ const BooksLibrary = () => {
                           }}
                         />
                       ) : null}
-                      <div className="flex flex-col items-center justify-center text-gray-400" style={{display: book.cover ? 'none' : 'flex'}}>
+                      <div className="flex flex-col items-center justify-center text-gray-400" style={{display: (book.cover_public_id || book.cover) ? 'none' : 'flex'}}>
                         <BookOpen className="h-12 w-12 mb-2" />
                         <span className="text-sm text-center px-2">{book.title}</span>
                       </div>
@@ -465,7 +474,15 @@ const BooksLibrary = () => {
               ) : (
                                 <>
                   <div className="w-24 h-32 bg-gray-100 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {book.cover ? (
+                    {book.cover_public_id ? (
+                      <OptimizedImage
+                        publicId={book.cover_public_id}
+                        alt={book.title}
+                        type="bookCover"
+                        size="small"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : book.cover ? (
                       <img
                         src={book.cover}
                         alt={book.title}
@@ -476,7 +493,7 @@ const BooksLibrary = () => {
                         }}
                       />
                     ) : null}
-                    <div className="flex flex-col items-center justify-center text-gray-400 p-2" style={{display: book.cover ? 'none' : 'flex'}}>
+                    <div className="flex flex-col items-center justify-center text-gray-400 p-2" style={{display: (book.cover_public_id || book.cover) ? 'none' : 'flex'}}>
                       <BookOpen className="h-6 w-6 mb-1" />
                       <span className="text-xs text-center leading-tight">{book.title?.slice(0, 20)}</span>
                     </div>

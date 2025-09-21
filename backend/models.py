@@ -15,7 +15,9 @@ class User(SQLModel, table = True):
     bio : Optional[str] = None
     date_of_birth : Optional[str] = None
     profile_image : Optional[str] = None
+    profile_public_id : Optional[str] = None  # Cloudinary public ID for profile image
     cover_image : Optional[str] = None
+    cover_public_id : Optional[str] = None    # Cloudinary public ID for cover image
     hashed_password : str
     role : UserRole = Field(default=UserRole.member)
     is_active : bool = Field(default=True)
@@ -48,6 +50,7 @@ class Book(SQLModel, table = True):
     title : str
     author : str 
     cover : str
+    cover_public_id : Optional[str] = None  # Cloudinary public ID for book cover
     category_id : Optional[int] = Field(default=None, foreign_key="category.id")
     published_year : int
     pages : int

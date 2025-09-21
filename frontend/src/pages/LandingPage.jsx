@@ -1,22 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  BookOpen,
-  Users,
-  Heart,
-  Share2,
-  RefreshCw,
-  TrendingUp,
-  ArrowRight,
-  CheckCircle,
-  Shield,
-  Clock,
-  Menu,
-  X,
-  Star,
-} from 'lucide-react';
+import { BookOpen, Users, Heart, Share2, RefreshCw, TrendingUp, ArrowRight, CheckCircle, Shield, Clock, Menu, X, Star} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiServices } from '../api';;
 
@@ -44,32 +30,6 @@ const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
     </span>
   );
 };
-
-// Testimonial Card Component
-const TestimonialCard = ({ name, location, content, rating }) => (
-  <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow border border-gray-200">
-    <div className="flex items-center space-x-1 mb-3 sm:mb-4">
-      {[...Array(5)].map((_, i) => (
-        <Star
-          key={i}
-          className={`h-3 w-3 sm:h-4 sm:w-4 ${
-            i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-          }`}
-        />
-      ))}
-    </div>
-    <p className="text-gray-700 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">"{content}"</p>
-    <div className="flex items-center space-x-3">
-      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
-        {name.charAt(0)}
-      </div>
-      <div>
-        <p className="font-medium text-gray-900 text-sm sm:text-base">{name}</p>
-        <p className="text-xs sm:text-sm text-gray-600">{location}</p>
-      </div>
-    </div>
-  </div>
-);
 
 const LoginForm = ({ formData, setFormData, onSubmit, loading }) => (
   <form onSubmit={onSubmit} className="space-y-4">
@@ -646,123 +606,124 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Contact Section */}
       <section id="contact" className="py-16 sm:py-20 bg-white">
-  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center mb-12 sm:mb-16">
-      <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-4">
-        যোগাযোগ করুন
-      </h2>
-      <p className="text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto px-4">
-        যেকোন প্রশ্ন বা মতামতের জন্য নিচের ফরমটি পূরণ করুন অথবা উল্লেখিত তথ্য ব্যবহার করুন।
-      </p>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-      {/* Contact Form */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          alert('ধন্যবাদ! আপনার বার্তা পাঠানো হয়েছে।');
-        }}
-        className="space-y-6"
-      >
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            নাম
-          </label>
-          <input
-            type="text"
-            id="name"
-            required
-            placeholder="আপনার নাম"
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            ইমেইল
-          </label>
-          <input
-            type="email"
-            id="email"
-            required
-            placeholder="আপনার ইমেইল"
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-          />
-        </div>
-        <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-            বার্তা
-          </label>
-          <textarea
-            id="message"
-            required
-            rows="4"
-            placeholder="আপনার বার্তা লিখুন"
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition resize-none"
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-md font-semibold hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition transform hover:scale-105"
-        >
-          পাঠান
-        </button>
-      </form>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-4">
+              যোগাযোগ করুন
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto px-4">
+              যেকোন প্রশ্ন বা মতামতের জন্য নিচের ফরমটি পূরণ করুন অথবা উল্লেখিত তথ্য ব্যবহার করুন।
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Contact Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert('ধন্যবাদ! আপনার বার্তা পাঠানো হয়েছে।');
+              }}
+              className="space-y-6"
+            >
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  নাম
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  required
+                  placeholder="আপনার নাম"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  ইমেইল
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  placeholder="আপনার ইমেইল"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                />
+              </div>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  বার্তা
+                </label>
+                <textarea
+                  id="message"
+                  required
+                  rows="4"
+                  placeholder="আপনার বার্তা লিখুন"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition resize-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-md font-semibold hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition transform hover:scale-105"
+              >
+                পাঠান
+              </button>
+            </form>
 
-      {/* Contact Details */}
-      <div className="text-gray-700 space-y-6">
-        <div>
-          <h3 className="text-xl font-semibold mb-2">ঠিকানা</h3>
-          <p>যশোর বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়, যশোর, বাংলাদেশ</p>
-        </div>
-        <div>
-          <h3 className="text-xl font-semibold mb-2">ফোন</h3>
-          <p>+৮৮ ০১৭XXXXXXXX</p>
-        </div>
-        <div>
-          <h3 className="text-xl font-semibold mb-2">ইমেইল</h3>
-          <p>
-            <a href="mailto:support@boiadda.com" className="text-green-600 hover:underline">
-              support@boiadda.com
-            </a>
-          </p>
-        </div>
-        <div>
-          <h3 className="text-xl font-semibold mb-2">সোশ্যাল মিডিয়া</h3>
-          <div className="flex space-x-4">
-            <a
-              href="#"
-              className="text-green-600 hover:text-green-800 transition"
-              aria-label="Facebook"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Facebook
-            </a>
-            <a
-              href="#"
-              className="text-green-600 hover:text-green-800 transition"
-              aria-label="Twitter"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Twitter
-            </a>
-            <a
-              href="#"
-              className="text-green-600 hover:text-green-800 transition"
-              aria-label="Instagram"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Instagram
-            </a>
+            {/* Contact Details */}
+            <div className="text-gray-700 space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">ঠিকানা</h3>
+                <p>যশোর বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়, যশোর, বাংলাদেশ</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">ফোন</h3>
+                <p>+৮৮ ০১৭XXXXXXXX</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">ইমেইল</h3>
+                <p>
+                  <a href="mailto:support@boiadda.com" className="text-green-600 hover:underline">
+                    support@boiadda.com
+                  </a>
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">সোশ্যাল মিডিয়া</h3>
+                <div className="flex space-x-4">
+                  <a
+                    href="#"
+                    className="text-green-600 hover:text-green-800 transition"
+                    aria-label="Facebook"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Facebook
+                  </a>
+                  <a
+                    href="#"
+                    className="text-green-600 hover:text-green-800 transition"
+                    aria-label="Twitter"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Twitter
+                  </a>
+                  <a
+                    href="#"
+                    className="text-green-600 hover:text-green-800 transition"
+                    aria-label="Instagram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Instagram
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
 
       {/* Footer */}

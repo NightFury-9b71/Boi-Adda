@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session, select, func
 from models import Book, BookCopy, User, Donation, Borrow
-from schemas import BookCreate, BookOut
+from schemas import BookCreate, BookOut, ImageUploadResponse, BookImageUploadRequest
 from enums import CopyStatus, BorrowStatus
 from database import get_session
 from auth import get_current_user, require_admin, require_librarian_or_admin
+from cloudinary_service import upload_book_cover, delete_image, get_optimized_url
 import logging
 from typing import List, Optional
 
@@ -109,6 +110,92 @@ def getBook(id: int, session: Session = Depends(get_session)):
         logger.error(f"Error in getBook for id {id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve book")
 
+@router.post("/upload-cover/{book_id}", response_model=ImageUploadResponse)
+async def upload_book_cover_endpoint(
+    book_id: int,
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_librarian_or_admin)
+):
+    """Upload a book cover image to Cloudinary"""
+    try:
+        # Get the book
+        book = session.get(Book, book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Validate file size (max 5MB)
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+        
+        # Delete old Cloudinary image if exists
+        if book.cover_public_id:
+            await delete_image(book.cover_public_id)
+        
+        # Upload to Cloudinary
+        upload_result = await upload_book_cover(
+            contents, 
+            book_id, 
+            book.title, 
+            book.author,
+            replace_existing=True
+        )
+        
+        # Update book with new Cloudinary public ID
+        book.cover_public_id = upload_result["public_id"]
+        book.cover = upload_result["url"]  # Store the URL as well for backward compatibility
+        session.add(book)
+        session.commit()
+        session.refresh(book)
+        
+        return ImageUploadResponse(**upload_result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading book cover for book {book_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to upload book cover")
+
+@router.delete("/cover/{book_id}")
+async def delete_book_cover(
+    book_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_librarian_or_admin)
+):
+    """Delete a book's Cloudinary cover image"""
+    try:
+        book = session.get(Book, book_id)
+        if not book:
+            raise HTTPException(status_code=404, detail="Book not found")
+        
+        if not book.cover_public_id:
+            raise HTTPException(status_code=400, detail="Book has no Cloudinary cover image")
+        
+        # Delete from Cloudinary
+        success = await delete_image(book.cover_public_id)
+        
+        if success:
+            # Reset to default cover
+            book.cover_public_id = None
+            book.cover = 'cover-1.jpg'  # Default cover
+            session.add(book)
+            session.commit()
+            
+            return {"message": "Book cover deleted successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete cover from Cloudinary")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting book cover for book {book_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete book cover")
+
 @router.post("/", response_model=BookOut)
 def addBook(
     book: BookCreate, 
@@ -190,7 +277,7 @@ def addBook(
         raise HTTPException(status_code=500, detail="Failed to add book")
 
 @router.put("/{id}", response_model=BookOut)
-def updateBook(
+async def updateBook(
     id: int, 
     book_update: BookCreate, 
     session: Session = Depends(get_session), 
@@ -205,8 +292,16 @@ def updateBook(
         
         # Update book fields
         book_data = book_update.model_dump(exclude_unset=True) if hasattr(book_update, 'model_dump') else book_update.dict(exclude_unset=True)
+        
+        # Handle Cloudinary public ID update
+        old_public_id = existing_book.cover_public_id
+        
         for field, value in book_data.items():
             setattr(existing_book, field, value)
+        
+        # If cover_public_id was removed but we had one before, delete the old image
+        if old_public_id and not existing_book.cover_public_id:
+            await delete_image(old_public_id)
         
         session.add(existing_book)
         session.commit()
@@ -247,7 +342,7 @@ def updateBook(
         raise HTTPException(status_code=500, detail="Failed to update book")
 
 @router.delete("/{id}")
-def deleteBook(
+async def deleteBook(
     id: int, 
     session: Session = Depends(get_session), 
     current_user: User = Depends(require_admin)
@@ -268,6 +363,10 @@ def deleteBook(
                 detail=f"Cannot delete book with {len(active_copies)} active copies (borrowed/reserved)"
             )
         
+        # Delete Cloudinary image if exists
+        if book.cover_public_id:
+            await delete_image(book.cover_public_id)
+        
         # Delete all book copies first
         for copy in book_copies:
             session.delete(copy)
@@ -280,7 +379,8 @@ def deleteBook(
             "message": "Book deleted successfully",
             "deleted_book_id": id,
             "deleted_copies": len(book_copies),
-            "deleted_by": current_user.name
+            "deleted_by": current_user.name,
+            "cloudinary_image_deleted": book.cover_public_id is not None
         }
         
     except HTTPException:

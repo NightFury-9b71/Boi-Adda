@@ -18,6 +18,7 @@ import {
 
 } from 'lucide-react';
 import { apiServices } from '../../api';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();
@@ -366,21 +367,15 @@ const AdminBorrowManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-white p-0.5 shadow-sm">
-                          {borrow.user?.profile_image ? (
-                            <img
-                              src={borrow.user.profile_image}
-                              alt={borrow.user.name}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-full h-full rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-xs ${borrow.user?.profile_image ? 'hidden' : 'flex'}`}>
-                            {borrow.user?.name?.charAt(0) || 'ব'}
-                          </div>
+                        <div className="h-8 w-8 rounded-full bg-white p-0.5 shadow-sm overflow-hidden">
+                          <OptimizedImage
+                            publicId={borrow.user?.profile_image_public_id || borrow.user?.profile_image}
+                            alt={borrow.user?.name}
+                            type="profileImage"
+                            size="thumbnail"
+                            className="w-full h-full rounded-full object-cover"
+                            placeholderText={borrow.user?.name?.charAt(0) || 'U'}
+                          />
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
@@ -395,20 +390,14 @@ const AdminBorrowManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-12 w-10 bg-white rounded shadow-sm overflow-hidden mr-3">
-                          {borrow.book_copy?.book?.cover ? (
-                            <img
-                              src={borrow.book_copy.book.cover}
-                              alt={borrow.book_copy.book.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-full h-full bg-green-200 flex items-center justify-center text-green-700 font-bold text-xs ${borrow.book_copy?.book?.cover ? 'hidden' : 'flex'}`}>
-                            BOOK
-                          </div>
+                          <OptimizedImage
+                            publicId={borrow.book_copy?.book?.cover_public_id || borrow.book_copy?.book?.cover}
+                            alt={borrow.book_copy?.book?.title}
+                            type="bookCover"
+                            size="thumbnail"
+                            className="w-full h-full object-cover"
+                            placeholderText="BOOK"
+                          />
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
@@ -594,21 +583,15 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
             <h3 className="text-lg font-semibold text-gray-900 mb-4">ধারকারী</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-white p-0.5 shadow-sm">
-                  {borrow.user?.profile_image ? (
-                    <img
-                      src={borrow.user.profile_image}
-                      alt={borrow.user.name}
-                      className="w-full h-full rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-lg font-bold ${borrow.user?.profile_image ? 'hidden' : 'flex'}`}>
-                    {borrow.user?.name?.charAt(0) || 'ব'}
-                  </div>
+                <div className="h-12 w-12 rounded-full bg-white p-0.5 shadow-sm overflow-hidden">
+                  <OptimizedImage
+                    publicId={borrow.user?.profile_image_public_id || borrow.user?.profile_image}
+                    alt={borrow.user?.name}
+                    type="profileImage"
+                    size="small"
+                    className="w-full h-full rounded-full object-cover"
+                    placeholderText={borrow.user?.name?.charAt(0) || 'U'}
+                  />
                 </div>
                 <div className="ml-4">
                   <div className="text-lg font-medium text-gray-900">{borrow.user?.name || 'অজানা ব্যবহারকারী'}</div>
@@ -627,20 +610,14 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
                 <div className="h-24 w-16 bg-white rounded shadow-sm overflow-hidden">
-                  {borrow.book_copy?.book?.cover ? (
-                    <img
-                      src={borrow.book_copy.book.cover}
-                      alt={borrow.book_copy.book.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-full bg-green-200 flex items-center justify-center text-green-700 font-bold text-xs ${borrow.book_copy?.book?.cover ? 'hidden' : 'flex'}`}>
-                    BOOK
-                  </div>
+                  <OptimizedImage
+                    publicId={borrow.book_copy?.book?.cover_public_id || borrow.book_copy?.book?.cover}
+                    alt={borrow.book_copy?.book?.title}
+                    type="bookCover"
+                    size="small"
+                    className="w-full h-full object-cover"
+                    placeholderText="BOOK"
+                  />
                 </div>
                 <div className="ml-4 flex-1">
                   <div className="text-lg font-medium text-gray-900">

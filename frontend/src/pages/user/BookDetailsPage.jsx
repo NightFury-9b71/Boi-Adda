@@ -23,7 +23,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiServices } from '../../api';
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const BookDetailsPage = () => {
   const { id } = useParams();
@@ -279,24 +280,14 @@ const BookDetailsPage = () => {
               <div className="flex-shrink-0 mx-auto md:mx-0">
                 <div className="relative">
                   <div className="w-56 h-80 bg-gray-100 rounded-lg overflow-hidden shadow-lg">
-                    {book.cover ? (
-                      <img
-                        src={book.cover}
-                        alt={book.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div 
-                      className="w-full h-full flex flex-col items-center justify-center text-gray-400"
-                      style={{display: book.cover ? 'none' : 'flex'}}
-                    >
-                      <BookOpen className="h-16 w-16 mb-4" />
-                      <span className="text-sm text-center px-4 font-medium">{book.title}</span>
-                    </div>
+                    <OptimizedImage
+                      publicId={book.cover_public_id || book.cover}
+                      alt={book.title}
+                      type="bookCover"
+                      size="default"
+                      className="w-full h-full object-cover"
+                      placeholderText={book.title}
+                    />
                   </div>
                   
                   {/* Availability Badge */}

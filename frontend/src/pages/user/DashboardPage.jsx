@@ -1,15 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  BookOpen, 
-  BookMarked, 
-  Clock, 
-  Gift, 
-  AlertCircle, 
-  Search, 
-  HistoryIcon, 
-  User 
-} from 'lucide-react';
+import { BookOpen, BookMarked, Clock, Gift, AlertCircle, Search, HistoryIcon, User } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -73,6 +64,7 @@ const DashboardPage = () => {
 
       {/* User Activity Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
@@ -144,6 +136,7 @@ const DashboardPage = () => {
             </div>
           </div>
         </div>
+        
       </div>
 
       {/* Quick Actions */}

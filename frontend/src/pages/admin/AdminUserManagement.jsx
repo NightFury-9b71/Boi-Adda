@@ -22,7 +22,8 @@ import {
   Gift,
   Clock
 } from 'lucide-react';
-import { apiServices } from '../../api';;
+import { apiServices } from '../../api';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();
@@ -286,18 +287,15 @@ const AdminUserManagement = () => {
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-white p-0.5 shadow-sm">
-                          {user.profile_image ? (
-                            <img
-                              src={user.profile_image}
-                              alt={user.name}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm">
-                              {getUserInitials(user.name)}
-                            </div>
-                          )}
+                        <div className="h-10 w-10 rounded-full bg-white p-0.5 shadow-sm overflow-hidden">
+                          <OptimizedImage
+                            publicId={user.profile_public_id || user.profile_image}
+                            alt={user.name}
+                            type="userProfile"
+                            size="small"
+                            className="w-full h-full rounded-full object-cover"
+                            placeholderText={getUserInitials(user.name)}
+                          />
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{user.name}</div>
@@ -458,18 +456,15 @@ const UserDetailsModal = ({ user, onClose }) => {
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-start">
             <div className="flex items-center">
-              <div className="h-16 w-16 rounded-full bg-white p-1 shadow-lg">
-                {user.profile_image ? (
-                  <img
-                    src={user.profile_image}
-                    alt={user.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xl font-bold">
-                    {getUserInitials(user.name)}
-                  </div>
-                )}
+              <div className="h-16 w-16 rounded-full bg-white p-1 shadow-lg overflow-hidden">
+                <OptimizedImage
+                  publicId={user.profile_public_id || user.profile_image}
+                  alt={user.name}
+                  type="userProfile"
+                  size="large"
+                  className="w-full h-full rounded-full object-cover"
+                  placeholderText={getUserInitials(user.name)}
+                />
               </div>
               <div className="ml-4">
                 <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>

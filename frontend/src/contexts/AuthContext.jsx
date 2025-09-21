@@ -40,7 +40,8 @@ export const AuthProvider = ({ children }) => {
     queryFn: authService.getCurrentUser,
     enabled: !!localStorage.getItem('access_token'),
     retry: false,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Always refetch when called
+    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     initialData: getStoredUser(),
     onError: () => {
       // Interceptor already handles token removal
@@ -96,6 +97,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       register,
+      refetchUser,
       isLoginLoading: loginMutation.isPending,
       isRegisterLoading: registerMutation.isPending
     }}>
