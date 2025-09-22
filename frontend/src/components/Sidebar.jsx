@@ -47,7 +47,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
         />
       )}
 
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:hidden`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:hidden flex flex-col`}>
         <div className="flex items-center justify-between p-4 border-b">
           <span className="text-lg font-semibold text-green-800">বই আড্ডা</span>
           <button
@@ -102,17 +102,18 @@ const SidebarMobile = ({ isOpen, onClose }) => {
               })}
             </div>
           )}
-
-          <div className="pt-4 border-t">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="h-5 w-5 mr-3" />
-              <span className="font-medium">লগআউট</span>
-            </button>
-          </div>
         </nav>
+
+        {/* Logout Button at the bottom - outside of nav */}
+        <div className="p-4 border-t mt-auto">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            <span className="font-medium">লগআউট</span>
+          </button>
+        </div>
       </div>
     </>
   );
