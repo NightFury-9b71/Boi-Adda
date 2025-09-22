@@ -1,11 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 import os
-
-# Load environment variables from .env file
-load_dotenv()
-
 from database import create_tables
 from routers import users, categories, books, book_copies, borrows, donations, database, admin, auth
 
