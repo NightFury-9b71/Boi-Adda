@@ -13,10 +13,6 @@ from typing import Optional, Dict, Any, Union
 from urllib.parse import unquote
 from datetime import datetime
 import logging
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
