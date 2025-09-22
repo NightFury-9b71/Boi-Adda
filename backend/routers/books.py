@@ -26,7 +26,7 @@ def getBooks(session: Session = Depends(get_session)):
         
         for book in all_books:
             try:
-                # Count available copies (excluding reserved and borrowed)
+                # Count available copies (excluding reserved, borrowed, and pending donations)
                 available_copies_result = session.exec(
                     select(func.count(BookCopy.id)).where(
                         BookCopy.book_id == book.id,
@@ -75,7 +75,7 @@ def getBook(id: int, session: Session = Depends(get_session)):
         if not book:
             raise HTTPException(status_code=404, detail="Book not found")
         
-        # Count available copies (excluding reserved and borrowed)
+        # Count available copies (excluding reserved, borrowed, and pending donations)
         available_copies_result = session.exec(
             select(func.count(BookCopy.id)).where(
                 BookCopy.book_id == book.id,

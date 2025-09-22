@@ -16,6 +16,7 @@ class BookImageUploadRequest(BaseModel):
     book_id: int
     title: str
     author: str
+    isbn: Optional[str] = None
 
 class UserImageUploadRequest(BaseModel):
     user_id: int
@@ -103,6 +104,7 @@ class CategoryOut(BaseModel):
 class BookCreate(BaseModel):
     title: str
     author: str
+    isbn: Optional[str] = None
     cover: str
     cover_public_id: Optional[str] = None  # Cloudinary public ID for book cover
     category_id: Optional[int] = None
@@ -113,6 +115,7 @@ class BookOut(BaseModel):
     id: int
     title: str
     author: str
+    isbn: Optional[str]
     cover: str
     cover_public_id: Optional[str]  # Cloudinary public ID for book cover
     category_id: Optional[int]
@@ -127,6 +130,7 @@ class BookWithDonorOut(BaseModel):
     id: int
     title: str
     author: str
+    isbn: Optional[str]
     cover: str
     cover_public_id: Optional[str]  # Cloudinary public ID for book cover
     category_id: Optional[int]
@@ -184,6 +188,7 @@ class DonationWithNewBookCreate(BaseModel):
     # Book information for new book
     title: str
     author: str
+    isbn: Optional[str] = None
     cover: str
     cover_public_id: Optional[str] = None  # Cloudinary public ID for book cover
     category_id: Optional[int] = None

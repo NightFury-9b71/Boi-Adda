@@ -86,7 +86,9 @@ const IssueBook = () => {
   // Filter books based on search
   const filteredBooks = availableBooks.filter(book => 
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchTerm.toLowerCase())
+    book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (book.isbn && book.isbn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    book.id.toString().includes(searchTerm)
   );
 
   // Calculate return date (14 days from issue date)
@@ -209,7 +211,7 @@ const IssueBook = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="বইয়ের নাম বা লেখকের নাম দিয়ে খুঁজুন..."
+              placeholder="বইয়ের নাম, লেখক, ISBN বা বই ID দিয়ে খুঁজুন..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"

@@ -49,6 +49,7 @@ class Book(SQLModel, table = True):
     id : Optional[int] = Field(default=None, primary_key=True)
     title : str
     author : str 
+    isbn : Optional[str] = None  # ISBN field for book identification
     cover : str
     cover_public_id : Optional[str] = None  # Cloudinary public ID for book cover
     category_id : Optional[int] = Field(default=None, foreign_key="category.id")

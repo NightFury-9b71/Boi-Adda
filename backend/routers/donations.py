@@ -95,11 +95,11 @@ def createDonation(donation: DonationCreate, session: Session = Depends(get_sess
     session.commit()
     session.refresh(db_donation)
     
-    # Create book copy for the donation with donor information
+    # Create book copy for the donation with donor information (pending admin approval)
     book_copy = BookCopy(
         book_id=donation.book_id,
         donor_id=donation.user_id,  # Set the donor
-        status=CopyStatus.available
+        status=CopyStatus.pending_donation  # Not available until admin completes donation
     )
     session.add(book_copy)
     session.commit()
@@ -162,11 +162,11 @@ def createDonationWithNewBook(donation: DonationWithNewBookCreate, session: Sess
     session.commit()
     session.refresh(db_donation)
     
-    # Create book copy for the donation with donor information
+    # Create book copy for the donation with donor information (pending admin approval)
     book_copy = BookCopy(
         book_id=book_id,
         donor_id=donation.user_id,  # Set the donor
-        status=CopyStatus.available
+        status=CopyStatus.pending_donation  # Not available until admin completes donation
     )
     session.add(book_copy)
     session.commit()

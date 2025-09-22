@@ -11,6 +11,7 @@ class CopyStatus(str, Enum):
     reserved = "reserved"         # Reserved for approved borrow request
     borrowed = "borrowed"         # Actually borrowed (physically handed over)
     damaged = "damaged"
+    pending_donation = "pending_donation"  # Donated but awaiting admin approval
 
 class BorrowStatus(str, Enum):
     pending = "pending"           # User requested, waiting for admin approval

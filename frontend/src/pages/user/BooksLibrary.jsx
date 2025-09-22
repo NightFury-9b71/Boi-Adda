@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import OptimizedImage from '../../components/OptimizedImage';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const BooksLibrary = () => {
   const { user } = useAuth();
@@ -30,6 +31,10 @@ const BooksLibrary = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 12;
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    book: null
+  });
 
   // API calls
   const { data: books = [], isLoading: booksLoading } = useQuery({
@@ -157,20 +162,31 @@ const BooksLibrary = () => {
     navigate(`/profile/${donorId}`);
   };
 
+  // Show confirmation modal before borrowing
+  const showBorrowConfirmation = (book) => {
+    if (!user) {
+      toast.error('বই ধার নিতে লগইন করুন');
+      navigate('/login');
+      return;
+    }
+
+    // Check if user already has an active borrow for this book
+    if (hasActiveBorrowForBook(book.id)) {
+      toast.error('আপনি ইতিমধ্যে এই বইয়ের জন্য অনুরোধ করেছেন');
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      book: book
+    });
+  };
+
+  // Handle borrow confirmation
   const handleBorrowRequest = async (book) => {
+    setConfirmModal({ isOpen: false, book: null });
+    
     try {
-      if (!user) {
-        toast.error('বই ধার নিতে লগইন করুন');
-        navigate('/login');
-        return;
-      }
-
-      // Check if user already has an active borrow for this book
-      if (hasActiveBorrowForBook(book.id)) {
-        toast.error('আপনি ইতিমধ্যে এই বইয়ের জন্য অনুরোধ করেছেন');
-        return;
-      }
-
       // Find an available book copy
       if (!book.total_copies || book.total_copies === 0) {
         toast.error('এই বইয়ের কোন কপি পাওয়া যাচ্ছে না');
@@ -453,7 +469,7 @@ const BooksLibrary = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleBorrowRequest(book);
+                                showBorrowConfirmation(book);
                               }}
                               className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
                             >
@@ -585,7 +601,7 @@ const BooksLibrary = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleBorrowRequest(book);
+                                  showBorrowConfirmation(book);
                                 }}
                                 className="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition-colors"
                               >
@@ -694,6 +710,18 @@ const BooksLibrary = () => {
           </div>
         </div>
       )}
+
+      {/* Borrow Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, book: null })}
+        onConfirm={() => handleBorrowRequest(confirmModal.book)}
+        title="বই ধার নিন"
+        message={`আপনি কি নিশ্চিত যে "${confirmModal.book?.title}" বইটি ধার নিতে চান?`}
+        confirmText="হ্যাঁ, ধার নিন"
+        cancelText="বাতিল"
+        type="default"
+      />
     </div>
   );
 };

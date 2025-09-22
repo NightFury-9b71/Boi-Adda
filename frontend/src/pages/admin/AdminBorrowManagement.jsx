@@ -19,11 +19,20 @@ import {
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import OptimizedImage from '../../components/OptimizedImage';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: 'default',
+    title: '',
+    message: '',
+    action: null,
+    borrowId: null
+  });
   const [selectedBorrow, setSelectedBorrow] = useState(null);
   const [showBorrowDetails, setShowBorrowDetails] = useState(false);
 
@@ -82,19 +91,23 @@ const AdminBorrowManagement = () => {
     }
   });
 
-  // Filter borrows based on search and status
-  const filteredBorrows = borrows.filter(borrow => {
-    const borrowerName = borrow.user?.name || 'অজানা';
-    const bookTitle = borrow.book_copy?.book?.title || 'অজানা বই';
-    
-    const matchesSearch = borrowerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         bookTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         borrow.id.toString().includes(searchQuery);
-    
-    const matchesStatus = statusFilter === 'all' || borrow.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Filter and sort borrows based on search and status (latest first)
+  const filteredBorrows = borrows
+    .filter(borrow => {
+      const borrowerName = borrow.user?.name || 'অজানা';
+      const bookTitle = borrow.book_copy?.book?.title || 'অজানা বই';
+      const userId = borrow.user?.id || '';
+      
+      const matchesSearch = borrowerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           bookTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           borrow.id.toString().includes(searchQuery) ||
+                           userId.toString().includes(searchQuery);
+      
+      const matchesStatus = statusFilter === 'all' || borrow.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -167,20 +180,76 @@ const AdminBorrowManagement = () => {
     }
   };
 
+  // Confirmation handlers - show modal before action
   const handleApprove = (borrowId) => {
-    approveBorrowMutation.mutate(borrowId);
+    setConfirmModal({
+      isOpen: true,
+      type: 'default',
+      title: 'ধারের অনুরোধ অনুমোদন',
+      message: 'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি অনুমোদন করতে চান?',
+      action: 'approve',
+      borrowId
+    });
   };
 
   const handleHandover = (borrowId) => {
-    handoverBookMutation.mutate(borrowId);
+    setConfirmModal({
+      isOpen: true,
+      type: 'default',
+      title: 'বই হস্তান্তর',
+      message: 'আপনি কি নিশ্চিত যে বইটি ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে?',
+      action: 'handover',
+      borrowId
+    });
   };
 
   const handleReject = (borrowId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
-    rejectBorrowMutation.mutate({ borrowId, reason });
+    setConfirmModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'ধারের অনুরোধ প্রত্যাখ্যান',
+      message: 'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি প্রত্যাখ্যান করতে চান?',
+      action: 'reject',
+      borrowId,
+      reason
+    });
   };
 
   const handleReturn = (borrowId) => {
-    returnBookMutation.mutate(borrowId);
+    setConfirmModal({
+      isOpen: true,
+      type: 'default',
+      title: 'বই ফেরত গ্রহণ',
+      message: 'আপনি কি নিশ্চিত যে বইটি ফেরত নেওয়া হয়েছে?',
+      action: 'return',
+      borrowId
+    });
+  };
+
+  // Actual mutation handlers
+  const executeAction = () => {
+    const { action, borrowId, reason } = confirmModal;
+    
+    switch (action) {
+      case 'approve':
+        approveBorrowMutation.mutate(borrowId);
+        break;
+      case 'handover':
+        handoverBookMutation.mutate(borrowId);
+        break;
+      case 'reject':
+        rejectBorrowMutation.mutate({ borrowId, reason });
+        break;
+      case 'return':
+        returnBookMutation.mutate(borrowId);
+        break;
+    }
+    
+    setConfirmModal({ isOpen: false, type: 'default', title: '', message: '', action: null, borrowId: null });
+  };
+
+  const closeModal = () => {
+    setConfirmModal({ isOpen: false, type: 'default', title: '', message: '', action: null, borrowId: null });
   };
 
   // Calculate statistics
@@ -305,7 +374,7 @@ const AdminBorrowManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="ব্যবহারকারী, বই বা ID দিয়ে খুঁজুন..."
+                placeholder="ব্যবহারকারী, বই, ধার ID বা ব্যবহারকারী ID দিয়ে খুঁজুন..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -341,6 +410,9 @@ const AdminBorrowManagement = () => {
                   ধার ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ব্যবহারকারী ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ব্যবহারকারী
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -364,6 +436,9 @@ const AdminBorrowManagement = () => {
                   <tr key={borrow.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">#{borrow.id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-blue-600">#{borrow.user?.id || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -519,6 +594,18 @@ const AdminBorrowManagement = () => {
           onReturn={() => handleReturn(selectedBorrow.id)}
         />
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeModal}
+        onConfirm={executeAction}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText="নিশ্চিত করুন"
+        cancelText="বাতিল"
+      />
     </div>
   );
 };
