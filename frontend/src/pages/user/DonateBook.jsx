@@ -16,10 +16,12 @@ import { toast } from 'sonner';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const DonateBook = () => {
   const { user } = useAuth();
   const { confirmSubmit } = useConfirmation();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   
   // Form state
@@ -59,14 +61,14 @@ const DonateBook = () => {
   const createDonationMutation = useMutation({
     mutationFn: apiServices.donations.createDonationWithNewBook,
     onSuccess: () => {
-      toast.success('বই দানের অনুরোধ সফলভাবে জমা দেওয়া হয়েছে!');
+      toast.success(t('donation.submitSuccess'));
       queryClient.invalidateQueries(['userDonations']);
       queryClient.invalidateQueries(['books']);
       resetForm();
       setShowConfirmModal(false);
     },
     onError: (error) => {
-      const errorMessage = error.response?.data?.detail || error.message || 'দানের অনুরোধ জমা দিতে সমস্যা হয়েছে';
+      const errorMessage = error.response?.data?.detail || error.message || t('donation.submitError');
       toast.error(errorMessage);
     },
   });
@@ -99,12 +101,12 @@ const DonateBook = () => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast.error('অনুগ্রহ করে একটি ছবি ফাইল নির্বাচন করুন');
+        toast.error(t('profile.invalidFileType'));
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('ছবির সাইজ ৫ মেগাবাইটের চেয়ে ছোট হতে হবে');
+        toast.error(t('profile.fileSizeError'));
         return;
       }
 
@@ -127,19 +129,19 @@ const DonateBook = () => {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      toast.error('বইয়ের নাম প্রয়োজন');
+      toast.error(t('donation.titleRequired'));
       return false;
     }
     if (!formData.author.trim()) {
-      toast.error('লেখকের নাম প্রয়োজন');
+      toast.error(t('donation.authorRequired'));
       return false;
     }
     if (!formData.pages || formData.pages < 1) {
-      toast.error('সঠিক পৃষ্ঠা সংখ্যা দিন');
+      toast.error(t('donation.pagesRequired'));
       return false;
     }
     if (formData.published_year < 1000 || formData.published_year > new Date().getFullYear()) {
-      toast.error('সঠিক প্রকাশনা বছর দিন');
+      toast.error(t('donation.yearRequired'));
       return false;
     }
     return true;
@@ -149,8 +151,8 @@ const DonateBook = () => {
     if (!validateForm()) return;
     
     const confirmed = await confirmSubmit(
-      'বই দান নিশ্চিত করুন',
-      'আপনি কি নিশ্চিত যে এই বইটি দান করতে চান? দান করার পর এটি প্রশাসকের অনুমোদনের জন্য পাঠানো হবে।'
+      t('donation.confirmTitle'),
+      t('donation.confirmMessage')
     );
     
     if (!confirmed) return;
@@ -183,10 +185,10 @@ const DonateBook = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, text: 'অপেক্ষমান' },
-      approved: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle, text: 'অনুমোদিত' },
-      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'সম্পন্ন' },
-      rejected: { color: 'bg-red-100 text-red-800', icon: AlertCircle, text: 'প্রত্যাখ্যাত' }
+      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, text: t('status.pending') },
+      approved: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle, text: t('status.approved') },
+      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: t('status.completed') },
+      rejected: { color: 'bg-red-100 text-red-800', icon: AlertCircle, text: t('status.rejected') }
     };
     
     const config = statusConfig[status] || statusConfig.pending;
@@ -212,25 +214,25 @@ const DonateBook = () => {
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center space-x-3 mb-4">
             <Gift className="h-6 w-6 text-green-600" />
-            <h1 className="text-2xl font-bold text-gray-900">বই দান করুন</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('donation.title')}</h1>
           </div>
           
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900">{userDonations.length}</p>
-              <p className="text-sm text-gray-600">মোট দান</p>
+              <p className="text-sm text-gray-600">{t('donation.totalDonations')}</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-yellow-600">
                 {userDonations.filter(d => d.status === 'pending').length}
               </p>
-              <p className="text-sm text-gray-600">অপেক্ষমান</p>
+              <p className="text-sm text-gray-600">{t('status.pending')}</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">
                 {userDonations.filter(d => d.status === 'completed').length}
               </p>
-              <p className="text-sm text-gray-600">সম্পন্ন</p>
+              <p className="text-sm text-gray-600">{t('status.completed')}</p>
             </div>
           </div>
         </div>
@@ -239,7 +241,7 @@ const DonateBook = () => {
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center space-x-3 mb-6">
             <Plus className="h-5 w-5 text-green-600" />
-            <h2 className="text-xl font-semibold text-gray-900">নতুন বই দান করুন</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('donation.donateNewBook')}</h2>
           </div>
 
           <div className="space-y-4">
@@ -247,7 +249,7 @@ const DonateBook = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  বইয়ের নাম *
+                  {t('donation.bookTitle')} *
                 </label>
                 <input
                   type="text"
@@ -255,14 +257,14 @@ const DonateBook = () => {
                   value={formData.title}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="বইয়ের নাম লিখুন..."
+                  placeholder={t('donation.titlePlaceholder')}
                   required
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  লেখকের নাম *
+                  {t('donation.authorName')} *
                 </label>
                 <input
                   type="text"
@@ -270,7 +272,7 @@ const DonateBook = () => {
                   value={formData.author}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="লেখকের নাম লিখুন..."
+                  placeholder={t('donation.authorPlaceholder')}
                   required
                 />
               </div>
@@ -279,7 +281,7 @@ const DonateBook = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ক্যাটেগরি
+                  {t('books.category')}
                 </label>
                 <select
                   name="category_id"
@@ -287,7 +289,7 @@ const DonateBook = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
-                  <option value="">ক্যাটেগরি নির্বাচন করুন</option>
+                  <option value="">{t('donation.selectCategory')}</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
@@ -298,7 +300,7 @@ const DonateBook = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  প্রকাশনা বছর *
+                  {t('donation.publishYear')} *
                 </label>
                 <input
                   type="number"
@@ -314,7 +316,7 @@ const DonateBook = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  পৃষ্ঠা সংখ্যা *
+                  {t('donation.pageCount')} *
                 </label>
                 <input
                   type="number"
@@ -323,7 +325,7 @@ const DonateBook = () => {
                   onChange={handleInputChange}
                   min="1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="পৃষ্ঠা সংখ্যা"
+                  placeholder={t('donation.pageCountPlaceholder')}
                   required
                 />
               </div>
@@ -332,13 +334,13 @@ const DonateBook = () => {
             {/* Book Condition */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                বইয়ের অবস্থা
+                {t('donation.bookCondition')}
               </label>
               <div className="flex space-x-4">
                 {[
-                  { value: 'excellent', label: 'চমৎকার' },
-                  { value: 'good', label: 'ভালো' },
-                  { value: 'fair', label: 'গ্রহণযোগ্য' }
+                  { value: 'excellent', label: t('donation.excellent') },
+                  { value: 'good', label: t('donation.good') },
+                  { value: 'fair', label: t('donation.fair') }
                 ].map((condition) => (
                   <label key={condition.value} className="flex items-center">
                     <input
@@ -358,13 +360,13 @@ const DonateBook = () => {
             {/* Cover Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                কভার আপলোড করুন
+                {t('donation.uploadCover')}
               </label>
               
               <div className="flex space-x-3 mb-3">
                 <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 border border-blue-200">
                   <Upload className="h-4 w-4" />
-                  <span>ছবি আপলোড</span>
+                  <span>{t('donation.uploadImage')}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -380,7 +382,7 @@ const DonateBook = () => {
                     className="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 border border-red-200"
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span>মুছুন</span>
+                    <span>{t('common.delete')}</span>
                   </button>
                 )}
               </div>
@@ -426,7 +428,7 @@ const DonateBook = () => {
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                অতিরিক্ত বিবরণ
+                {t('donation.additionalDescription')}
               </label>
               <textarea
                 name="description"
@@ -434,7 +436,7 @@ const DonateBook = () => {
                 onChange={handleInputChange}
                 rows="3"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="বই সম্পর্কে অতিরিক্ত তথ্য..."
+                placeholder={t('donation.descriptionPlaceholder')}
               />
             </div>
 
@@ -444,7 +446,7 @@ const DonateBook = () => {
                 onClick={resetForm}
                 className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
               >
-                রিসেট
+                {t('common.reset')}
               </button>
               <button
                 onClick={handleSubmit}
@@ -452,7 +454,7 @@ const DonateBook = () => {
                 className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
               >
                 <Gift className="h-4 w-4" />
-                <span>{createDonationMutation.isPending ? 'জমা দেওয়া হচ্ছে...' : 'দান করুন'}</span>
+                <span>{createDonationMutation.isPending ? t('donation.submitting') : t('donation.donateButton')}</span>
               </button>
             </div>
           </div>

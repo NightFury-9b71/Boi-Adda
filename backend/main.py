@@ -1,13 +1,40 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
+from starlette.responses import JSONResponse
 import os
+import json
+from datetime import datetime, timezone
 from database import create_tables
 from routers import users, categories, books, book_copies, borrows, donations, database, admin, auth
+from timezone_utils import add_timezone_to_naive_datetime, utc_now
+
+class TimezoneAwareJSONResponse(JSONResponse):
+    """Custom JSON response that ensures datetime objects have timezone info"""
+    
+    def render(self, content) -> bytes:
+        # Convert any datetime objects to timezone-aware ISO strings
+        def convert_datetime(obj):
+            if isinstance(obj, dict):
+                return {k: convert_datetime(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_datetime(item) for item in obj]
+            elif isinstance(obj, datetime):
+                if obj.tzinfo is None:
+                    # Assume naive datetime from database is Bangladesh time (+6)
+                    from timezone_utils import BANGLADESH_TZ
+                    obj = obj.replace(tzinfo=BANGLADESH_TZ)
+                return obj.isoformat()
+            return obj
+        
+        converted_content = convert_datetime(content)
+        return super().render(converted_content)
 
 app = FastAPI(
-    title="বই আড্ডা API",
+    title="বই আড্ডা API", 
     description="API for Book Adda - A library management system for promoting knowledge sharing",
     version="1.0.0",
+    default_response_class=TimezoneAwareJSONResponse
 )
 
 # Get environment variables directly from Render

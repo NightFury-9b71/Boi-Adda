@@ -24,11 +24,13 @@ import {
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import OptimizedImage from '../../components/OptimizedImage';
 import cloudinaryService from '../../services/cloudinary';
 
 const ProfilePage = () => {
   const { user, refetchUser } = useAuth();
+  const { t } = useTranslation();
   const { confirmUpdate } = useConfirmation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -83,7 +85,7 @@ const ProfilePage = () => {
   const updateProfileMutation = useMutation({
     mutationFn: (data) => apiServices.users.updateProfile(data),
     onSuccess: () => {
-      toast.success('প্রোফাইল সফলভাবে আপডেট হয়েছে!');
+      toast.success(t('profile.updateSuccess'));
       setIsEditing(false);
       // Invalidate and refetch user data
       queryClient.invalidateQueries(['currentUser']);
@@ -93,7 +95,7 @@ const ProfilePage = () => {
       console.error('Profile update error:', error);
       const errorMessage = error?.response?.data?.detail || 
                           error?.response?.data?.message || 
-                          'প্রোফাইল আপডেট করতে সমস্যা হয়েছে';
+                          t('profile.updateError');
       toast.error(errorMessage);
     }
   });
@@ -105,7 +107,7 @@ const ProfilePage = () => {
       setIsUploadingProfile(true);
     },
     onSuccess: async (data) => {
-      toast.success('প্রোফাইল ছবি সফলভাবে আপলোড হয়েছে!');
+      toast.success(t('profile.profileImageSuccess'));
       // Clear preview and refresh user data
       setProfilePreview(null);
       await queryClient.invalidateQueries(['currentUser']);
@@ -115,7 +117,7 @@ const ProfilePage = () => {
       console.error('Profile upload error:', error);
       const errorMessage = error?.response?.data?.detail || 
                           error?.message || 
-                          'প্রোফাইল ছবি আপলোড করতে সমস্যা হয়েছে';
+                          t('profile.profileImageError');
       toast.error(errorMessage);
       setProfilePreview(null);
     },
@@ -131,7 +133,7 @@ const ProfilePage = () => {
       setIsUploadingCover(true);
     },
     onSuccess: async (data) => {
-      toast.success('কভার ছবি সফলভাবে আপলোড হয়েছে!');
+      toast.success(t('profile.coverImageSuccess'));
       // Clear preview and refresh user data
       setCoverPreview(null);
       await queryClient.invalidateQueries(['currentUser']);
@@ -141,7 +143,7 @@ const ProfilePage = () => {
       console.error('Cover upload error:', error);
       const errorMessage = error?.response?.data?.detail || 
                           error?.message || 
-                          'কভার ছবি আপলোড করতে সমস্যা হয়েছে';
+                          t('profile.coverImageError');
       toast.error(errorMessage);
       setCoverPreview(null);
     },
@@ -161,15 +163,15 @@ const ProfilePage = () => {
 
   // Validate and process image files
   const validateImageFile = (file) => {
-    if (!file) return { isValid: false, error: 'ফাইল নির্বাচন করা হয়নি' };
+    if (!file) return { isValid: false, error: t('profile.noFileSelected') };
     
     if (!file.type.startsWith('image/')) {
-      return { isValid: false, error: 'অনুগ্রহ করে একটি ছবি ফাইল নির্বাচন করুন' };
+      return { isValid: false, error: t('profile.invalidFileType') };
     }
     
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      return { isValid: false, error: 'ছবির সাইজ ৫ এমবি এর কম হতে হবে' };
+      return { isValid: false, error: t('profile.fileSizeError') };
     }
     
     return { isValid: true };
@@ -236,26 +238,26 @@ const ProfilePage = () => {
     
     // Validation
     if (!formData.name?.trim()) {
-      toast.error('নাম আবশ্যক');
+      toast.error(t('profile.nameRequired'));
       return;
     }
     
     if (!formData.email?.trim()) {
-      toast.error('ইমেইল আবশ্যক');
+      toast.error(t('profile.emailRequired'));
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.error('সঠিক ইমেইল ঠিকানা প্রদান করুন');
+      toast.error(t('profile.emailInvalid'));
       return;
     }
 
     // Confirm profile update
     const confirmed = await confirmUpdate(
-      'প্রোফাইল আপডেট',
-      'আপনি কি নিশ্চিত যে আপনার প্রোফাইলের তথ্য আপডেট করতে চান?'
+      t('profile.confirmTitle'),
+      t('profile.confirmMessage')
     );
     
     if (!confirmed) return;
@@ -289,21 +291,22 @@ const ProfilePage = () => {
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'নির্ধারিত নয়';
+    if (!dateString) return t('profile.notSet');
     try {
-      return new Date(dateString).toLocaleDateString('bn-BD', {
+      const locale = t('language') === 'bn' ? 'bn-BD' : 'en-US';
+      return new Date(dateString).toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
     } catch (error) {
-      return 'তারিখ ফরম্যাট সমস্যা';
+      return t('profile.dateFormatError');
     }
   };
 
   // Get user initials for placeholder
   const getUserInitials = (name) => {
-    if (!name) return 'ব';
+    if (!name) return t('profile.defaultInitial');
     return name
       .split(' ')
       .map(word => word[0])
@@ -318,7 +321,7 @@ const ProfilePage = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-          <span className="ml-2 text-gray-600">লোড হচ্ছে...</span>
+          <span className="ml-2 text-gray-600">{t('common.loading')}</span>
         </div>
       </div>
     );
@@ -354,7 +357,7 @@ const ProfilePage = () => {
             <div className="w-full h-full bg-gradient-to-r from-green-600 to-green-800 flex items-center justify-center">
               <div className="text-center text-white/70">
                 <Upload className="h-12 w-12 mx-auto mb-2" />
-                <p className="text-sm">কভার ছবি আপলোড করুন</p>
+                <p className="text-sm">{t('profile.uploadCover')}</p>
               </div>
             </div>
           )}
@@ -364,7 +367,7 @@ const ProfilePage = () => {
             onClick={() => coverFileRef.current?.click()}
             disabled={isUploadingCover}
             className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-lg hover:bg-black/70 transition-colors disabled:opacity-50"
-            title="কভার ছবি পরিবর্তন করুন"
+            title={t('profile.changeCover')}
           >
             {isUploadingCover ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -419,7 +422,7 @@ const ProfilePage = () => {
               onClick={() => profileFileRef.current?.click()}
               disabled={isUploadingProfile}
               className="absolute bottom-1 right-1 md:bottom-2 md:right-2 bg-green-600 text-white p-1.5 md:p-2 rounded-full hover:bg-green-700 transition-colors shadow-lg disabled:opacity-50"
-              title="প্রোফাইল ছবি পরিবর্তন করুন"
+              title={t('profile.changeProfile')}
             >
               {isUploadingProfile ? (
                 <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
@@ -447,7 +450,7 @@ const ProfilePage = () => {
             <p className="text-gray-600 mb-2">{user?.email}</p>
             <div className="flex items-center text-sm text-gray-500">
               <Calendar className="h-4 w-4 mr-1" />
-              <span>সদস্য হয়েছেন: {formatDate(user?.created_at)}</span>
+              <span>{t('profile.memberSince')}: {formatDate(user?.created_at)}</span>
             </div>
           </div>
           
@@ -458,7 +461,7 @@ const ProfilePage = () => {
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Edit3 className="h-4 w-4 mr-2" />
-                সম্পাদনা
+                {t('profile.edit')}
               </button>
             ) : (
               <>
@@ -467,7 +470,7 @@ const ProfilePage = () => {
                   className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  বাতিল
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleSubmit}
@@ -479,7 +482,7 @@ const ProfilePage = () => {
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  {updateProfileMutation.isPending ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ'}
+                  {updateProfileMutation.isPending ? t('profile.saving') : t('common.save')}
                 </button>
               </>
             )}
@@ -492,7 +495,7 @@ const ProfilePage = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
           <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">ব্যক্তিগত তথ্য</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('profile.personalInfo')}</h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -500,7 +503,7 @@ const ProfilePage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <User className="h-4 w-4 inline mr-2" />
-                    নাম *
+                    {t('profile.name')} *
                   </label>
                   {isEditing ? (
                     <input
@@ -509,11 +512,11 @@ const ProfilePage = () => {
                       value={formData.name}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder="আপনার নাম লিখুন"
+                      placeholder={t('profile.namePlaceholder')}
                       required
                     />
                   ) : (
-                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.name || 'নির্ধারিত নয়'}</p>
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.name || t('profile.notSet')}</p>
                   )}
                 </div>
 
@@ -521,7 +524,7 @@ const ProfilePage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Mail className="h-4 w-4 inline mr-2" />
-                    ইমেইল *
+                    {t('profile.email')} *
                   </label>
                   {isEditing ? (
                     <input
@@ -530,11 +533,11 @@ const ProfilePage = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder="আপনার ইমেইল লিখুন"
+                      placeholder={t('profile.emailPlaceholder')}
                       required
                     />
                   ) : (
-                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.email || 'নির্ধারিত নয়'}</p>
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.email || t('profile.notSet')}</p>
                   )}
                 </div>
 
@@ -542,7 +545,7 @@ const ProfilePage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Phone className="h-4 w-4 inline mr-2" />
-                    ফোন
+                    {t('profile.phone')}
                   </label>
                   {isEditing ? (
                     <input
@@ -551,10 +554,10 @@ const ProfilePage = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder="ফোন নম্বর"
+                      placeholder={t('profile.phonePlaceholder')}
                     />
                   ) : (
-                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.phone || 'নির্ধারিত নয়'}</p>
+                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.phone || t('profile.notSet')}</p>
                   )}
                 </div>
 
@@ -562,7 +565,7 @@ const ProfilePage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="h-4 w-4 inline mr-2" />
-                    জন্ম তারিখ
+                    {t('profile.dateOfBirth')}
                   </label>
                   {isEditing ? (
                     <input
@@ -582,7 +585,7 @@ const ProfilePage = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 inline mr-2" />
-                  ঠিকানা
+                  {t('profile.address')}
                 </label>
                 {isEditing ? (
                   <input
@@ -591,10 +594,10 @@ const ProfilePage = () => {
                     value={formData.address}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="আপনার ঠিকানা লিখুন"
+                    placeholder={t('profile.addressPlaceholder')}
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.address || 'নির্ধারিত নয়'}</p>
+                  <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.address || t('profile.notSet')}</p>
                 )}
               </div>
 
@@ -602,7 +605,7 @@ const ProfilePage = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <UserCircle className="h-4 w-4 inline mr-2" />
-                  পরিচয়
+                  {t('profile.bio')}
                 </label>
                 {isEditing ? (
                   <textarea
@@ -611,11 +614,11 @@ const ProfilePage = () => {
                     onChange={handleInputChange}
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none"
-                    placeholder="নিজের সম্পর্কে কিছু লিখুন..."
+                    placeholder={t('profile.bioPlaceholder')}
                   />
                 ) : (
                   <p className="px-4 py-2 bg-gray-50 rounded-lg min-h-[100px] whitespace-pre-wrap">
-                    {user?.bio || 'কোন পরিচয় দেওয়া হয়নি'}
+                    {user?.bio || t('profile.noBio')}
                   </p>
                 )}
               </div>
@@ -628,11 +631,11 @@ const ProfilePage = () => {
           {/* User Stats */}
           <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">কার্যক্রম পরিসংখ্যান</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('profile.activityStats')}</h3>
               <button
                 onClick={() => queryClient.invalidateQueries(['userStats'])}
                 className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                title="পরিসংখ্যান রিফ্রেশ করুন"
+                title={t('profile.refreshStats')}
               >
                 <RefreshCw className="h-4 w-4" />
               </button>
@@ -641,7 +644,7 @@ const ProfilePage = () => {
             {statsError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                 <p className="text-red-700 text-sm">
-                  পরিসংখ্যান লোড করতে সমস্যা হয়েছে
+                  {t('profile.statsError')}
                 </p>
               </div>
             )}
@@ -663,7 +666,7 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                   <div className="flex items-center">
                     <BookOpen className="h-5 w-5 text-blue-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">মোট ধার</span>
+                    <span className="text-sm font-medium text-gray-700">{t('profile.totalBorrows')}</span>
                   </div>
                   <span className="text-lg font-bold text-blue-600">
                     {userStats?.activity_summary?.borrows?.total || 0}
@@ -673,7 +676,7 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                   <div className="flex items-center">
                     <Clock className="h-5 w-5 text-yellow-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">সক্রিয় ধার</span>
+                    <span className="text-sm font-medium text-gray-700">{t('profile.activeBorrows')}</span>
                   </div>
                   <span className="text-lg font-bold text-yellow-600">
                     {userStats?.activity_summary?.borrows?.active || 0}
@@ -683,7 +686,7 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center">
                     <Gift className="h-5 w-5 text-green-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">মোট দান</span>
+                    <span className="text-sm font-medium text-gray-700">{t('profile.totalDonations')}</span>
                   </div>
                   <span className="text-lg font-bold text-green-600">
                     {userStats?.activity_summary?.donations?.total || 0}
@@ -693,11 +696,11 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-purple-600 mr-3" />
-                    <span className="text-sm font-medium text-gray-700">সদস্যপদ</span>
+                    <span className="text-sm font-medium text-gray-700">{t('profile.membership')}</span>
                   </div>
                   <span className="text-sm font-medium text-purple-600">
-                    {user?.role === 'admin' ? 'প্রশাসক' : 
-                     user?.role === 'librarian' ? 'গ্রন্থাগারিক' : 'সাধারণ সদস্য'}
+                    {user?.role === 'admin' ? t('roles.admin') : 
+                     user?.role === 'librarian' ? t('roles.librarian') : t('roles.member')}
                   </span>
                 </div>
               </div>
@@ -706,14 +709,14 @@ const ProfilePage = () => {
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">দ্রুত কার্যক্রম</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('profile.quickActions')}</h3>
             <div className="space-y-3">
               <button 
                 onClick={() => navigate('/books')}
                 className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <BookOpen className="h-4 w-4 mr-2" />
-                বই খুঁজুন
+                {t('profile.findBooks')}
               </button>
               
               <button 
@@ -721,7 +724,7 @@ const ProfilePage = () => {
                 className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Gift className="h-4 w-4 mr-2" />
-                বই দান করুন
+                {t('profile.donateBooks')}
               </button>
               
               <button 
@@ -729,7 +732,7 @@ const ProfilePage = () => {
                 className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <Clock className="h-4 w-4 mr-2" />
-                ইতিহাস দেখুন
+                {t('profile.viewHistory')}
               </button>
             </div>
           </div>

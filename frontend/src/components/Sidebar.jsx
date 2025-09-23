@@ -1,32 +1,45 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, User, HistoryIcon, X, Home, Gift, BookMarked, LogOut, BarChart3, Users, HeartHandshake, Library, TrendingUp, BookA } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSwitcher from './LanguageSwitcher';
 
-const navigationItems = [
-  { path: '/dashboard', label: 'ড্যাশবোর্ড', icon: Home },
-  { path: '/books', label: 'বইসমূহ', icon: BookOpen },
-  { path: '/donate', label: 'বই দান', icon: Gift },
-  { path: '/history', label: 'ইতিহাস', icon: HistoryIcon },
-  { path: '/profile', label: 'প্রোফাইল', icon: User },
-];
-
-const adminItems = [
-  { path: '/admin/dashboard', label: 'অ্যাডমিন ড্যাশবোর্ড', icon: BarChart3 },
-  { path: '/admin/statistics', label: 'পরিসংখ্যান', icon: TrendingUp },
-  { path: '/admin/users', label: 'ব্যবহারকারী', icon: Users },
-  { path: '/admin/issue', label: 'বই ইস্যু', icon: BookA },
-  { path: '/admin/borrows', label: 'ধার ব্যবস্থাপনা', icon: BookMarked },
-    { path: '/admin/donations', label: 'দান ব্যবস্থাপনা', icon: HeartHandshake },
-    { path: '/admin/books', label: 'বই ব্যবস্থাপনা', icon: Library },
+const NavigationItems = () => {
+  const { t } = useTranslation();
+  
+  return [
+    { path: '/dashboard', label: t('nav.dashboard'), icon: Home },
+    { path: '/books', label: t('nav.books'), icon: BookOpen },
+    { path: '/donate', label: t('nav.donate'), icon: Gift },
+    { path: '/history', label: t('nav.history'), icon: HistoryIcon },
+    { path: '/profile', label: t('nav.profile'), icon: User },
   ];
+};
+
+const AdminItems = () => {
+  const { t } = useTranslation();
+  
+  return [
+    { path: '/admin/dashboard', label: t('nav.admin.dashboard'), icon: BarChart3 },
+    { path: '/admin/statistics', label: t('nav.admin.statistics'), icon: TrendingUp },
+    { path: '/admin/users', label: t('nav.admin.users'), icon: Users },
+    { path: '/admin/issue', label: t('nav.admin.issue'), icon: BookA },
+    { path: '/admin/borrows', label: t('nav.admin.borrows'), icon: BookMarked },
+    { path: '/admin/donations', label: t('nav.admin.donations'), icon: HeartHandshake },
+    { path: '/admin/books', label: t('nav.admin.books'), icon: Library },
+  ];
+};
   
 // Mobile Sidebar Component
 const SidebarMobile = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   
   const isAdmin = user?.role === 'admin' || user?.role === 'librarian';
+  const navigationItems = NavigationItems();
+  const adminItems = AdminItems();
 
   const handleLogout = () => {
     logout();
@@ -36,6 +49,10 @@ const SidebarMobile = ({ isOpen, onClose }) => {
   const handleNavigation = (path) => {
     navigate(path);
     onClose();
+  };
+
+  const getRoleText = (role) => {
+    return t(`roles.${role}`);
   };
 
   return (
@@ -49,7 +66,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
 
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:hidden flex flex-col`}>
         <div className="flex items-center justify-between p-4 border-b">
-          <span className="text-lg font-semibold text-green-800">বই আড্ডা</span>
+          <span className="text-lg font-semibold text-green-800">{t('appName')}</span>
           <button
             onClick={onClose}
             className="p-2 rounded-md text-gray-400 hover:bg-gray-100"
@@ -60,7 +77,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
 
         <nav className="mt-8 px-4 space-y-6 overflow-y-auto flex-1">
           <div className="space-y-2">
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">মূল মেনু</h3>
+            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('nav.mainMenu')}</h3>
             {navigationItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -80,9 +97,14 @@ const SidebarMobile = ({ isOpen, onClose }) => {
             })}
           </div>
 
+          {/* Language Switcher */}
+          <div className="space-y-2">
+            <LanguageSwitcher />
+          </div>
+
           {isAdmin && (
             <div className="space-y-2">
-              <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">প্রশাসন</h3>
+              <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('nav.administration')}</h3>
               {adminItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -111,7 +133,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
             className="w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors text-red-600 hover:bg-red-50"
           >
             <LogOut className="h-5 w-5 mr-3" />
-            <span className="font-medium">লগআউট</span>
+            <span className="font-medium">{t('nav.logout')}</span>
           </button>
         </div>
       </div>
@@ -124,8 +146,15 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   
   const isAdmin = user?.role === 'admin' || user?.role === 'librarian';
+  const navigationItems = NavigationItems();
+  const adminItems = AdminItems();
+
+  const getRoleText = (role) => {
+    return t(`roles.${role}`);
+  };
 
   return (
     <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:top-0 lg:bottom-0 lg:left-0 bg-white shadow-lg">
@@ -133,7 +162,7 @@ const Sidebar = () => {
       <div className="h-16 bg-gradient-to-r from-green-800 to-green-900 flex items-center justify-center">
         <div className="flex items-center">
           <BookOpen className="h-8 w-8 text-yellow-400" />
-          <span className="ml-2 text-xl font-bold text-white">বই আড্ডা</span>
+          <span className="ml-2 text-xl font-bold text-white">{t('appName')}</span>
         </div>
       </div>
       
@@ -160,7 +189,7 @@ const Sidebar = () => {
             <div className="flex items-center mt-1">
               <div className={`h-2 w-2 rounded-full mr-2 transition-all duration-300 ${user?.is_active ? 'bg-green-400 hover:bg-green-500 hover:shadow-md hover:shadow-green-400/50' : 'bg-gray-400'}`}></div>
               <span className="text-xs text-gray-600 transition-all duration-300 hover:text-gray-800">
-                {user?.role === 'admin' ? 'প্রশাসক' : user?.role === 'librarian' ? 'গ্রন্থাগারিক' : 'সদস্য'}
+                {getRoleText(user?.role)}
               </span>
             </div>
           </div>
@@ -169,7 +198,7 @@ const Sidebar = () => {
 
       <nav className="mt-2 pt-6 px-4 space-y-6 overflow-y-auto flex-1">
         <div className="space-y-2">
-          <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">মূল মেনু</h3>
+          <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('nav.mainMenu')}</h3>
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -189,9 +218,14 @@ const Sidebar = () => {
           })}
         </div>
 
+        {/* Language Switcher */}
+        <div className="space-y-2">
+          <LanguageSwitcher />
+        </div>
+
         {isAdmin && (
           <div className="space-y-2">
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">প্রশাসন</h3>
+            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('nav.administration')}</h3>
             {adminItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -220,7 +254,7 @@ const Sidebar = () => {
           className="w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors text-red-600 hover:bg-red-50"
         >
           <LogOut className="h-5 w-5 mr-3" />
-          <span className="font-medium">লগআউট</span>
+          <span className="font-medium">{t('nav.logout')}</span>
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Menu } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 import {SidebarMobile} from './Sidebar';
 
 
@@ -9,6 +10,7 @@ import {SidebarMobile} from './Sidebar';
 const Header = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -25,7 +27,7 @@ const Header = () => {
             {/* Only show logo on mobile when sidebar is hidden */}
             <div className="flex items-center ml-2 lg:hidden">
               <BookOpen className="h-8 w-8 text-yellow-400" />
-              <span className="ml-2 text-xl font-bold">বই আড্ডা</span>
+              <span className="ml-2 text-xl font-bold">{t('appName')}</span>
             </div>
           </div>
 

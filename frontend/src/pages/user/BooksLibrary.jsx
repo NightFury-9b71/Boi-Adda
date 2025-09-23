@@ -12,17 +12,18 @@ import {
   List,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Heart
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import OptimizedImage from '../../components/OptimizedImage';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
 const BooksLibrary = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,19 +88,19 @@ const BooksLibrary = () => {
     switch (status) {
       case 'pending':
         return {
-          text: 'অপেক্ষমাণ',
+          text: t('books.pending'),
           className: 'bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full',
           canCancel: true
         };
       case 'approved':
         return {
-          text: 'অনুমোদিত - নিতে আসুন',
+          text: t('books.approvedPickup'),
           className: 'bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full',
           canCancel: true
         };
       case 'active':
         return {
-          text: 'আপনার কাছে আছে',
+          text: t('books.withYou'),
           className: 'bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full',
           canCancel: false
         };
@@ -157,22 +158,17 @@ const BooksLibrary = () => {
     navigate(`/books/${bookId}`);
   };
 
-  const handleDonorClick = (donorId, e) => {
-    e.stopPropagation();
-    navigate(`/profile/${donorId}`);
-  };
-
   // Show confirmation modal before borrowing
   const showBorrowConfirmation = (book) => {
     if (!user) {
-      toast.error('বই ধার নিতে লগইন করুন');
+      toast.error(t('books.loginToBorrow'));
       navigate('/login');
       return;
     }
 
     // Check if user already has an active borrow for this book
     if (hasActiveBorrowForBook(book.id)) {
-      toast.error('আপনি ইতিমধ্যে এই বইয়ের জন্য অনুরোধ করেছেন');
+      toast.error(t('books.alreadyRequested'));
       return;
     }
 
@@ -189,7 +185,7 @@ const BooksLibrary = () => {
     try {
       // Find an available book copy
       if (!book.total_copies || book.total_copies === 0) {
-        toast.error('এই বইয়ের কোন কপি পাওয়া যাচ্ছে না');
+        toast.error(t('books.noCopiesAvailable'));
         return;
       }
 
@@ -197,7 +193,7 @@ const BooksLibrary = () => {
       const availableCopies = await apiServices.bookCopies.getAvailableForBook(book.id);
       
       if (!availableCopies || availableCopies.length === 0) {
-        toast.error('এই বইয়ের কোন কপি এখন উপলব্ধ নেই');
+        toast.error(t('books.noAvailableCopies'));
         return;
       }
 
@@ -208,14 +204,14 @@ const BooksLibrary = () => {
       };
 
       await apiServices.borrows.createBorrow(borrowData);
-      toast.success(`"${book.title}" এর ধার অনুরোধ পাঠানো হয়েছে`);
+      toast.success(`"${book.title}" ${t('books.borrowRequestSent')}`);
       
       // Refresh the user's borrows to update the UI
       queryClient.invalidateQueries(['userBorrows', user.id]);
       queryClient.invalidateQueries(['books']);
     } catch (error) {
       console.error('Borrow request error:', error);
-      toast.error(`ধার অনুরোধ পাঠাতে সমস্যা হয়েছে: ${error.response?.data?.detail || 'অজানা ত্রুটি'}`);
+      toast.error(`${t('books.borrowRequestError')}: ${error.response?.data?.detail || t('common.error')}`);
     }
   };
 
@@ -254,9 +250,9 @@ const BooksLibrary = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">বই লাইব্রেরি</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('books.title')}</h1>
             <p className="text-gray-600 mt-1">
-              মোট {sortedBooks.length} টি বই পাওয়া গেছে
+              {t('books.totalFound', { count: sortedBooks.length })}
             </p>
           </div>
           
@@ -266,7 +262,7 @@ const BooksLibrary = () => {
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
             >
               <Plus className="h-4 w-4" />
-              <span>নতুন বই যোগ করুন</span>
+              <span>{t('books.addNewBook')}</span>
             </button>
           )}
         </div>
@@ -280,7 +276,7 @@ const BooksLibrary = () => {
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                placeholder="বইয়ের নাম বা লেখকের নাম লিখুন..."
+                placeholder={t('books.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
@@ -288,7 +284,7 @@ const BooksLibrary = () => {
               type="submit"
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
-              খুঁজুন
+              {t('common.search')}
             </button>
           </form>
 
@@ -305,7 +301,7 @@ const BooksLibrary = () => {
                   }}
                   className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
-                  <option value="all">সব ক্যাটাগরি</option>
+                  <option value="all">{t('books.allCategories')}</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
@@ -319,11 +315,11 @@ const BooksLibrary = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                <option value="newest">নতুন আগে</option>
-                <option value="oldest">পুরাতন আগে</option>
-                <option value="title">বইয়ের নাম অনুযায়ী</option>
-                <option value="author">লেখকের নাম অনুযায়ী</option>
-                <option value="popular">জনপ্রিয়তা অনুযায়ী</option>
+                <option value="newest">{t('books.newest')}</option>
+                <option value="oldest">{t('books.oldest')}</option>
+                <option value="title">{t('books.byTitle')}</option>
+                <option value="author">{t('books.byAuthor')}</option>
+                <option value="popular">{t('books.byPopularity')}</option>
               </select>
             </div>
 
@@ -391,11 +387,11 @@ const BooksLibrary = () => {
                     <div className="absolute top-2 right-2 flex space-x-1">
                       {book.total_copies > 0 ? (
                         <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          {book.total_copies} কপি
+                          {t('books.copiesAvailable', { count: book.total_copies })}
                         </span>
                       ) : (
                         <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                          স্টকে নেই
+                          {t('books.outOfStock')}
                         </span>
                       )}
                     </div>
@@ -414,35 +410,9 @@ const BooksLibrary = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Users className="h-3 w-3" />
-                        <span>{book.times_borrowed || 0} বার</span>
+                        <span>{t('books.borrowedTimes', { count: book.times_borrowed || 0 })}</span>
                       </div>
                     </div>
-                    
-                    {/* Donor Information */}
-                    {book.donors && book.donors.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center text-xs text-gray-600 mb-1">
-                          <Heart className="h-3 w-3 mr-1 text-red-500" />
-                          <span>দানকারী:</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {book.donors.slice(0, 2).map((donor) => (
-                            <button
-                              key={donor.id}
-                              onClick={(e) => handleDonorClick(donor.id, e)}
-                              className="text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-full hover:bg-pink-100 transition-colors"
-                            >
-                              {donor.name}
-                            </button>
-                          ))}
-                          {book.donors.length > 2 && (
-                            <span className="text-xs text-gray-500 px-2 py-1">
-                              +{book.donors.length - 2} আরো
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
                     
                     <div className="flex items-center justify-between">
                       <button
@@ -453,7 +423,7 @@ const BooksLibrary = () => {
                         className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center space-x-1"
                       >
                         <Eye className="h-3 w-3" />
-                        <span>বিস্তারিত</span>
+                        <span>{t('books.details')}</span>
                       </button>
                       
                       {(() => {
@@ -473,13 +443,13 @@ const BooksLibrary = () => {
                               }}
                               className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
                             >
-                              ধার নিন
+                              {t('books.borrow')}
                             </button>
                           );
                         } else {
                           return (
                             <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
-                              স্টকে নেই
+                              {t('books.outOfStock')}
                             </span>
                           );
                         }
@@ -529,11 +499,11 @@ const BooksLibrary = () => {
                           </div>
                           <div className="flex items-center space-x-1">
                             <BookOpen className="h-3 w-3" />
-                            <span>{book.pages} পৃষ্ঠা</span>
+                            <span>{book.pages} {t('books.pages')}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Users className="h-3 w-3" />
-                            <span>{book.times_borrowed || 0} বার ধার</span>
+                            <span>{t('books.borrowedTimesShort', { count: book.times_borrowed || 0 })}</span>
                           </div>
                         </div>
                         
@@ -541,36 +511,12 @@ const BooksLibrary = () => {
                           <div className="flex items-center space-x-2">
                             {book.total_copies > 0 ? (
                               <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                {book.total_copies} কপি আছে
+                                {t('books.copiesInStock', { count: book.total_copies })}
                               </span>
                             ) : (
                               <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                                স্টকে নেই
+                                {t('books.outOfStock')}
                               </span>
-                            )}
-                            
-                            {/* Donor Information in List View */}
-                            {book.donors && book.donors.length > 0 && (
-                              <div className="flex items-center space-x-1">
-                                <Heart className="h-3 w-3 text-red-500" />
-                                <span className="text-xs text-gray-600">দানকারী:</span>
-                                <div className="flex space-x-1">
-                                  {book.donors.slice(0, 1).map((donor) => (
-                                    <button
-                                      key={donor.id}
-                                      onClick={(e) => handleDonorClick(donor.id, e)}
-                                      className="text-xs bg-pink-50 text-pink-700 px-2 py-1 rounded-full hover:bg-pink-100 transition-colors"
-                                    >
-                                      {donor.name}
-                                    </button>
-                                  ))}
-                                  {book.donors.length > 1 && (
-                                    <span className="text-xs text-gray-500">
-                                      +{book.donors.length - 1} আরো
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
                             )}
                           </div>
                         </div>
@@ -585,7 +531,7 @@ const BooksLibrary = () => {
                           className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center space-x-1"
                         >
                           <Eye className="h-3 w-3" />
-                          <span>দেখুন</span>
+                          <span>{t('books.view')}</span>
                         </button>
                         
                         {(() => {
@@ -605,13 +551,13 @@ const BooksLibrary = () => {
                                 }}
                                 className="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition-colors"
                               >
-                                ধার নিন
+                                {t('books.borrow')}
                               </button>
                             );
                           } else {
                             return (
                               <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded">
-                                স্টকে নেই
+                                {t('books.outOfStock')}
                               </span>
                             );
                           }
@@ -629,11 +575,11 @@ const BooksLibrary = () => {
           <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <BookOpen className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">কোন বই পাওয়া যায়নি</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('books.noBookFound')}</h3>
           <p className="text-gray-600 mb-4">
             {searchQuery || selectedCategory !== 'all'
-              ? 'আপনার অনুসন্ধান অনুযায়ী কোন বই পাওয়া যায়নি।'
-              : 'এখনো কোন বই যোগ করা হয়নি।'
+              ? t('books.noBooksBySearch')
+              : t('books.noBooksAdded')
             }
           </p>
           {(searchQuery || selectedCategory !== 'all') && (
@@ -645,7 +591,7 @@ const BooksLibrary = () => {
               }}
               className="text-green-600 hover:text-green-700 font-medium"
             >
-              সব বই দেখুন
+              {t('books.viewAllBooks')}
             </button>
           )}
         </div>
@@ -656,7 +602,7 @@ const BooksLibrary = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              {startIndex + 1}-{Math.min(startIndex + booksPerPage, sortedBooks.length)} এর মধ্যে {sortedBooks.length} টি
+              {startIndex + 1}-{Math.min(startIndex + booksPerPage, sortedBooks.length)} {t('common.of')} {sortedBooks.length} {t('books.items')}
             </p>
             
             <div className="flex items-center space-x-2">
@@ -716,10 +662,10 @@ const BooksLibrary = () => {
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false, book: null })}
         onConfirm={() => handleBorrowRequest(confirmModal.book)}
-        title="বই ধার নিন"
-        message={`আপনি কি নিশ্চিত যে "${confirmModal.book?.title}" বইটি ধার নিতে চান?`}
-        confirmText="হ্যাঁ, ধার নিন"
-        cancelText="বাতিল"
+        title={t('books.borrowConfirmTitle')}
+        message={t('books.borrowConfirmMessage', { title: confirmModal.book?.title })}
+        confirmText={t('books.yesBorrow')}
+        cancelText={t('common.cancel')}
         type="default"
       />
     </div>

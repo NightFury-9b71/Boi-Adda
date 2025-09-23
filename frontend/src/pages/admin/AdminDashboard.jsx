@@ -28,10 +28,12 @@ import {
   History,
   Settings
 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { apiServices } from '../../api';;
 
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState('week'); // week, month, year
+  const { t } = useTranslation();
 
   // Fetch dashboard data
   const { data: users = [], isLoading: usersLoading } = useQuery({
@@ -130,14 +132,7 @@ const AdminDashboard = () => {
   };
 
   const getStatusText = (status) => {
-    switch (status) {
-      case 'pending': return 'অপেক্ষমাণ';
-      case 'approved': return 'অনুমোদিত';
-      case 'completed': return 'সম্পন্ন';
-      case 'returned': return 'ফেরত';
-      case 'rejected': return 'প্রত্যাখ্যাত';
-      default: return status;
-    }
+    return t(`status.${status}`) || status;
   };
 
   if (isLoading) {
@@ -145,7 +140,7 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">ড্যাশবোর্ড লোড হচ্ছে...</p>
+          <p className="text-gray-600">{t('dashboard.loadingMessage')}</p>
         </div>
       </div>
     );
@@ -156,8 +151,8 @@ const AdminDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">অ্যাডমিন ড্যাশবোর্ড</h1>
-          <p className="text-gray-600 mt-2">লাইব্রেরি পরিচালনার সম্পূর্ণ ওভারভিউ</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+          <p className="text-gray-600 mt-2">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center space-x-3">
           <select
@@ -165,16 +160,17 @@ const AdminDashboard = () => {
             onChange={(e) => setTimeRange(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
-            <option value="week">এই সপ্তাহ</option>
-            <option value="month">এই মাস</option>
-            <option value="year">এই বছর</option>
+            <option value="week">{t('time.thisWeek')}</option>
+            <option value="month">{t('time.thisMonth')}</option>
+            <option value="year">{t('time.thisYear')}</option>
+            <option value="all">{t('time.allTime')}</option>
           </select>
           <button
             onClick={() => window.location.reload()}
             className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            রিফ্রেশ
+            {t('common.refresh')}
           </button>
         </div>
       </div>

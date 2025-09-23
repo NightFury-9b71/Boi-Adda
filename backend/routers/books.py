@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session, select, func
 from models import Book, BookCopy, User, Donation, Borrow
-from schemas import BookCreate, BookOut, ImageUploadResponse, BookImageUploadRequest
+from schemas import BookCreate, BookOut, BookWithDonorOut, ImageUploadResponse, BookImageUploadRequest, DonorInfo
 from enums import CopyStatus, BorrowStatus
 from database import get_session
 from auth import get_current_user, require_admin, require_librarian_or_admin
@@ -14,15 +14,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
-@router.get("/", response_model=List[BookOut])
+@router.get("/", response_model=List[BookWithDonorOut])
 def getBooks(session: Session = Depends(get_session)):
-    """Get all books with available copies (public access)"""
+    """Get all books with availability information and donors (public access)"""
     try:
         # Get all books with their copy information
         statement = select(Book)
         all_books = session.exec(statement).all()
         
-        available_books = []
+        books_with_availability = []
         
         for book in all_books:
             try:
@@ -48,28 +48,38 @@ def getBooks(session: Session = Depends(get_session)):
                 
                 times_borrowed = times_borrowed_result if times_borrowed_result is not None else 0
                 
-                # Only include books with available copies
-                if available_copies_count > 0:
-                    # Create a dictionary with book data plus computed fields
-                    book_data = book.model_dump() if hasattr(book, 'model_dump') else book.dict()
-                    book_data['total_copies'] = int(available_copies_count)
-                    book_data['times_borrowed'] = int(times_borrowed)
-                    
-                    available_books.append(book_data)
+                # Get unique donors for this book
+                donors_query = session.exec(
+                    select(User.id, User.name).join(BookCopy, User.id == BookCopy.donor_id).where(
+                        BookCopy.book_id == book.id,
+                        BookCopy.donor_id.is_not(None)
+                    ).distinct()
+                ).all()
+                
+                donors = [DonorInfo(id=donor_id, name=donor_name) for donor_id, donor_name in donors_query]
+                
+                # Include all books, regardless of availability
+                # Create a dictionary with book data plus computed fields
+                book_data = book.model_dump() if hasattr(book, 'model_dump') else book.dict()
+                book_data['total_copies'] = int(available_copies_count)
+                book_data['times_borrowed'] = int(times_borrowed)
+                book_data['donors'] = donors
+                
+                books_with_availability.append(book_data)
                     
             except Exception as e:
                 logger.error(f"Error processing book {book.id}: {str(e)}")
                 continue
         
-        return available_books
+        return books_with_availability
         
     except Exception as e:
         logger.error(f"Error in getBooks: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve books")
 
-@router.get("/{id}", response_model=BookOut)
+@router.get("/{id}", response_model=BookWithDonorOut)
 def getBook(id: int, session: Session = Depends(get_session)):
-    """Get book by ID with available copies count (public access)"""
+    """Get book by ID with available copies count and donors (public access)"""
     try:
         book = session.get(Book, id)
         if not book:
@@ -97,10 +107,21 @@ def getBook(id: int, session: Session = Depends(get_session)):
         
         times_borrowed = times_borrowed_result if times_borrowed_result is not None else 0
         
-        # Create response with updated counts
+        # Get unique donors for this book
+        donors_query = session.exec(
+            select(User.id, User.name).join(BookCopy, User.id == BookCopy.donor_id).where(
+                BookCopy.book_id == book.id,
+                BookCopy.donor_id.is_not(None)
+            ).distinct()
+        ).all()
+        
+        donors = [DonorInfo(id=donor_id, name=donor_name) for donor_id, donor_name in donors_query]
+        
+        # Create response with updated counts and donors
         book_data = book.model_dump() if hasattr(book, 'model_dump') else book.dict()
         book_data['total_copies'] = int(available_copies_count)
         book_data['times_borrowed'] = int(times_borrowed)
+        book_data['donors'] = donors
         
         return book_data
         
@@ -196,7 +217,7 @@ async def delete_book_cover(
         logger.error(f"Error deleting book cover for book {book_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to delete book cover")
 
-@router.post("/", response_model=BookOut)
+@router.post("/", response_model=BookWithDonorOut)
 def addBook(
     book: BookCreate, 
     session: Session = Depends(get_session), 
@@ -243,10 +264,21 @@ def addBook(
             
             times_borrowed = times_borrowed_result if times_borrowed_result is not None else 0
             
-            # Return book data with counts
+            # Get unique donors for this book
+            donors_query = session.exec(
+                select(User.id, User.name).join(BookCopy, User.id == BookCopy.donor_id).where(
+                    BookCopy.book_id == existing_book.id,
+                    BookCopy.donor_id.is_not(None)
+                ).distinct()
+            ).all()
+            
+            donors = [DonorInfo(id=donor_id, name=donor_name) for donor_id, donor_name in donors_query]
+            
+            # Return book data with counts and donors
             book_data = existing_book.model_dump() if hasattr(existing_book, 'model_dump') else existing_book.dict()
             book_data['total_copies'] = int(available_copies_count)
             book_data['times_borrowed'] = int(times_borrowed)
+            book_data['donors'] = donors
             return book_data
             
         else:
@@ -263,10 +295,11 @@ def addBook(
             session.commit()
             session.refresh(new_copy)
 
-            # Return new book with initial counts
+            # Return new book with initial counts and empty donors (no donors yet)
             book_data = db_book.model_dump() if hasattr(db_book, 'model_dump') else db_book.dict()
             book_data['total_copies'] = 1  # Just created one copy
             book_data['times_borrowed'] = 0  # Brand new book
+            book_data['donors'] = []  # No donors yet
             return book_data
             
     except HTTPException:
@@ -276,7 +309,7 @@ def addBook(
         session.rollback()
         raise HTTPException(status_code=500, detail="Failed to add book")
 
-@router.put("/{id}", response_model=BookOut)
+@router.put("/{id}", response_model=BookWithDonorOut)
 async def updateBook(
     id: int, 
     book_update: BookCreate, 
@@ -328,10 +361,21 @@ async def updateBook(
         
         times_borrowed = times_borrowed_result if times_borrowed_result is not None else 0
         
-        # Return updated book data with counts
+        # Get unique donors for this book
+        donors_query = session.exec(
+            select(User.id, User.name).join(BookCopy, User.id == BookCopy.donor_id).where(
+                BookCopy.book_id == existing_book.id,
+                BookCopy.donor_id.is_not(None)
+            ).distinct()
+        ).all()
+        
+        donors = [DonorInfo(id=donor_id, name=donor_name) for donor_id, donor_name in donors_query]
+        
+        # Return updated book data with counts and donors
         response_data = existing_book.model_dump() if hasattr(existing_book, 'model_dump') else existing_book.dict()
         response_data['total_copies'] = int(available_copies_count)
         response_data['times_borrowed'] = int(times_borrowed)
+        response_data['donors'] = donors
         return response_data
         
     except HTTPException:

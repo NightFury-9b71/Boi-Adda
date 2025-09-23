@@ -4,6 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { ConfirmationProvider } from './contexts/ConfirmationContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import AppRoutes from './routes/AppRoutes';
 
 // Create a single QueryClient instance outside the component
@@ -24,12 +25,14 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <AuthProvider>
-          <ConfirmationProvider>
-            <Toaster position="top-right" richColors />
-            <AppRoutes />
-          </ConfirmationProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ConfirmationProvider>
+              <Toaster position="top-right" richColors />
+              <AppRoutes />
+            </ConfirmationProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </Router>
     </QueryClientProvider>
   );

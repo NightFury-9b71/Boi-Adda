@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { BookOpen, Users, Heart, Share2, RefreshCw, TrendingUp, ArrowRight, CheckCircle, Shield, Clock, Menu, X, Star} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiServices } from '../api';;
@@ -184,6 +185,7 @@ const LandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
 
   const { login, register } = useAuth();
+  const { t } = useTranslation();
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const navigate = useNavigate();
@@ -260,7 +262,7 @@ const LandingPage = () => {
                     : 'text-white'
                 }`}
               >
-                বই আড্ডা
+                {t('appName')}
               </span>
             </div>
             {/* Desktop */}
@@ -271,7 +273,7 @@ const LandingPage = () => {
                   scrollY > 50 ? 'text-gray-700 hover:text-green-600' : 'text-white/90 hover:text-white'
                 }`}
               >
-                সুবিধা
+                {t('landing.nav.features')}
               </a>
               <a
                 href="#how-it-works"
@@ -279,7 +281,7 @@ const LandingPage = () => {
                   scrollY > 50 ? 'text-gray-700 hover:text-green-600' : 'text-white/90 hover:text-white'
                 }`}
               >
-                কিভাবে কাজ করে
+                {t('landing.nav.howItWorks')}
               </a>
               <a
                 href="#testimonials"
@@ -287,7 +289,7 @@ const LandingPage = () => {
                   scrollY > 50 ? 'text-gray-700 hover:text-green-600' : 'text-white/90 hover:text-white'
                 }`}
               >
-                রিভিউ
+                {t('landing.nav.testimonials')}
               </a>
               <a
                 href="#auth-form"
@@ -324,16 +326,16 @@ const LandingPage = () => {
             <div className="md:hidden bg-white border-t border-gray-200 shadow-md">
               <div className="px-2 pt-2 pb-3 space-y-1">
                 <a href="#features" className="block px-3 py-2 text-gray-700 hover:text-green-600 transition-colors">
-                  সুবিধা
+                  {t('landing.nav.features')}
                 </a>
                 <a
                   href="#how-it-works"
                   className="block px-3 py-2 text-gray-700 hover:text-green-600 transition-colors"
                 >
-                  কিভাবে কাজ করে
+                  {t('landing.nav.howItWorks')}
                 </a>
                 <a href="#testimonials" className="block px-3 py-2 text-gray-700 hover:text-green-600 transition-colors">
-                  রিভিউ
+                  {t('landing.nav.testimonials')}
                 </a>
                 <a href="#auth-form" className="block px-3 py-2 text-gray-700 hover:text-green-600 transition-colors">
                   যোগ দিন

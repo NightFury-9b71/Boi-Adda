@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, BookMarked, Clock, Gift, AlertCircle, Search, HistoryIcon, User } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   
   // Real API calls using React Query for user-specific data
@@ -53,8 +55,12 @@ const DashboardPage = () => {
       <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">স্বাগতম, {user?.name}!</h1>
-            <p className="text-green-100 text-lg">আজ আপনার লাইব্রেরি যাত্রা শুরু করুন</p>
+            <h1 className="text-3xl font-bold mb-2">
+              {t('dashboard.welcome')}, {user?.name}!
+            </h1>
+            <p className="text-green-100 text-lg">
+              {t('dashboard.userWelcome')}
+            </p>
           </div>
           <div className="hidden md:block">
             <BookOpen className="h-20 w-20 text-green-200" />
@@ -68,7 +74,7 @@ const DashboardPage = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">গৃহীত ধার</p>
+              <p className="text-sm font-medium text-gray-600">{t('dashboard.totalBorrowed')}</p>
               <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
@@ -86,7 +92,7 @@ const DashboardPage = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সক্রিয় ধার</p>
+              <p className="text-sm font-medium text-gray-600">{t('dashboard.currentBorrows')}</p>
               <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
@@ -95,8 +101,8 @@ const DashboardPage = () => {
                 )}
               </div>
             </div>
-            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-6 w-6 text-yellow-600" />
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Clock className="h-6 w-6 text-green-600" />
             </div>
           </div>
         </div>
@@ -104,7 +110,7 @@ const DashboardPage = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">গৃহীত দান</p>
+              <p className="text-sm font-medium text-gray-600">{t('dashboard.totalDonated')}</p>
               <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
@@ -113,8 +119,8 @@ const DashboardPage = () => {
                 )}
               </div>
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Gift className="h-6 w-6 text-green-600" />
+            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Gift className="h-6 w-6 text-purple-600" />
             </div>
           </div>
         </div>
@@ -122,7 +128,7 @@ const DashboardPage = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">অপেক্ষমাণ</p>
+              <p className="text-sm font-medium text-gray-600">{t('dashboard.pendingRequests')}</p>
               <div className="text-3xl font-bold text-gray-900">
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
@@ -131,8 +137,8 @@ const DashboardPage = () => {
                 )}
               </div>
             </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <AlertCircle className="h-6 w-6 text-purple-600" />
+            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-yellow-600" />
             </div>
           </div>
         </div>
@@ -141,14 +147,14 @@ const DashboardPage = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">দ্রুত কার্যক্রম</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('dashboard.quickActions')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={() => navigate('/books')}
             className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors"
           >
             <Search className="h-8 w-8 text-green-600 mb-2" />
-            <span className="text-sm font-medium text-gray-700">বই খুঁজুন</span>
+            <span className="text-sm font-medium text-gray-700">{t('dashboard.browseBooks')}</span>
           </button>
           
           <button
@@ -156,7 +162,7 @@ const DashboardPage = () => {
             className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
           >
             <Gift className="h-8 w-8 text-blue-600 mb-2" />
-            <span className="text-sm font-medium text-gray-700">বই দান করুন</span>
+            <span className="text-sm font-medium text-gray-700">{t('dashboard.donateBooks')}</span>
           </button>
           
           <button
@@ -164,7 +170,7 @@ const DashboardPage = () => {
             className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors"
           >
             <HistoryIcon className="h-8 w-8 text-purple-600 mb-2" />
-            <span className="text-sm font-medium text-gray-700">ইতিহাস দেখুন</span>
+            <span className="text-sm font-medium text-gray-700">{t('dashboard.viewHistory')}</span>
           </button>
           
           <button
@@ -172,7 +178,7 @@ const DashboardPage = () => {
             className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
           >
             <User className="h-8 w-8 text-orange-600 mb-2" />
-            <span className="text-sm font-medium text-gray-700">প্রোফাইল</span>
+            <span className="text-sm font-medium text-gray-700">{t('dashboard.editProfile')}</span>
           </button>
         </div>
       </div>
@@ -181,12 +187,12 @@ const DashboardPage = () => {
         {/* Current Borrows */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">আমার বর্তমান ধার</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('dashboard.currentBorrows')}</h2>
             <button 
               onClick={() => navigate('/history')}
               className="text-green-600 hover:text-green-700 text-sm font-medium"
             >
-              সব দেখুন →
+              {t('common.view')} →
             </button>
           </div>
           {borrowsLoading ? (
@@ -209,13 +215,13 @@ const DashboardPage = () => {
                 const getStatusInfo = (status) => {
                   switch (status) {
                     case 'pending':
-                      return { text: 'অপেক্ষমাণ', color: 'bg-yellow-100 text-yellow-800' };
+                      return { text: t('status.pending'), color: 'bg-yellow-100 text-yellow-800' };
                     case 'approved':
-                      return { text: 'অনুমোদিত', color: 'bg-blue-100 text-blue-800' };
+                      return { text: t('status.approved'), color: 'bg-blue-100 text-blue-800' };
                     case 'active':
-                      return { text: 'সক্রিয়', color: 'bg-green-100 text-green-800' };
+                      return { text: t('status.active'), color: 'bg-green-100 text-green-800' };
                     default:
-                      return { text: 'অজানা', color: 'bg-gray-100 text-gray-800' };
+                      return { text: t('common.unknown'), color: 'bg-gray-100 text-gray-800' };
                   }
                 };
                 
@@ -229,10 +235,10 @@ const DashboardPage = () => {
                         <BookOpen className="h-4 w-4 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{book.title || 'অজানা বই'}</p>
-                        <p className="text-sm text-gray-600">{book.author || 'অজানা লেখক'}</p>
+                        <p className="font-medium text-gray-900">{book.title || t('common.unknownBook')}</p>
+                        <p className="text-sm text-gray-600">{book.author || t('common.unknownAuthor')}</p>
                         <p className="text-xs text-gray-500">
-                          আবেদন: {new Date(borrow.created_at).toLocaleDateString('bn-BD')}
+                          {t('common.applicationDate')}: {new Date(borrow.created_at).toLocaleDateString('bn-BD')}
                         </p>
                       </div>
                     </div>
@@ -251,12 +257,12 @@ const DashboardPage = () => {
               <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <BookMarked className="h-6 w-6 text-gray-400" />
               </div>
-              <p className="text-gray-500 text-sm">কোন সক্রিয় ধার নেই</p>
+              <p className="text-gray-500 text-sm">{t('dashboard.noBorrows')}</p>
               <button
                 onClick={() => navigate('/books')}
                 className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
               >
-                বই খুঁজুন →
+                {t('common.searchBooks')} →
               </button>
             </div>
           )}
@@ -264,7 +270,7 @@ const DashboardPage = () => {
 
         {/* My Recent Activities */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">আমার সাম্প্রতিক কার্যক্রম</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('common.recentActivity')}</h2>
           <div className="space-y-4">
             {/* For now showing a message since we don't have activity history API */}
             <div className="text-center py-8">
@@ -272,13 +278,13 @@ const DashboardPage = () => {
                 <HistoryIcon className="h-6 w-6 text-gray-400" />
               </div>
               <p className="text-gray-500 text-sm">
-                সাম্প্রতিক কার্যক্রমের তথ্য শীঘ্রই পাওয়া যাবে
+                {t('language') === 'bn' ? 'সাম্প্রতিক কার্যক্রমের তথ্য শীঘ্রই পাওয়া যাবে' : 'Recent activity information will be available soon'}
               </p>
               <button
                 onClick={() => navigate('/history')}
                 className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"
               >
-                সম্পূর্ণ ইতিহাস দেখুন →
+                {t('dashboard.viewHistory')} →
               </button>
             </div>
           </div>

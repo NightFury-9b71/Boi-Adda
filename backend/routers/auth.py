@@ -4,6 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlmodel import Session, select
 from models import User, AdminConfig
 from schemas import UserLogin, UserRegister, Token, UserOut, AdminCreateRequest, AdminCodeChangeRequest, AdminCodeResponse
+from timezone_utils import bangladesh_now
 from auth import (
     authenticate_user, 
     create_access_token, 
@@ -152,8 +153,7 @@ def change_admin_code(
         session.add(admin_config)
     else:
         admin_config.admin_creation_code = code_data.new_code
-        from timezone_utils import get_current_time
-        admin_config.updated_at = get_current_time()
+        admin_config.updated_at = bangladesh_now()
     
     session.commit()
     

@@ -19,12 +19,17 @@ import {
   Trash2,
   Crown,
   BookOpen,
+  X,
+  AlertCircle,
+  RefreshCw,
   Gift,
   Clock
 } from 'lucide-react';
 import { apiServices } from '../../api';
-import OptimizedImage from '../../components/OptimizedImage';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();
