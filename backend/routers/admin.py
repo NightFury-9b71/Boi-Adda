@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from datetime import datetime
+from datetime import datetime, timedelta
 from models import Borrow, Donation, BookCopy, Book, User, Category
 from schemas import BorrowOut, DonationOut, UserOut, UserCreate, BorrowCreate
 from enums import BorrowStatus, DonationStatus, CopyStatus, UserRole
 from database import get_session
 from auth import require_admin, get_password_hash, get_current_user
-from datetime import datetime, timedelta
+from timezone_utils import utc_now
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -67,7 +67,7 @@ def approve_borrow_first_step(borrow_id: int, session: Session = Depends(get_ses
     
     # Update borrow status to approved and set approved_at
     borrow.status = BorrowStatus.approved
-    borrow.approved_at = datetime.now()  # Set the approval timestamp
+    borrow.approved_at = utc_now()  # Set the approval timestamp
     
     # Update book copy status to reserved
     book_copy = session.get(BookCopy, borrow.book_copy_id)
@@ -100,7 +100,7 @@ def handover_book_second_step(borrow_id: int, session: Session = Depends(get_ses
     
     # Update borrow status to active and set handed_over_at
     borrow.status = BorrowStatus.active
-    borrow.handed_over_at = datetime.now()  # Set the handover timestamp
+    borrow.handed_over_at = utc_now()  # Set the handover timestamp
     
     # Update book copy status to borrowed
     book_copy = session.get(BookCopy, borrow.book_copy_id)
@@ -164,7 +164,7 @@ def mark_book_returned(borrow_id: int, session: Session = Depends(get_session), 
     
     # Update borrow status to returned and set returned_at
     borrow.status = BorrowStatus.returned
-    borrow.returned_at = datetime.now()  # Set the return timestamp
+    borrow.returned_at = utc_now()  # Set the return timestamp
     
     # Update book copy status to available
     book_copy = session.get(BookCopy, borrow.book_copy_id)
@@ -231,8 +231,8 @@ def issue_book(borrow: BorrowCreate, session: Session = Depends(get_session), cu
         user_id=borrow.user_id,
         book_copy_id=borrow.book_copy_id,
         status=BorrowStatus.active,  # Direct issue - skip pending/approved states
-        issued_date=datetime.utcnow(),
-        due_date=datetime.utcnow() + timedelta(days=14)  # 2 weeks default
+        issued_date=utc_now(),
+        due_date=utc_now() + timedelta(days=14)  # 2 weeks default
     )
     session.add(db_borrow)
     
@@ -312,7 +312,7 @@ def approve_donation_first_step(donation_id: int, session: Session = Depends(get
     
     # Update donation status to approved and set approved_at
     donation.status = DonationStatus.approved
-    donation.approved_at = datetime.now()  # Set the approval timestamp
+    donation.approved_at = utc_now()  # Set the approval timestamp
     
     session.add(donation)
     session.commit()
@@ -339,7 +339,7 @@ def complete_donation_second_step(donation_id: int, session: Session = Depends(g
     
     # Update donation status to completed and set completed_at
     donation.status = DonationStatus.completed
-    donation.completed_at = datetime.now()  # Set the completion timestamp
+    donation.completed_at = utc_now()  # Set the completion timestamp
     
     # If there's a book copy associated, ensure it's available
     if donation.book_copy_id:
@@ -683,7 +683,7 @@ def get_trends_data(session: Session = Depends(get_session), admin_user: User = 
     
     # Get data for the last 6 months
     months_data = []
-    current_date = datetime.now()
+    current_date = utc_now()
     
     for i in range(5, -1, -1):  # Last 6 months
         target_date = current_date.replace(day=1) - timedelta(days=30*i)
@@ -733,7 +733,7 @@ def get_user_activity_data(session: Session = Depends(get_session), admin_user: 
     
     # Get data for the last 7 days
     weekly_activity = []
-    current_date = datetime.now()
+    current_date = utc_now()
     
     day_name_mapping = {
         0: "সোম", 1: "মঙ্গল", 2: "বুধ", 3: "বৃহস্পতি",

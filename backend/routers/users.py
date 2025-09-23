@@ -7,7 +7,7 @@ from database import get_session
 from auth import get_current_user
 from cloudinary_service import upload_user_profile, upload_user_cover, delete_image
 import os
-from datetime import datetime
+from timezone_utils import utc_now
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -88,7 +88,7 @@ async def update_my_profile(user_update: UserUpdate, session: Session = Depends(
     if old_cover_public_id and not current_user.cover_public_id:
         await delete_image(old_cover_public_id)
     
-    current_user.updated_at = datetime.now()
+    current_user.updated_at = utc_now()
     
     session.add(current_user)
     session.commit()
@@ -125,7 +125,7 @@ async def upload_profile_image(file: UploadFile = File(...), session: Session = 
         # Update user's profile image
         current_user.profile_public_id = upload_result["public_id"]
         current_user.profile_image = upload_result["url"]
-        current_user.updated_at = datetime.now()
+        current_user.updated_at = utc_now()
         session.add(current_user)
         session.commit()
         session.refresh(current_user)
@@ -164,7 +164,7 @@ async def upload_cover_image(file: UploadFile = File(...), session: Session = De
         # Update user's cover image
         current_user.cover_public_id = upload_result["public_id"]
         current_user.cover_image = upload_result["url"]
-        current_user.updated_at = datetime.now()
+        current_user.updated_at = utc_now()
         session.add(current_user)
         session.commit()
         session.refresh(current_user)
@@ -189,7 +189,7 @@ async def delete_profile_image(session: Session = Depends(get_session), current_
             # Reset profile image
             current_user.profile_public_id = None
             current_user.profile_image = None
-            current_user.updated_at = datetime.now()
+            current_user.updated_at = utc_now()
             session.add(current_user)
             session.commit()
             
@@ -215,7 +215,7 @@ async def delete_cover_image(session: Session = Depends(get_session), current_us
             # Reset cover image
             current_user.cover_public_id = None
             current_user.cover_image = None
-            current_user.updated_at = datetime.now()
+            current_user.updated_at = utc_now()
             session.add(current_user)
             session.commit()
             

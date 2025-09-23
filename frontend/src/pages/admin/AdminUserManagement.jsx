@@ -24,9 +24,11 @@ import {
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import OptimizedImage from '../../components/OptimizedImage';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();
+  const { confirmUpdate } = useConfirmation();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -78,13 +80,35 @@ const AdminUserManagement = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleRoleChange = (userId, newRole) => {
-    updateUserRoleMutation.mutate({ userId, role: newRole });
+  const handleRoleChange = async (userId, newRole, userName) => {
+    const roleMap = {
+      'admin': 'প্রশাসক',
+      'librarian': 'গ্রন্থাগারিক', 
+      'member': 'সদস্য'
+    };
+    
+    const confirmed = await confirmUpdate(
+      `${userName} এর ভূমিকা ${roleMap[newRole]} এ পরিবর্তন করুন`,
+      `আপনি কি নিশ্চিত যে ${userName} এর ভূমিকা ${roleMap[newRole]} এ পরিবর্তন করতে চান?`
+    );
+    
+    if (confirmed) {
+      updateUserRoleMutation.mutate({ userId, role: newRole });
+    }
   };
 
-  const handleStatusToggle = (userId, currentStatus) => {
+  const handleStatusToggle = async (userId, currentStatus, userName) => {
     const newStatus = !currentStatus;
-    updateUserStatusMutation.mutate({ userId, isActive: newStatus });
+    const action = newStatus ? 'সক্রিয়' : 'নিষ্ক্রিয়';
+    
+    const confirmed = await confirmUpdate(
+      `${userName} কে ${action} করুন`,
+      `আপনি কি নিশ্চিত যে ${userName} কে ${action} করতে চান?`
+    );
+    
+    if (confirmed) {
+      updateUserStatusMutation.mutate({ userId, isActive: newStatus });
+    }
   };
 
   const getRoleColor = (role) => {
@@ -313,7 +337,7 @@ const AdminUserManagement = () => {
                       <div className="flex items-center">
                         <select
                           value={user.role}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value, user.name)}
                           className={`text-xs font-semibold px-2 py-1 rounded-full border-0 ${getRoleColor(user.role)}`}
                           disabled={updateUserRoleMutation.isPending}
                         >
@@ -343,7 +367,7 @@ const AdminUserManagement = () => {
                           )}
                         </span>
                         <button
-                          onClick={() => handleStatusToggle(user.id, user.is_active)}
+                          onClick={() => handleStatusToggle(user.id, user.is_active, user.name)}
                           disabled={updateUserStatusMutation.isPending}
                           className={`text-xs px-2 py-1 rounded transition-colors ${
                             user.is_active 

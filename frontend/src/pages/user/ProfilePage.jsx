@@ -23,11 +23,13 @@ import {
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 import OptimizedImage from '../../components/OptimizedImage';
 import cloudinaryService from '../../services/cloudinary';
 
 const ProfilePage = () => {
   const { user, refetchUser } = useAuth();
+  const { confirmUpdate } = useConfirmation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -249,6 +251,14 @@ const ProfilePage = () => {
       toast.error('সঠিক ইমেইল ঠিকানা প্রদান করুন');
       return;
     }
+
+    // Confirm profile update
+    const confirmed = await confirmUpdate(
+      'প্রোফাইল আপডেট',
+      'আপনি কি নিশ্চিত যে আপনার প্রোফাইলের তথ্য আপডেট করতে চান?'
+    );
+    
+    if (!confirmed) return;
 
     try {
       await updateProfileMutation.mutateAsync(formData);

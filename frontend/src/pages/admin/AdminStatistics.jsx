@@ -182,17 +182,17 @@ const AdminStatistics = () => {
     };
 
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-            <Icon className="h-6 w-6" />
+      <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-3 lg:mb-4">
+          <div className={`h-10 w-10 lg:h-12 lg:w-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+            <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
           </div>
           {trend !== undefined && (
             <TrendIndicator value={trend} isPositive={isPositiveTrend} />
           )}
         </div>
-        <h3 className="text-2xl font-bold text-gray-900">{formatNumber(value)}</h3>
-        <p className="text-sm text-gray-600 mt-1">{title}</p>
+        <h3 className="text-xl lg:text-2xl font-bold text-gray-900">{formatNumber(value)}</h3>
+        <p className="text-xs lg:text-sm text-gray-600 mt-1">{title}</p>
       </div>
     );
   };
@@ -211,38 +211,40 @@ const AdminStatistics = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">পরিসংখ্যান ও বিশ্লেষণ</h1>
-          <p className="text-gray-600 mt-2">লাইব্রেরির সম্পূর্ণ ডেটা ড্যাশবোর্ড ও ট্রেন্ড বিশ্লেষণ</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">পরিসংখ্যান ও বিশ্লেষণ</h1>
+          <p className="text-gray-600 mt-2 text-sm lg:text-base">লাইব্রেরির সম্পূর্ণ ডেটা ড্যাশবোর্ড ও ট্রেন্ড বিশ্লেষণ</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
           >
             <option value="week">এই সপ্তাহ</option>
             <option value="month">এই মাস</option>
             <option value="year">এই বছর</option>
             <option value="all">সব সময়</option>
           </select>
-          <button
-            onClick={handleRefreshAll}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            রিফ্রেশ
-          </button>
-          <button className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            <Download className="h-4 w-4 mr-2" />
-            রিপোর্ট ডাউনলোড
-          </button>
+          <div className="flex space-x-2 w-full sm:w-auto">
+            <button
+              onClick={handleRefreshAll}
+              className="flex items-center justify-center px-3 lg:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex-1 sm:flex-none text-sm"
+            >
+              <RefreshCw className="h-4 w-4 mr-1 lg:mr-2" />
+              <span className="hidden sm:inline">রিফ্রেশ</span>
+            </button>
+            <button className="flex items-center justify-center px-3 lg:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex-1 sm:flex-none text-sm">
+              <Download className="h-4 w-4 mr-1 lg:mr-2" />
+              <span className="hidden sm:inline">রিপোর্ট</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+      <div className="flex flex-wrap sm:flex-nowrap space-x-1 bg-gray-100 rounded-lg p-1 overflow-x-auto">
         {[
           { key: 'overview', label: 'সামগ্রিক', icon: BarChart3 },
           { key: 'users', label: 'ব্যবহারকারী', icon: Users },
@@ -255,14 +257,14 @@ const AdminStatistics = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center px-4 py-2 rounded-md transition-colors ${
+              className={`flex items-center px-3 lg:px-4 py-2 rounded-md transition-colors whitespace-nowrap text-sm lg:text-base ${
                 activeTab === tab.key
                   ? 'bg-white text-green-700 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Icon className="h-4 w-4 mr-2" />
-              {tab.label}
+              <Icon className="h-4 w-4 mr-1 lg:mr-2" />
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}
@@ -272,7 +274,7 @@ const AdminStatistics = () => {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Key Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <StatsCard
               title="মোট ব্যবহারকারী"
               value={overviewStats?.users?.total || 0}
@@ -319,137 +321,145 @@ const AdminStatistics = () => {
           </div>
 
           {/* Main Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Monthly Trends */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">মাসিক প্রবণতা</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={monthlyTrendsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="borrows" stackId="1" stroke="#8884d8" fill="#8884d8" name="ধার" />
-                  <Area type="monotone" dataKey="returns" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="ফেরত" />
-                  <Area type="monotone" dataKey="donations" stackId="1" stroke="#ffc658" fill="#ffc658" name="দান" />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">মাসিক প্রবণতা</h2>
+              <div className="h-64 lg:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyTrendsData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Legend />
+                    <Area type="monotone" dataKey="borrows" stackId="1" stroke="#8884d8" fill="#8884d8" name="ধার" />
+                    <Area type="monotone" dataKey="returns" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="ফেরত" />
+                    <Area type="monotone" dataKey="donations" stackId="1" stroke="#ffc658" fill="#ffc658" name="দান" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* User Activity */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">সাপ্তাহিক ব্যবহারকারী কার্যকলাপ</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={weeklyUserActivity}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="users" fill="#10b981" name="ব্যবহারকারী" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">সাপ্তাহিক ব্যবহারকারী কার্যকলাপ</h2>
+              <div className="h-64 lg:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyUserActivity}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Bar dataKey="users" fill="#10b981" name="ব্যবহারকারী" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
           {/* Distribution Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Book Categories */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">বই বিভাগের বিতরণ</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsPieChart>
-                  <Pie
-                    data={bookCategoryData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {bookCategoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">বই বিভাগের বিতরণ</h2>
+              <div className="h-64 lg:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={bookCategoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={window.innerWidth < 768 ? 60 : 80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {bookCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             {/* Borrow Status */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">ধার অবস্থার বিতরণ</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsPieChart>
-                  <Pie
-                    data={borrowStatusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {borrowStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">ধার অবস্থার বিতরণ</h2>
+              <div className="h-64 lg:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={borrowStatusData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={window.innerWidth < 768 ? 60 : 80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {borrowStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
           {/* Performance Metrics */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">কর্মক্ষমতা মেট্রিক্স</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+            <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-6">কর্মক্ষমতা মেট্রিক্স</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <div className="text-center">
-                <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Target className="h-8 w-8 text-green-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Target className="h-6 w-6 lg:h-8 lg:w-8 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {borrowStats?.completion_rate ? 
                     `${Math.round(borrowStats.completion_rate)}%` : 
                     '০%'}
                 </h3>
-                <p className="text-sm text-gray-600">ধার সফলতার হার</p>
+                <p className="text-xs lg:text-sm text-gray-600">ধার সফলতার হার</p>
               </div>
               <div className="text-center">
-                <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Clock className="h-8 w-8 text-blue-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Clock className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {bookStats?.books?.average_copies_per_book ? 
                     `${Math.round(bookStats.books.average_copies_per_book * 10) / 10}` : 
                     '০'}
                 </h3>
-                <p className="text-sm text-gray-600">গড় কপি প্রতি বই</p>
+                <p className="text-xs lg:text-sm text-gray-600">গড় কপি প্রতি বই</p>
               </div>
               <div className="text-center">
-                <div className="h-20 w-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Award className="h-8 w-8 text-purple-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Award className="h-6 w-6 lg:h-8 lg:w-8 text-purple-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {bookStats?.availability?.available_percentage ? 
                     `${Math.round(bookStats.availability.available_percentage)}%` : 
                     '০%'}
                 </h3>
-                <p className="text-sm text-gray-600">বই উপলব্ধতার হার</p>
+                <p className="text-xs lg:text-sm text-gray-600">বই উপলব্ধতার হার</p>
               </div>
               <div className="text-center">
-                <div className="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Heart className="h-8 w-8 text-orange-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Heart className="h-6 w-6 lg:h-8 lg:w-8 text-orange-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {donationStats?.completion_rate ? 
                     `${Math.round(donationStats.completion_rate)}%` : 
                     '০%'}
                 </h3>
-                <p className="text-sm text-gray-600">দান সফলতার হার</p>
+                <p className="text-xs lg:text-sm text-gray-600">দান সফলতার হার</p>
               </div>
             </div>
           </div>
@@ -460,7 +470,7 @@ const AdminStatistics = () => {
       {activeTab === 'users' && (
         <div className="space-y-6">
           {/* User Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="মোট ব্যবহারকারী"
               value={userStats?.total_users || 0}
@@ -488,76 +498,78 @@ const AdminStatistics = () => {
           </div>
 
           {/* User Role Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">ভূমিকা অনুযায়ী বিতরণ</h2>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">ভূমিকা অনুযায়ী বিতরণ</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">সদস্য</span>
+                  <span className="text-gray-600 text-sm lg:text-base">সদস্য</span>
                   <div className="flex items-center space-x-2">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div className="w-24 lg:w-32 bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
                         style={{ width: `${((userStats?.by_role?.member || 0) / (userStats?.total_users || 1)) * 100}%` }}
                       ></div>
                     </div>
-                    <span className="font-medium">{userStats?.by_role?.member || 0}</span>
+                    <span className="font-medium text-sm lg:text-base">{userStats?.by_role?.member || 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">গ্রন্থাগারিক</span>
+                  <span className="text-gray-600 text-sm lg:text-base">গ্রন্থাগারিক</span>
                   <div className="flex items-center space-x-2">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div className="w-24 lg:w-32 bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-green-600 h-2 rounded-full" 
                         style={{ width: `${((userStats?.by_role?.librarian || 0) / (userStats?.total_users || 1)) * 100}%` }}
                       ></div>
                     </div>
-                    <span className="font-medium">{userStats?.by_role?.librarian || 0}</span>
+                    <span className="font-medium text-sm lg:text-base">{userStats?.by_role?.librarian || 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">অ্যাডমিন</span>
+                  <span className="text-gray-600 text-sm lg:text-base">অ্যাডমিন</span>
                   <div className="flex items-center space-x-2">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div className="w-24 lg:w-32 bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-purple-600 h-2 rounded-full" 
                         style={{ width: `${((userStats?.by_role?.admin || 0) / (userStats?.total_users || 1)) * 100}%` }}
                       ></div>
                     </div>
-                    <span className="font-medium">{userStats?.by_role?.admin || 0}</span>
+                    <span className="font-medium text-sm lg:text-base">{userStats?.by_role?.admin || 0}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">সক্রিয়তার অবস্থা</h2>
-              <ResponsiveContainer width="100%" height={250}>
-                <RechartsPieChart>
-                  <Pie
-                    data={[
-                      { name: 'সক্রিয়', value: userStats?.active_users || 0, color: '#10b981' },
-                      { name: 'নিষ্ক্রিয়', value: userStats?.inactive_users || 0, color: '#ef4444' }
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {[
-                      { name: 'সক্রিয়', value: userStats?.active_users || 0, color: '#10b981' },
-                      { name: 'নিষ্ক্রিয়', value: userStats?.inactive_users || 0, color: '#ef4444' }
-                    ].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+            <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">সক্রিয়তার অবস্থা</h2>
+              <div className="h-48 lg:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={[
+                        { name: 'সক্রিয়', value: userStats?.active_users || 0, color: '#10b981' },
+                        { name: 'নিষ্ক্রিয়', value: userStats?.inactive_users || 0, color: '#ef4444' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={window.innerWidth < 768 ? 60 : 80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'সক্রিয়', value: userStats?.active_users || 0, color: '#10b981' },
+                        { name: 'নিষ্ক্রিয়', value: userStats?.inactive_users || 0, color: '#ef4444' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         </div>
@@ -686,7 +698,7 @@ const AdminStatistics = () => {
       {activeTab === 'borrows' && (
         <div className="space-y-6">
           {/* Borrow Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <StatsCard
               title="মোট ধার"
               value={borrowStats?.total_borrows || 0}
@@ -767,39 +779,39 @@ const AdminStatistics = () => {
           </div>
 
           {/* Workflow Metrics */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">ওয়ার্কফ্লো মেট্রিক্স</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100">
+            <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-6">ওয়ার্কফ্লো মেট্রিক্স</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
               <div className="text-center">
-                <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Target className="h-8 w-8 text-green-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Target className="h-6 w-6 lg:h-8 lg:w-8 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {borrowStats?.completion_rate ? 
                     `${Math.round(borrowStats.completion_rate)}%` : 
                     '০%'}
                 </h3>
-                <p className="text-sm text-gray-600">সফলতার হার</p>
+                <p className="text-xs lg:text-sm text-gray-600">সফলতার হার</p>
               </div>
               <div className="text-center">
-                <div className="h-20 w-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <AlertCircle className="h-8 w-8 text-red-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <AlertCircle className="h-6 w-6 lg:h-8 lg:w-8 text-red-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {borrowStats?.rejection_rate ? 
                     `${Math.round(borrowStats.rejection_rate)}%` : 
                     '০%'}
                 </h3>
-                <p className="text-sm text-gray-600">প্রত্যাখ্যানের হার</p>
+                <p className="text-xs lg:text-sm text-gray-600">প্রত্যাখ্যানের হার</p>
               </div>
               <div className="text-center">
-                <div className="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Clock className="h-8 w-8 text-orange-600" />
+                <div className="h-16 w-16 lg:h-20 lg:w-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Clock className="h-6 w-6 lg:h-8 lg:w-8 text-orange-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-lg lg:text-2xl font-bold text-gray-900">
                   {borrowStats?.by_status?.pending || 0}
                 </h3>
-                <p className="text-sm text-gray-600">অপেক্ষমাণ কর্ম</p>
+                <p className="text-xs lg:text-sm text-gray-600">অপেক্ষমাণ কর্ম</p>
               </div>
             </div>
           </div>

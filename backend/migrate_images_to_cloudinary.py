@@ -22,7 +22,7 @@ from database import engine
 from models import Book, User
 from cloudinary_service import upload_book_cover, upload_user_profile, upload_user_cover
 import cloudinary
-from datetime import datetime
+from timezone_utils import utc_now
 
 # Configure logging
 logging.basicConfig(
@@ -235,7 +235,7 @@ class CloudinaryMigration:
     
     async def run_migration(self):
         """Run the complete migration process"""
-        start_time = datetime.now()
+        start_time = utc_now()
         logger.info("🚀 Starting Cloudinary migration...")
         
         # Validate Cloudinary configuration
@@ -255,7 +255,7 @@ class CloudinaryMigration:
             await self.migrate_user_images()
             
             # Print summary
-            end_time = datetime.now()
+            end_time = utc_now()
             duration = end_time - start_time
             logger.info(f"⏱️ Migration completed in {duration}")
             

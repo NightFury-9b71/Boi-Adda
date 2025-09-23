@@ -29,16 +29,17 @@ import {
   Camera
 } from 'lucide-react';
 import { apiServices } from '../../api';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 import OptimizedImage from '../../components/OptimizedImage';
 import ImageUpload from '../../components/ImageUpload';
 
 const AdminBookManagement = () => {
   const queryClient = useQueryClient();
+  const { confirmDelete, confirmUpdate, confirmSubmit } = useConfirmation();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
 
@@ -89,8 +90,6 @@ const AdminBookManagement = () => {
     onSuccess: () => {
       toast.success('বই সফলভাবে মুছে ফেলা হয়েছে!');
       queryClient.invalidateQueries(['admin', 'books']);
-      setShowDeleteModal(false);
-      setSelectedBook(null);
     },
     onError: (error) => {
       toast.error('বই মুছতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
@@ -124,14 +123,10 @@ const AdminBookManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteBook = (book) => {
-    setSelectedBook(book);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = () => {
-    if (selectedBook) {
-      deleteBookMutation.mutate(selectedBook.id);
+  const handleDeleteBook = async (book) => {
+    const confirmed = await confirmDelete(`"${book.title}" বইটি`);
+    if (confirmed) {
+      deleteBookMutation.mutate(book.id);
     }
   };
 
@@ -164,7 +159,13 @@ const AdminBookManagement = () => {
         </div>
         <div className="flex space-x-3">
           <button
-            onClick={() => queryClient.invalidateQueries(['admin', 'books'])}
+            onClick={async () => {
+              const confirmed = await confirmUpdate('সকল বইয়ের তথ্য রিফ্রেশ করতে');
+              if (confirmed) {
+                queryClient.invalidateQueries(['admin', 'books']);
+                toast.success('বইয়ের তথ্য রিফ্রেশ করা হয়েছে!');
+              }
+            }}
             className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -375,18 +376,6 @@ const AdminBookManagement = () => {
         />
       )}
 
-      {showDeleteModal && selectedBook && (
-        <DeleteConfirmationModal
-          book={selectedBook}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setSelectedBook(null);
-          }}
-          onConfirm={confirmDelete}
-          isLoading={deleteBookMutation.isPending}
-        />
-      )}
-
       {showBookDetails && selectedBook && (
         <BookDetailsModal
           book={selectedBook}
@@ -403,6 +392,7 @@ const AdminBookManagement = () => {
 
 // Book Modal Component (Add/Edit)
 const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) => {
+  const { confirmSubmit } = useConfirmation();
   const [formData, setFormData] = useState({
     title: book?.title || '',
     author: book?.author || '',
@@ -422,7 +412,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
     'cover-11.jpg', 'cover-12.jpg', 'cover-13.jpg', 'cover-14.jpg', 'cover-15.jpg'
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.title.trim() || !formData.author.trim()) {
@@ -439,6 +429,11 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
       toast.error('সঠিক প্রকাশনা বছর দিন');
       return;
     }
+
+    const actionText = isEdit ? `"${formData.title}" বইয়ের তথ্য আপডেট করতে` : `"${formData.title}" নতুন বই যোগ করতে`;
+    const confirmed = await confirmSubmit(actionText);
+    
+    if (!confirmed) return;
 
     const submitData = {
       ...formData,
@@ -736,48 +731,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
   );
 };
 
-// Delete Confirmation Modal
-const DeleteConfirmationModal = ({ book, onClose, onConfirm, isLoading }) => {
-  return (
-    <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-md w-full">
-        <div className="p-6">
-          <div className="flex items-center mb-4">
-            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-              <Trash2 className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">বই মুছে ফেলুন</h2>
-              <p className="text-gray-600">এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না</p>
-            </div>
-          </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-600 mb-2">আপনি নিম্নলিখিত বইটি মুছে ফেলতে চান:</p>
-            <p className="font-semibold text-gray-900">{book.title}</p>
-            <p className="text-gray-600">লেখক: {book.author}</p>
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              বাতিল
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={isLoading}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? 'মুছে ফেলা হচ্ছে...' : 'মুছে ফেলুন'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Book Details Modal
 const BookDetailsModal = ({ book, categories, onClose }) => {

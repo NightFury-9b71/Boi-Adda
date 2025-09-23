@@ -19,20 +19,13 @@ import {
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import OptimizedImage from '../../components/OptimizedImage';
-import ConfirmationModal from '../../components/ConfirmationModal';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();
+  const { confirmUpdate, confirmSubmit } = useConfirmation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    type: 'default',
-    title: '',
-    message: '',
-    action: null,
-    borrowId: null
-  });
   const [selectedBorrow, setSelectedBorrow] = useState(null);
   const [showBorrowDetails, setShowBorrowDetails] = useState(false);
 
@@ -181,75 +174,48 @@ const AdminBorrowManagement = () => {
   };
 
   // Confirmation handlers - show modal before action
-  const handleApprove = (borrowId) => {
-    setConfirmModal({
-      isOpen: true,
-      type: 'default',
-      title: 'ধারের অনুরোধ অনুমোদন',
-      message: 'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি অনুমোদন করতে চান?',
-      action: 'approve',
-      borrowId
-    });
-  };
-
-  const handleHandover = (borrowId) => {
-    setConfirmModal({
-      isOpen: true,
-      type: 'default',
-      title: 'বই হস্তান্তর',
-      message: 'আপনি কি নিশ্চিত যে বইটি ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে?',
-      action: 'handover',
-      borrowId
-    });
-  };
-
-  const handleReject = (borrowId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
-    setConfirmModal({
-      isOpen: true,
-      type: 'danger',
-      title: 'ধারের অনুরোধ প্রত্যাখ্যান',
-      message: 'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি প্রত্যাখ্যান করতে চান?',
-      action: 'reject',
-      borrowId,
-      reason
-    });
-  };
-
-  const handleReturn = (borrowId) => {
-    setConfirmModal({
-      isOpen: true,
-      type: 'default',
-      title: 'বই ফেরত গ্রহণ',
-      message: 'আপনি কি নিশ্চিত যে বইটি ফেরত নেওয়া হয়েছে?',
-      action: 'return',
-      borrowId
-    });
-  };
-
-  // Actual mutation handlers
-  const executeAction = () => {
-    const { action, borrowId, reason } = confirmModal;
+  const handleApprove = async (borrowId) => {
+    const confirmed = await confirmUpdate(
+      'ধারের অনুরোধ অনুমোদন',
+      'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি অনুমোদন করতে চান?'
+    );
     
-    switch (action) {
-      case 'approve':
-        approveBorrowMutation.mutate(borrowId);
-        break;
-      case 'handover':
-        handoverBookMutation.mutate(borrowId);
-        break;
-      case 'reject':
-        rejectBorrowMutation.mutate({ borrowId, reason });
-        break;
-      case 'return':
-        returnBookMutation.mutate(borrowId);
-        break;
+    if (confirmed) {
+      approveBorrowMutation.mutate(borrowId);
     }
-    
-    setConfirmModal({ isOpen: false, type: 'default', title: '', message: '', action: null, borrowId: null });
   };
 
-  const closeModal = () => {
-    setConfirmModal({ isOpen: false, type: 'default', title: '', message: '', action: null, borrowId: null });
+  const handleHandover = async (borrowId) => {
+    const confirmed = await confirmSubmit(
+      'বই হস্তান্তর',
+      'আপনি কি নিশ্চিত যে বইটি ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে?'
+    );
+    
+    if (confirmed) {
+      handoverBookMutation.mutate(borrowId);
+    }
+  };
+
+  const handleReject = async (borrowId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
+    const confirmed = await confirmUpdate(
+      'ধারের অনুরোধ প্রত্যাখ্যান',
+      'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি প্রত্যাখ্যান করতে চান?'
+    );
+    
+    if (confirmed) {
+      rejectBorrowMutation.mutate({ borrowId, reason });
+    }
+  };
+
+  const handleReturn = async (borrowId) => {
+    const confirmed = await confirmSubmit(
+      'বই ফেরত গ্রহণ',
+      'আপনি কি নিশ্চিত যে বইটি ফেরত নেওয়া হয়েছে?'
+    );
+    
+    if (confirmed) {
+      returnBookMutation.mutate(borrowId);
+    }
   };
 
   // Calculate statistics
@@ -594,18 +560,6 @@ const AdminBorrowManagement = () => {
           onReturn={() => handleReturn(selectedBorrow.id)}
         />
       )}
-
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={confirmModal.isOpen}
-        onClose={closeModal}
-        onConfirm={executeAction}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        type={confirmModal.type}
-        confirmText="নিশ্চিত করুন"
-        cancelText="বাতিল"
-      />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { ConfirmationProvider } from './contexts/ConfirmationContext';
 import AppRoutes from './routes/AppRoutes';
 
 // Create a single QueryClient instance outside the component
@@ -24,8 +25,10 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
-          <Toaster position="top-right" richColors />
-          <AppRoutes />
+          <ConfirmationProvider>
+            <Toaster position="top-right" richColors />
+            <AppRoutes />
+          </ConfirmationProvider>
         </AuthProvider>
       </Router>
     </QueryClientProvider>

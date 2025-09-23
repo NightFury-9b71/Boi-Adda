@@ -2,9 +2,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from typing import Optional
 from datetime import datetime
 from enums import CopyStatus, BorrowStatus, DonationStatus, UserRole
-
-def get_current_time():
-    return datetime.now()
+from timezone_utils import get_current_time
 
 class User(SQLModel, table = True):
     id : Optional[int] = Field(default=None, primary_key=True)

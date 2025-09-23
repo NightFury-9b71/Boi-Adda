@@ -15,12 +15,12 @@ import {
 import { toast } from 'sonner';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
-import ConfirmationModal from '../../components/ConfirmationModal';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 
 const DonateBook = () => {
   const { user } = useAuth();
+  const { confirmSubmit } = useConfirmation();
   const queryClient = useQueryClient();
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -145,12 +145,16 @@ const DonateBook = () => {
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
-    setShowConfirmModal(true);
-  };
-
-  const confirmDonation = async () => {
+    
+    const confirmed = await confirmSubmit(
+      'বই দান নিশ্চিত করুন',
+      'আপনি কি নিশ্চিত যে এই বইটি দান করতে চান? দান করার পর এটি প্রশাসকের অনুমোদনের জন্য পাঠানো হবে।'
+    );
+    
+    if (!confirmed) return;
+    
     try {
       let donationData = {
         user_id: user.id,
@@ -173,7 +177,7 @@ const DonateBook = () => {
       
       await createDonationMutation.mutateAsync(donationData);
     } catch (error) {
-      console.error('Donation submission error:', error);
+      // Error is handled in the mutation
     }
   };
 
@@ -455,18 +459,6 @@ const DonateBook = () => {
         </div>
 
       </div>
-
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={confirmDonation}
-        title="দান নিশ্চিত করুন"
-        message={`আপনি কি নিশ্চিত যে আপনি "${formData.title}" বইটি দান করতে চান?`}
-        confirmText="হ্যাঁ, দান করুন"
-        cancelText="বাতিল"
-        type="default"
-      />
     </div>
   );
 };

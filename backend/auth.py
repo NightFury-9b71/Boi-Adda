@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 from models import User
 from enums import UserRole
 from database import get_session
+from timezone_utils import utc_now, create_expiry_datetime
 
 # Security configuration
 SECRET_KEY = "your-secret-key-here-change-in-production"  # Change this in production!
@@ -32,9 +33,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT access token"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = utc_now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = create_expiry_datetime(15)  # 15 minutes default
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

@@ -24,10 +24,12 @@ import {
   TrendingUp,
   Award
 } from 'lucide-react';
-import { apiServices } from '../../api';;
+import { apiServices } from '../../api';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 
 const AdminDonationManagement = () => {
   const queryClient = useQueryClient();
+  const { confirmUpdate, confirmSubmit } = useConfirmation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedDonation, setSelectedDonation] = useState(null);
@@ -124,16 +126,37 @@ const AdminDonationManagement = () => {
     return new Date(dateString).toLocaleDateString('bn-BD');
   };
 
-  const handleApprove = (donationId) => {
-    approveDonationMutation.mutate(donationId);
+  const handleApprove = async (donationId) => {
+    const confirmed = await confirmUpdate(
+      'দান অনুমোদন', 
+      'আপনি কি নিশ্চিত যে এই দানটি অনুমোদন করতে চান?'
+    );
+    
+    if (confirmed) {
+      approveDonationMutation.mutate(donationId);
+    }
   };
 
-  const handleComplete = (donationId) => {
-    completeDonationMutation.mutate(donationId);
+  const handleComplete = async (donationId) => {
+    const confirmed = await confirmSubmit(
+      'দান সম্পূর্ণ', 
+      'আপনি কি নিশ্চিত যে এই দানটি সম্পূর্ণ হয়েছে?'
+    );
+    
+    if (confirmed) {
+      completeDonationMutation.mutate(donationId);
+    }
   };
 
-  const handleReject = (donationId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
-    rejectDonationMutation.mutate({ donationId, reason });
+  const handleReject = async (donationId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
+    const confirmed = await confirmUpdate(
+      'দান প্রত্যাখ্যান', 
+      'আপনি কি নিশ্চিত যে এই দানটি প্রত্যাখ্যান করতে চান?'
+    );
+    
+    if (confirmed) {
+      rejectDonationMutation.mutate({ donationId, reason });
+    }
   };
 
   // Calculate statistics

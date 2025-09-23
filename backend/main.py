@@ -49,6 +49,12 @@ async def root():
 async def health_check():
     return {"status": "healthy", "service": "বই আড্ডা API"}
 
+@app.get("/timezone")
+async def get_timezone_info():
+    """Get timezone information for Bangladesh and UTC"""
+    from timezone_utils import get_timezone_info
+    return get_timezone_info()
+
 
 # Include routers
 app.include_router(auth.router)
