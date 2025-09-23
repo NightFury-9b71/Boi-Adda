@@ -168,3 +168,9 @@ class Donation(SQLModel, table = True):
 
 #     user_id : Optional[int] = Field(default=None, foreign_key="user.id")
 #     user : Optional["User"] = Relationship(back_populates="notifications")
+
+class AdminConfig(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    admin_creation_code: str = Field(default="illusion")
+    created_at: datetime = Field(default_factory=get_current_time)
+    updated_at: datetime = Field(default_factory=get_current_time)

@@ -207,3 +207,18 @@ class DonationOut(BaseModel):
     book_copy: Optional[BookCopyOut] = None
     user: Optional[UserOut] = None
 
+# Admin Creation Schemas
+class AdminCreateRequest(BaseModel):
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    password: str
+    admin_code: str
+
+class AdminCodeChangeRequest(BaseModel):
+    new_code: str
+
+class AdminCodeResponse(BaseModel):
+    message: str
+
