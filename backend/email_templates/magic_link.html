@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ইমেইল যাচাই করুন - বই আড্ডা</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+            background-size: cover;
+            opacity: 0.3;
+        }
+        
+        .logo {
+            background: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            fill: #059669;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .message {
+            color: #4b5563;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white !important;
+            padding: 18px 50px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(5, 150, 105, 0.5);
+        }
+        
+        .link-info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #92400e;
+        }
+        
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+            margin: 30px 0;
+        }
+        
+        .alternative-method {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .alternative-method p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .alternative-method a {
+            color: #059669;
+            word-break: break-all;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        
+        .info-box {
+            background: #f9fafb;
+            border-left: 4px solid #059669;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .info-box h3 {
+            color: #1f2937;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-box li {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.8;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .info-box li::before {
+            content: '✓';
+            color: #059669;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .footer {
+            background: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .footer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #059669;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: #059669;
+        }
+        
+        .footer-text {
+            color: #9ca3af;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .love {
+            color: #ef4444;
+            display: inline-block;
+            animation: heartbeat 1.5s infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .button {
+                padding: 16px 40px;
+                font-size: 16px;
+            }
+            
+            .footer-stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+            </div>
+            <h1>বই আড্ডা</h1>
+            <p>জ্ঞান ভাগাভাগির মাধ্যম • যশোর বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            
+            <div class="message">
+                বই আড্ডা পরিবারে আপনাকে স্বাগতম! আপনার অ্যাকাউন্ট সক্রিয় করতে নিচের বাটনে ক্লিক করুন।
+            </div>
+            
+            <!-- CTA Button -->
+            <div class="button-container">
+                <a href="{{ .ConfirmationURL }}" class="button">
+                    ✅ ইমেইল যাচাই করুন
+                </a>
+            </div>
+            
+            <div class="link-info">
+                ⏰ এই লিংকটি ৬০ মিনিটের জন্য বৈধ। সময় শেষ হলে নতুন লিংক চেয়ে নিন।
+            </div>
+            
+            <div class="divider"></div>
+            
+            <!-- Alternative Method -->
+            <div class="alternative-method">
+                <p><strong>বাটন কাজ না করলে?</strong></p>
+                <p>নিচের লিংকটি কপি করে আপনার ব্রাউজারে পেস্ট করুন:</p>
+                <a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a>
+            </div>
+            
+            <!-- Info Box -->
+            <div class="info-box">
+                <h3>🔐 নিরাপত্তা টিপস:</h3>
+                <ul>
+                    <li>এই লিংকটি কারো সাথে শেয়ার করবেন না</li>
+                    <li>বই আড্ডা টিম কখনো ইমেইল বা ফোনে পাসওয়ার্ড চাইবে না</li>
+                    <li>সন্দেহজনক কিছু দেখলে অবিলম্বে আমাদের জানান</li>
+                </ul>
+            </div>
+            
+            <div class="message">
+                যদি আপনি এই অ্যাকাউন্ট তৈরি না করে থাকেন, তাহলে এই ইমেইলটি উপেক্ষা করুন।
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>
