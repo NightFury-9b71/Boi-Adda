@@ -32,6 +32,7 @@ import { apiServices } from '../../api';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
 import OptimizedImage from '../../components/OptimizedImage';
 import ImageUpload from '../../components/ImageUpload';
+import { storageService } from '../../services/storage';
 
 const AdminBookManagement = () => {
   const queryClient = useQueryClient();
@@ -405,6 +406,8 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
   });
 
   const [useCustomImage, setUseCustomImage] = useState(!!book?.cover_public_id);
+  const [selectedFile, setSelectedFile] = useState(null); // For deferred upload
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state for form submission
 
   const availableCovers = [
     'cover-1.jpg', 'cover-2.jpg', 'cover-3.jpg', 'cover-4.jpg', 'cover-5.jpg',
@@ -435,31 +438,66 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
     
     if (!confirmed) return;
 
-    const submitData = {
-      ...formData,
-      category_id: formData.category_id ? parseInt(formData.category_id) : null,
-      published_year: parseInt(formData.published_year),
-      pages: parseInt(formData.pages),
-      total_copies: parseInt(formData.total_copies) || 1
-    };
+    setIsSubmitting(true);
 
-    onSubmit(submitData);
-  };
+    try {
+      let submitData = {
+        ...formData,
+        category_id: formData.category_id ? parseInt(formData.category_id) : null,
+        published_year: parseInt(formData.published_year),
+        pages: parseInt(formData.pages),
+        total_copies: parseInt(formData.total_copies) || 1
+      };
 
-  // Handle Cloudinary upload success
-  const handleUploadSuccess = (result) => {
-    setFormData(prev => ({
-      ...prev,
-      cover_public_id: result.publicId,
-      cover: result.secureUrl
-    }));
-    setUseCustomImage(true);
-    toast.success('ছবি সফলভাবে আপলোড হয়েছে!');
-  };
+      let createdBook = null;
 
-  // Handle upload error
-  const handleUploadError = (error) => {
-    toast.error('ছবি আপলোড করতে সমস্যা হয়েছে: ' + error);
+      if (isEdit) {
+        // For editing, update the book
+        toast.loading('বইয়ের তথ্য আপডেট হচ্ছে...', { id: 'book-update' });
+        createdBook = await apiServices.books.updateBook(book.id, submitData);
+        
+        // If there's a selected file, upload it
+        if (selectedFile) {
+          toast.loading('কভার ছবি আপলোড হচ্ছে...', { id: 'book-update' });
+          const uploadResult = await storageService.uploadBookCover(selectedFile, book.id);
+          // Update the book with the new cover URL
+          await apiServices.books.updateBook(book.id, {
+            ...submitData,
+            cover_image_url: uploadResult.url
+          });
+          toast.success('বই এবং কভার ছবি সফলভাবে আপডেট হয়েছে!', { id: 'book-update' });
+        } else {
+          toast.success('বইয়ের তথ্য সফলভাবে আপডেট করা হয়েছে!', { id: 'book-update' });
+        }
+      } else {
+        // For new books, create the book first
+        toast.loading('বই তৈরি হচ্ছে...', { id: 'book-create' });
+        createdBook = await apiServices.books.addBook(submitData);
+        
+        // If there's a selected file, upload the cover
+        if (selectedFile) {
+          toast.loading('কভার ছবি আপলোড হচ্ছে...', { id: 'book-create' });
+          const uploadResult = await storageService.uploadBookCover(selectedFile, createdBook.id);
+          // Update the book with the new cover URL
+          await apiServices.books.updateBook(createdBook.id, {
+            cover_image_url: uploadResult.url
+          });
+          toast.success('বই এবং কভার ছবি সফলভাবে যোগ করা হয়েছে!', { id: 'book-create' });
+        } else {
+          toast.success('নতুন বই সফলভাবে যোগ করা হয়েছে!', { id: 'book-create' });
+        }
+      }
+
+      onSubmit(submitData);
+    } catch (error) {
+      console.error('Submit error:', error);
+      const errorMessage = error?.response?.data?.detail || error.message;
+      toast.error(`অপারেশন ব্যর্থ হয়েছে: ${errorMessage}`, { 
+        id: isEdit ? 'book-update' : 'book-create' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -517,6 +555,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="বইয়ের সম্পূর্ণ নাম লিখুন..."
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -532,6 +571,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="লেখকের নাম লিখুন..."
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -546,6 +586,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 value={formData.category_id}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                disabled={isSubmitting}
               >
                 <option value="">বিভাগ নির্বাচন করুন</option>
                 {categories.map((category) => (
@@ -569,6 +610,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 max={new Date().getFullYear()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 required
+                disabled={isSubmitting}
               />
             </div>
             
@@ -585,6 +627,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="পৃষ্ঠা"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -601,6 +644,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="কপি"
                 required
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -613,8 +657,6 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             
             {/* Cloudinary Image Upload */}
             <ImageUpload
-              onUploadSuccess={handleUploadSuccess}
-              onUploadError={handleUploadError}
               folder="book-covers"
               maxSize={5 * 1024 * 1024} // 5MB
               allowedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/webp']}
@@ -627,6 +669,18 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 gravity: 'center'
               }}
               value={formData.cover_public_id}
+              deferred={true}
+              disabled={isSubmitting}
+              onFileSelect={(result) => {
+                console.log('📁 AdminBookManagement: File selected:', result.file.name);
+                setSelectedFile(result.file);
+                setFormData(prev => ({
+                  ...prev,
+                  cover_public_id: null, // Clear any existing uploaded image
+                  cover: result.previewUrl // Use preview URL temporarily
+                }));
+                setUseCustomImage(true);
+              }}
             />
 
             {/* Default Cover Options */}
@@ -637,12 +691,14 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                   {availableCovers.map((cover) => (
                     <div
                       key={cover}
-                      onClick={() => setFormData(prev => ({ 
+                      onClick={() => !isSubmitting && setFormData(prev => ({ 
                         ...prev, 
                         cover,
                         cover_public_id: null 
                       }))}
                       className={`cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      } ${
                         formData.cover === cover && !formData.cover_public_id
                           ? 'border-green-500 ring-2 ring-green-200' 
                           : 'border-gray-200 hover:border-gray-300'
@@ -668,7 +724,13 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             <h4 className="font-medium text-gray-900 mb-3">প্রিভিউ</h4>
             <div className="flex items-start space-x-4">
               <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                {formData.cover_public_id ? (
+                {selectedFile ? (
+                  <img
+                    src={URL.createObjectURL(selectedFile)}
+                    alt="Selected cover preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : formData.cover_public_id ? (
                   <OptimizedImage
                     publicId={formData.cover_public_id}
                     alt="Uploaded cover preview"
@@ -698,8 +760,13 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                   <span>{formData.published_year}</span>
                   <span>{formData.pages} পৃষ্ঠা</span>
                   <span>{formData.total_copies} কপি</span>
-                  {formData.cover_public_id && (
+                  {selectedFile && (
                     <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                      নতুন ছবি নির্বাচিত
+                    </span>
+                  )}
+                  {formData.cover_public_id && !selectedFile && (
+                    <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-800">
                       Cloudinary
                     </span>
                   )}
@@ -718,11 +785,11 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
               <Book className="h-4 w-4" />
-              <span>{isLoading ? 'প্রক্রিয়াকরণ...' : (isEdit ? 'আপডেট' : 'যোগ করুন')}</span>
+              <span>{isSubmitting ? 'প্রক্রিয়াকরণ...' : (isEdit ? 'আপডেট' : 'যোগ করুন')}</span>
             </button>
           </div>
         </form>

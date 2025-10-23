@@ -15,7 +15,10 @@ const ImageUpload = ({
   required = false,
   disabled = false,
   value = null, // For controlled component
+  deferred = false, // New prop: if true, don't upload immediately, just return the file
+  onFileSelect = null, // New callback: called when file is selected (for deferred mode)
 }) => {
+  console.log('🖼️ ImageUpload rendered with deferred:', deferred, 'at', new Date().toISOString());
   const [uploadState, setUploadState] = useState({
     uploading: false,
     preview: value || null,
@@ -34,7 +37,8 @@ const ImageUpload = ({
     console.log('📁 File selected:', {
       name: file.name,
       size: file.size,
-      type: file.type
+      type: file.type,
+      deferred: deferred
     });
 
     // Validate file
@@ -63,6 +67,30 @@ const ImageUpload = ({
     setUploadState(prev => ({
       ...prev,
       preview: previewUrl,
+      uploading: false, // Don't show uploading for deferred
+      error: null,
+      success: true, // Show as successfully selected
+      progress: 100,
+    }));
+
+    // If deferred mode, just call onFileSelect callback
+    if (deferred) {
+      console.log('📋 Deferred mode: calling onFileSelect with file:', file.name);
+      onFileSelect?.({
+        file,
+        previewUrl,
+        publicId: null,
+        secureUrl: previewUrl,
+        url: previewUrl,
+      });
+      return;
+    }
+
+    console.log('🚀 Not deferred mode, proceeding with upload');
+
+    // Otherwise, proceed with upload
+    setUploadState(prev => ({
+      ...prev,
       uploading: true,
       error: null,
       success: false,
@@ -113,7 +141,7 @@ const ImageUpload = ({
       }));
       onUploadError?.(error.message || 'Upload failed');
     }
-  }, [folder, maxSize, allowedTypes, transformations, disabled, onUploadSuccess, onUploadError]);
+  }, [folder, maxSize, allowedTypes, transformations, disabled, onUploadSuccess, onUploadError, deferred, onFileSelect]);
 
   // Handle file input change
   const handleFileInputChange = (event) => {

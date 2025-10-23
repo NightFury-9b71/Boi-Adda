@@ -3,7 +3,7 @@
  * Maintained for backward compatibility
  */
 
-import storageService from './storage';
+import { storageService } from './storage';
 
 // Re-export storage service as cloudinary service for backward compatibility
 export default storageService;

@@ -79,7 +79,7 @@ class StorageService {
     let uploadEndpoint = '/images/upload'; // Default endpoint
     
     if (options.type === 'book-cover') {
-      uploadEndpoint = `/images/upload-book-cover/${options.bookId}`;
+      uploadEndpoint = `/images/books/${options.bookId}/cover`;
     } else if (options.type === 'user-profile') {
       uploadEndpoint = '/users/me/upload-profile-image';
     } else if (options.type === 'user-cover') {
@@ -124,7 +124,7 @@ class StorageService {
     formData.append('file', file);
 
     try {
-      const response = await apiClient.post(`/images/upload-book-cover/${bookId}`, formData, {
+      const response = await apiClient.post(`/images/books/${bookId}/cover`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -202,7 +202,7 @@ class StorageService {
    */
   async deleteBookCover(bookId) {
     try {
-      const response = await apiClient.delete(`/images/book-cover/${bookId}`);
+      const response = await apiClient.delete(`/images/books/${bookId}/cover`);
       return response.data;
     } catch (error) {
       console.error('Book cover delete error:', error);
@@ -220,7 +220,7 @@ class StorageService {
    */
   async deleteUserProfile() {
     try {
-      const response = await apiClient.delete('/users/me/profile-image');
+      const response = await apiClient.delete('/auth/profile-photo');
       return response.data;
     } catch (error) {
       console.error('Profile image delete error:', error);
@@ -348,4 +348,5 @@ export const {
   validateFile,
 } = storageService;
 
-export default storageService;
+// Export the service instance as named export
+export { storageService };
