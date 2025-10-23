@@ -38,9 +38,9 @@ const Header = () => {
               className="flex items-center space-x-2 rounded-lg px-3 py-2 transition-colors duration-300"
             >
               <div className="h-8 w-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-yellow-400/50 hover:scale-110">
-                {user?.profile_image ? (
+                {user?.profile_photo_url ? (
                   <img 
-                    src={user.profile_image} 
+                    src={user.profile_photo_url} 
                     alt="Profile" 
                     className="w-full h-full object-cover transition-all duration-300 hover:brightness-110 hover:shadow-lg hover:shadow-yellow-400/60"
                   />

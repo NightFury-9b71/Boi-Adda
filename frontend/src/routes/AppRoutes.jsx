@@ -9,6 +9,8 @@ import { PublicLayout, ProtectedLayout, AdminLayout } from '../layouts/Layout';
 import LandingPage from '../pages/LandingPage';
 import NotFound from '../pages/NotFound';
 
+import Book from '../components/book';
+
 // Import all pages
 import {
   SearchPage,
@@ -45,6 +47,7 @@ const AppRoutes = () => {
       {/* Unauthorized access routes */}
       <Route path="/unauthorized" element={<PublicLayout />}>
         <Route path="books" element={<BooksLibrary />} />
+        <Route path="book" element={<Book />} />
       </Route>
 
       {/* Protected User Routes */}

@@ -80,8 +80,8 @@ const AdminDonationManagement = () => {
 
   // Filter donations based on search and status
   const filteredDonations = donations.filter(donation => {
-    const donorName = donation.user?.name || 'অজানা';
-    const bookTitle = donation.book_copy?.book?.title || 'অজানা বই';
+    const donorName = donation.member_name || 'অজানা';
+    const bookTitle = donation.donation_title || 'অজানা বই';
     
     const matchesSearch = donorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          bookTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -329,56 +329,30 @@ const AdminDonationManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-white p-0.5 shadow-sm">
-                          {donation.user?.profile_image ? (
-                            <img
-                              src={donation.user.profile_image}
-                              alt={donation.user.name}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-xs ${donation.user?.profile_image ? 'hidden' : 'flex'}`}>
-                            {donation.user?.name?.charAt(0) || 'দ'}
-                          </div>
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-xs shadow-sm">
+                          {donation.member_name?.charAt(0) || 'দ'}
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {donation.user?.name || 'অজানা দাতা'}
+                            {donation.member_name || 'অজানা দাতা'}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {donation.user?.email || 'ইমেইল নেই'}
+                            {donation.member_email || 'ইমেইল নেই'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-12 w-10 bg-white rounded shadow-sm overflow-hidden mr-3">
-                          {donation.book_copy?.book?.cover ? (
-                            <img
-                              src={donation.book_copy.book.cover}
-                              alt={donation.book_copy.book.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-full h-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-xs ${donation.book_copy?.book?.cover ? 'hidden' : 'flex'}`}>
-                            BOOK
-                          </div>
+                        <div className="h-12 w-10 bg-purple-200 rounded shadow-sm flex items-center justify-center mr-3">
+                          <span className="text-purple-700 font-bold text-xs">BOOK</span>
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {donation.book_copy?.book?.title || 'অজানা বই'}
+                            {donation.donation_title || 'অজানা বই'}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {donation.book_copy?.book?.author || 'অজানা লেখক'}
+                            {donation.donation_author || 'অজানা লেখক'}
                           </div>
                         </div>
                       </div>
@@ -540,28 +514,13 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
             <h3 className="text-lg font-semibold text-gray-900 mb-4">দাতা</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-white p-0.5 shadow-sm">
-                  {donation.user?.profile_image ? (
-                    <img
-                      src={donation.user.profile_image}
-                      alt={donation.user.name}
-                      className="w-full h-full rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-bold ${donation.user?.profile_image ? 'hidden' : 'flex'}`}>
-                    {donation.user?.name?.charAt(0) || 'দ'}
-                  </div>
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
+                  {donation.member_name?.charAt(0) || 'দ'}
                 </div>
                 <div className="ml-4">
-                  <div className="text-lg font-medium text-gray-900">{donation.user?.name || 'অজানা দাতা'}</div>
-                  <div className="text-sm text-gray-500">{donation.user?.email || 'ইমেইল নেই'}</div>
-                  {donation.user?.phone && (
-                    <div className="text-sm text-gray-500">{donation.user.phone}</div>
-                  )}
+                  <div className="text-lg font-medium text-gray-900">{donation.member_name || 'অজানা দাতা'}</div>
+                  <div className="text-sm text-gray-500">{donation.member_email || 'ইমেইল নেই'}</div>
+                  <div className="text-sm text-gray-500">ID: #{donation.member_id}</div>
                 </div>
               </div>
             </div>
@@ -572,37 +531,21 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
             <h3 className="text-lg font-semibold text-gray-900 mb-4">বইয়ের তথ্য</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
-                <div className="h-24 w-16 bg-white rounded shadow-sm overflow-hidden">
-                  {donation.book_copy?.book?.cover ? (
-                    <img
-                      src={donation.book_copy.book.cover}
-                      alt={donation.book_copy.book.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold text-xs ${donation.book_copy?.book?.cover ? 'hidden' : 'flex'}`}>
-                    BOOK
-                  </div>
+                <div className="h-24 w-16 bg-purple-200 rounded shadow-sm flex items-center justify-center">
+                  <span className="text-purple-700 font-bold text-xs">BOOK</span>
                 </div>
                 <div className="ml-4 flex-1">
                   <div className="text-lg font-medium text-gray-900">
-                    {donation.book_copy?.book?.title || 'অজানা বই'}
+                    {donation.donation_title || 'অজানা বই'}
                   </div>
                   <div className="text-sm text-gray-600">
-                    লেখক: {donation.book_copy?.book?.author || 'অজানা লেখক'}
+                    লেখক: {donation.donation_author || 'অজানা লেখক'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    প্রকাশ: {donation.book_copy?.book?.published_year || 'অজানা'}
+                    প্রকাশ: {donation.donation_year || 'অজানা'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    পৃষ্ঠা: {donation.book_copy?.book?.pages || 'অজানা'}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    কপি ID: #{donation.book_copy_id}
+                    পৃষ্ঠা: {donation.donation_pages || 'অজানা'}
                   </div>
                 </div>
               </div>

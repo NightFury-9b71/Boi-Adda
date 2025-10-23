@@ -420,27 +420,16 @@ const AdminDashboard = () => {
             {recentBorrows.map((borrow) => (
               <div key={borrow.id} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
                 <div className="flex-shrink-0">
-                  {borrow.user?.profile_image ? (
-                    <img
-                      src={borrow.user.profile_image}
-                      alt={borrow.user?.name || 'User'}
-                      className="h-8 w-8 rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextElementSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`h-8 w-8 bg-gradient-to-br from-blue-200 to-blue-400 rounded-full flex items-center justify-center text-blue-700 font-semibold text-sm ${borrow.user?.profile_image ? 'hidden' : ''}`}>
-                    {borrow.user?.name ? borrow.user.name.charAt(0).toUpperCase() : 'U'}
+                  <div className="h-8 w-8 bg-gradient-to-br from-blue-200 to-blue-400 rounded-full flex items-center justify-center text-blue-700 font-semibold text-sm">
+                    {borrow.member_name ? borrow.member_name.charAt(0).toUpperCase() : 'U'}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {borrow.user?.name || 'অজানা ব্যবহারকারী'}
+                    {borrow.member_name || 'অজানা ব্যবহারকারী'}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {borrow.book_copy?.book?.title || 'অজানা বই'}
+                    {borrow.book_title || 'অজানা বই'}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">
@@ -472,27 +461,16 @@ const AdminDashboard = () => {
             {recentDonations.map((donation) => (
               <div key={donation.id} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
                 <div className="flex-shrink-0">
-                  {donation.user?.profile_image ? (
-                    <img
-                      src={donation.user.profile_image}
-                      alt={donation.user?.name || 'User'}
-                      className="h-8 w-8 rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextElementSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className={`h-8 w-8 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center text-purple-700 font-semibold text-sm ${donation.user?.profile_image ? 'hidden' : ''}`}>
-                    {donation.user?.name ? donation.user.name.charAt(0).toUpperCase() : 'U'}
+                  <div className="h-8 w-8 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center text-purple-700 font-semibold text-sm">
+                    {donation.member_name ? donation.member_name.charAt(0).toUpperCase() : 'U'}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {donation.user?.name || 'অজানা দাতা'}
+                    {donation.member_name || 'অজানা দাতা'}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {donation.book_copy?.book?.title || 'অজানা বই'}
+                    {donation.donation_title || 'অজানা বই'}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">

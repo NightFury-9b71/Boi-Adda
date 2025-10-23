@@ -1,5 +1,5 @@
 from db import get_session
-from models import Book, Member, BookRequest, requestType, requestStatus
+from models import Book, User, BookRequest, requestType, requestStatus
 from sqlmodel import select, Session, SQLModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime
@@ -43,7 +43,7 @@ def create_donation_request(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -101,7 +101,7 @@ def create_donation_with_book(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -154,7 +154,7 @@ def get_my_donation_requests(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -205,7 +205,7 @@ def cancel_donation_request(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

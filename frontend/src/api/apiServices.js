@@ -6,7 +6,7 @@ const apiServices = {
   database:{
     getOverviewStats: async() => {
       const response = await apiClient.get(API_ENDPOINTS.DATABASE.STATS);
-      return response.data.total_records;
+      return response.data; // Return full data object with all stats
     }
   },
 
@@ -109,6 +109,10 @@ const apiServices = {
     },
     cancelBorrow: async (borrowId) => {
       const response = await apiClient.put(`/borrows/${borrowId}/cancel`);
+      return response.data;
+    },
+    returnBook: async (borrowId) => {
+      const response = await apiClient.put(`/borrows/${borrowId}/return`);
       return response.data;
     }
   },

@@ -1,6 +1,6 @@
 from db import get_session
 from models import (
-    Book, BookCopy, Member, Admin, BookRequest, IssueBook,
+    Book, BookCopy, User, User, BookRequest, IssueBook,
     requestType, requestStatus, bookStatus
 )
 from sqlmodel import select, Session, SQLModel
@@ -66,7 +66,7 @@ def approve_borrow_request(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -142,7 +142,7 @@ def reject_borrow_request(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -200,7 +200,7 @@ def return_book(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -274,7 +274,7 @@ def get_all_issued_books(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -321,7 +321,7 @@ def get_overdue_books(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -368,7 +368,7 @@ def get_pending_requests(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -412,7 +412,7 @@ def get_approved_requests(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -462,7 +462,7 @@ def get_member_issued_books(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -510,7 +510,7 @@ def get_member_issue_details(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

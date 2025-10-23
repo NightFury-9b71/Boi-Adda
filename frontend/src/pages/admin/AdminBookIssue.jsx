@@ -68,7 +68,7 @@ const IssueBook = () => {
 
   // Filter active members
   const activeMembers = members.filter(member => 
-    member.is_active && member.role === 'member'
+    member.is_verified && member.role === 'member'
   );
 
   // Filter available books
@@ -330,9 +330,9 @@ const IssueBook = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="h-12 w-12 rounded-full bg-white p-0.5 shadow-sm">
-                    {selectedMember.profile_image ? (
+                    {selectedMember.profile_photo_url ? (
                       <img
-                        src={selectedMember.profile_image}
+                        src={selectedMember.profile_photo_url}
                         alt={selectedMember.name}
                         className="w-full h-full rounded-full object-cover"
                         onError={(e) => {
@@ -341,7 +341,7 @@ const IssueBook = () => {
                         }}
                       />
                     ) : null}
-                    <div className={`w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold ${selectedMember.profile_image ? 'hidden' : 'flex'}`}>
+                    <div className={`w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold ${selectedMember.profile_photo_url ? 'hidden' : 'flex'}`}>
                       {selectedMember.name?.charAt(0) || 'ব'}
                     </div>
                   </div>
@@ -376,9 +376,9 @@ const IssueBook = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 rounded-full bg-white p-0.5 shadow-sm">
-                          {member.profile_image ? (
+                          {member.profile_photo_url ? (
                             <img
-                              src={member.profile_image}
+                              src={member.profile_photo_url}
                               alt={member.name}
                               className="w-full h-full rounded-full object-cover"
                               onError={(e) => {
@@ -387,7 +387,7 @@ const IssueBook = () => {
                               }}
                             />
                           ) : null}
-                          <div className={`w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs ${member.profile_image ? 'hidden' : 'flex'}`}>
+                          <div className={`w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs ${member.profile_photo_url ? 'hidden' : 'flex'}`}>
                             {member.name?.charAt(0) || 'ব'}
                           </div>
                         </div>
@@ -399,7 +399,7 @@ const IssueBook = () => {
                       <div className="text-right">
                         <p className="text-xs text-blue-600 font-medium">ID: #{member.id}</p>
                         <p className="text-xs text-gray-500">
-                          {member.is_active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+                          {member.is_verified ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
                         </p>
                       </div>
                     </div>

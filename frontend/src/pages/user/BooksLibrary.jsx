@@ -68,8 +68,9 @@ const BooksLibrary = () => {
     if (!user || !userBorrows || userBorrows.length === 0) return null;
     
     const borrow = userBorrows.find(borrow => {
-      const borrowBookId = borrow.book_copy?.book?.id || borrow.book_copy?.book_id;
-      const isActiveStatus = ['pending', 'approved', 'active'].includes(borrow.status);
+      // API returns book_id directly in the borrow object
+      const borrowBookId = borrow.book_id;
+      const isActiveStatus = ['pending', 'approved', 'collected', 'return_requested'].includes(borrow.status);
       return borrowBookId === bookId && isActiveStatus;
     });
     
@@ -98,10 +99,16 @@ const BooksLibrary = () => {
           className: 'bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full',
           canCancel: true
         };
-      case 'active':
+      case 'collected':
         return {
           text: t('books.withYou'),
           className: 'bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full',
+          canCancel: false
+        };
+      case 'return_requested':
+        return {
+          text: 'ফেরত অনুরোধ',
+          className: 'bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full',
           canCancel: false
         };
       default:
@@ -183,24 +190,15 @@ const BooksLibrary = () => {
     setConfirmModal({ isOpen: false, book: null });
     
     try {
-      // Find an available book copy
-      if (!book.total_copies || book.total_copies === 0) {
+      // Check if book has available copies
+      if (!book.available_copies || book.available_copies === 0) {
         toast.error(t('books.noCopiesAvailable'));
         return;
       }
 
-      // Get available book copies for this book
-      const availableCopies = await apiServices.bookCopies.getAvailableForBook(book.id);
-      
-      if (!availableCopies || availableCopies.length === 0) {
-        toast.error(t('books.noAvailableCopies'));
-        return;
-      }
-
-      // Use the first available copy
+      // Create borrow request with just book_id (backend handles finding available copy)
       const borrowData = {
-        user_id: user.id,
-        book_copy_id: availableCopies[0].id
+        book_id: book.id
       };
 
       await apiServices.borrows.createBorrow(borrowData);
@@ -211,7 +209,19 @@ const BooksLibrary = () => {
       queryClient.invalidateQueries(['books']);
     } catch (error) {
       console.error('Borrow request error:', error);
-      toast.error(`${t('books.borrowRequestError')}: ${error.response?.data?.detail || t('common.error')}`);
+      
+      // Get detailed error message
+      let errorMessage = t('common.error');
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`${t('books.borrowRequestError')}: ${errorMessage}`);
     }
   };
 
@@ -360,17 +370,9 @@ const BooksLibrary = () => {
                 <>
                   <div className="relative">
                     <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                      {book.cover_public_id ? (
-                        <OptimizedImage
-                          publicId={book.cover_public_id}
-                          alt={book.title}
-                          type="bookCover"
-                          size="medium"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : book.cover ? (
+                      {book.cover || book.cover_image_url ? (
                         <img
-                          src={book.cover}
+                          src={book.cover || book.cover_image_url}
                           alt={book.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -379,15 +381,15 @@ const BooksLibrary = () => {
                           }}
                         />
                       ) : null}
-                      <div className="flex flex-col items-center justify-center text-gray-400" style={{display: (book.cover_public_id || book.cover) ? 'none' : 'flex'}}>
+                      <div className="flex flex-col items-center justify-center text-gray-400" style={{display: (book.cover || book.cover_image_url) ? 'none' : 'flex'}}>
                         <BookOpen className="h-12 w-12 mb-2" />
                         <span className="text-sm text-center px-2">{book.title}</span>
                       </div>
                     </div>
                     <div className="absolute top-2 right-2 flex space-x-1">
-                      {book.total_copies > 0 ? (
+                      {book.available_copies > 0 ? (
                         <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          {t('books.copiesAvailable', { count: book.total_copies })}
+                          {t('books.copiesAvailable', { count: book.available_copies })}
                         </span>
                       ) : (
                         <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
@@ -434,7 +436,7 @@ const BooksLibrary = () => {
                               {statusDisplay.text}
                             </span>
                           );
-                        } else if (book.total_copies > 0) {
+                        } else if (book.available_copies > 0) {
                           return (
                             <button
                               onClick={(e) => {
@@ -460,17 +462,9 @@ const BooksLibrary = () => {
               ) : (
                                 <>
                   <div className="w-24 h-32 bg-gray-100 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {book.cover_public_id ? (
-                      <OptimizedImage
-                        publicId={book.cover_public_id}
-                        alt={book.title}
-                        type="bookCover"
-                        size="small"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : book.cover ? (
+                    {book.cover || book.cover_image_url ? (
                       <img
-                        src={book.cover}
+                        src={book.cover || book.cover_image_url}
                         alt={book.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -479,7 +473,7 @@ const BooksLibrary = () => {
                         }}
                       />
                     ) : null}
-                    <div className="flex flex-col items-center justify-center text-gray-400 p-2" style={{display: (book.cover_public_id || book.cover) ? 'none' : 'flex'}}>
+                    <div className="flex flex-col items-center justify-center text-gray-400 p-2" style={{display: (book.cover || book.cover_image_url) ? 'none' : 'flex'}}>
                       <BookOpen className="h-6 w-6 mb-1" />
                       <span className="text-xs text-center leading-tight">{book.title?.slice(0, 20)}</span>
                     </div>
@@ -509,9 +503,9 @@ const BooksLibrary = () => {
                         
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            {book.total_copies > 0 ? (
+                            {book.available_copies > 0 ? (
                               <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                {t('books.copiesInStock', { count: book.total_copies })}
+                                {t('books.copiesInStock', { count: book.available_copies })}
                               </span>
                             ) : (
                               <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
@@ -542,7 +536,7 @@ const BooksLibrary = () => {
                                 {statusDisplay.text}
                               </span>
                             );
-                          } else if (book.total_copies > 0) {
+                          } else if (book.available_copies > 0) {
                             return (
                               <button
                                 onClick={(e) => {

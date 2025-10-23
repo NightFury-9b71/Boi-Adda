@@ -22,16 +22,28 @@ from router import (
 )
 from auth import router as auth_router
 
-
 app = FastAPI()
 
-# CORS configuration
+# CORS configuration - Allow frontend to access backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend URLs
+    allow_origins=[
+        "http://localhost:5173",  # Vite default
+        "http://localhost:3000",  # React default
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+    ],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 @app.on_event("startup")
@@ -82,3 +94,5 @@ app.include_router(issue_books.router, prefix="/issue", tags=["Issue Books Manag
 
 # Mock data
 app.include_router(mock_data.router, prefix="/mock", tags=["Mock Data"])
+
+

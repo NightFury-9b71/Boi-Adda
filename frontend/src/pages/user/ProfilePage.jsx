@@ -36,10 +36,7 @@ const ProfilePage = () => {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploadingProfile, setIsUploadingProfile] = useState(false);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const [coverPreview, setCoverPreview] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
-  const coverFileRef = useRef(null);
   const profileFileRef = useRef(null);
 
   // Form data state with proper initialization
@@ -55,6 +52,7 @@ const ProfilePage = () => {
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
+
       setFormData({
         name: user.name || '',
         email: user.email || '',
@@ -108,10 +106,15 @@ const ProfilePage = () => {
     },
     onSuccess: async (data) => {
       toast.success(t('profile.profileImageSuccess'));
-      // Clear preview and refresh user data
+      // Clear preview
       setProfilePreview(null);
-      await queryClient.invalidateQueries(['currentUser']);
+      // Force refetch user data
+      await queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       await refetchUser();
+      // Force a small delay to ensure backend has updated
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      }, 500);
     },
     onError: (error) => {
       console.error('Profile upload error:', error);
@@ -123,32 +126,6 @@ const ProfilePage = () => {
     },
     onSettled: () => {
       setIsUploadingProfile(false);
-    }
-  });
-
-  // Cover image upload mutation
-  const uploadCoverImageMutation = useMutation({
-    mutationFn: (file) => cloudinaryService.uploadUserCover(file),
-    onMutate: () => {
-      setIsUploadingCover(true);
-    },
-    onSuccess: async (data) => {
-      toast.success(t('profile.coverImageSuccess'));
-      // Clear preview and refresh user data
-      setCoverPreview(null);
-      await queryClient.invalidateQueries(['currentUser']);
-      await refetchUser();
-    },
-    onError: (error) => {
-      console.error('Cover upload error:', error);
-      const errorMessage = error?.response?.data?.detail || 
-                          error?.message || 
-                          t('profile.coverImageError');
-      toast.error(errorMessage);
-      setCoverPreview(null);
-    },
-    onSettled: () => {
-      setIsUploadingCover(false);
     }
   });
 
@@ -182,30 +159,6 @@ const ProfilePage = () => {
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
     reader.readAsDataURL(file);
-  };
-
-  // Handle cover image upload
-  const handleCoverUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const validation = validateImageFile(file);
-    if (!validation.isValid) {
-      toast.error(validation.error);
-      return;
-    }
-
-    // Show preview immediately
-    createImagePreview(file, setCoverPreview);
-    
-    try {
-      await uploadCoverImageMutation.mutateAsync(file);
-    } catch (error) {
-      // Error is handled in the mutation
-    }
-    
-    // Reset file input
-    e.target.value = '';
   };
 
   // Handle profile image upload
@@ -283,8 +236,7 @@ const ProfilePage = () => {
       });
     }
     
-    // Clear image previews
-    setCoverPreview(null);
+    // Clear image preview
     setProfilePreview(null);
     setIsEditing(false);
   };
@@ -329,60 +281,16 @@ const ProfilePage = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4">
-      {/* Cover Section */}
+      {/* Profile Header Section */}
       <div className="relative">
-        <div className="h-48 md:h-64 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl overflow-hidden">
-          {coverPreview ? (
-            <img
-              src={coverPreview}
-              alt="Cover Preview"
-              className="w-full h-full object-cover"
-            />
-          ) : user?.cover_public_id ? (
-            <OptimizedImage
-              publicId={user.cover_public_id}
-              alt="Cover"
-              type="userCover"
-              size="medium"
-              className="w-full h-full object-cover"
-            />
-          ) : user?.cover_image ? (
-            <img
-              src={user.cover_image}
-              alt="Cover"
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-green-600 to-green-800 flex items-center justify-center">
-              <div className="text-center text-white/70">
-                <Upload className="h-12 w-12 mx-auto mb-2" />
-                <p className="text-sm">{t('profile.uploadCover')}</p>
-              </div>
-            </div>
-          )}
-          
-          {/* Upload cover button */}
-          <button
-            onClick={() => coverFileRef.current?.click()}
-            disabled={isUploadingCover}
-            className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-lg hover:bg-black/70 transition-colors disabled:opacity-50"
-            title={t('profile.changeCover')}
-          >
-            {isUploadingCover ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Camera className="h-5 w-5" />
-            )}
-          </button>
-          
-          <input
-            ref={coverFileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleCoverUpload}
-            className="hidden"
-          />
+        {/* Header Background - Simple Gradient */}
+        <div className="h-48 md:h-64 bg-gradient-to-r from-green-600 to-green-800 rounded-xl overflow-hidden">
+          {/* Decorative pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-6 left-6 w-24 h-24 border-2 border-white rounded-full"></div>
+            <div className="absolute bottom-6 right-6 w-20 h-20 border-2 border-white rounded-full"></div>
+            <div className="absolute top-1/2 right-1/4 w-16 h-16 border-2 border-white rounded-full"></div>
+          </div>
         </div>
 
         {/* Profile Picture */}
@@ -395,6 +303,13 @@ const ProfilePage = () => {
                   alt="Profile Preview"
                   className="w-full h-full rounded-full object-cover"
                 />
+              ) : user?.profile_photo_url ? (
+                <img
+                  src={user.profile_photo_url}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover"
+                  loading="lazy"
+                />
               ) : user?.profile_public_id ? (
                 <OptimizedImage
                   publicId={user.profile_public_id}
@@ -403,9 +318,9 @@ const ProfilePage = () => {
                   size="large"
                   className="w-full h-full rounded-full object-cover"
                 />
-              ) : user?.profile_image ? (
+              ) : user?.profile_photo_url ? (
                 <img
-                  src={user.profile_image}
+                  src={user.profile_photo_url}
                   alt="Profile"
                   className="w-full h-full rounded-full object-cover"
                   loading="lazy"

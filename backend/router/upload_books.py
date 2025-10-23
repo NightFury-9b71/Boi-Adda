@@ -1,5 +1,5 @@
 from db import get_session
-from models import Book, BookCopy, Admin, bookStatus
+from models import Book, BookCopy, User, bookStatus
 from sqlmodel import select, Session, SQLModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime
@@ -30,7 +30,7 @@ def upload_books_directly(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

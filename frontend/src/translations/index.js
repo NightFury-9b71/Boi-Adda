@@ -70,6 +70,8 @@ export const bn = {
   status: {
     pending: 'অপেক্ষমাণ',
     approved: 'অনুমোদিত',
+    collected: 'সংগৃহীত',
+    return_requested: 'ফেরত অনুরোধ',
     completed: 'সম্পন্ন',
     returned: 'ফেরত',
     rejected: 'প্রত্যাখ্যাত',
@@ -566,6 +568,7 @@ export const en = {
   status: {
     pending: 'Pending',
     approved: 'Approved',
+    collected: 'Collected',
     completed: 'Completed',
     returned: 'Returned',
     rejected: 'Rejected',

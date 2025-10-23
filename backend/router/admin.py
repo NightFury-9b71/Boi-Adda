@@ -1,6 +1,6 @@
 from db import get_session
 from models import (
-    Book, BookCopy, bookStatus, Admin, Member, 
+    Book, BookCopy, bookStatus, User, Role,
     BookRequest, requestType, requestStatus, IssueBook
 )
 from sqlmodel import select, Session, SQLModel, func
@@ -94,7 +94,7 @@ def get_dashboard_stats(
     
     # Total statistics
     total_books = session.exec(select(func.count(Book.id))).one()
-    total_members = session.exec(select(func.count(Member.id))).one()
+    total_members = session.exec(select(func.count(User.id))).one()
     available_copies = session.exec(
         select(func.count(BookCopy.id)).where(BookCopy.status == bookStatus.AVAILABLE)
     ).one()
@@ -119,8 +119,8 @@ def get_overview_stats(
     """Get comprehensive system statistics overview"""
     
     # User Statistics
-    total_members = session.exec(select(func.count(Member.id))).one()
-    total_admins = session.exec(select(func.count(Admin.id))).one()
+    total_members = session.exec(select(func.count(User.id))).one()
+    total_admins = session.exec(select(func.count(User.id))).one()
     
     # Book Statistics
     total_books = session.exec(select(func.count(Book.id))).one()
@@ -214,8 +214,8 @@ def get_user_stats(
     session: Session = Depends(get_session)
 ):
     """Get detailed user statistics"""
-    total_members = session.exec(select(func.count(Member.id))).one()
-    total_admins = session.exec(select(func.count(Admin.id))).one()
+    total_members = session.exec(select(func.count(User.id))).one()
+    total_admins = session.exec(select(func.count(User.id))).one()
     
     return {
         "total_users": total_members + total_admins,
@@ -401,29 +401,34 @@ def get_all_borrow_requests(
     current_user: dict = Depends(require_admin),
     session: Session = Depends(get_session)
 ):
-    """Get all borrow requests"""
+    """Get all borrow requests with member and book details"""
     requests = session.exec(
         select(BookRequest).where(
             BookRequest.request_type == requestType.BORROW
         ).order_by(BookRequest.created_at.desc())
     ).all()
     
-    return [
-        BorrowRequestResponse(
+    result = []
+    for req in requests:
+        # Manually load relationships
+        member = session.get(User, req.member_id)
+        book = session.get(Book, req.book_id) if req.book_id else None
+        
+        result.append(BorrowRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=req.member.name,
-            member_email=req.member.email,
-            book_id=req.book_id,
-            book_title=req.book.title,
-            book_author=req.book.author,
-            book_cover_url=req.book.cover_image_url,
+            member_name=member.name if member else "Unknown User",
+            member_email=member.email if member else "unknown@email.com",
+            book_id=req.book_id if req.book_id else 0,
+            book_title=book.title if book else "Unknown Book",
+            book_author=book.author if book else "Unknown Author",
+            book_cover_url=book.cover_image_url if book else None,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at
-        )
-        for req in requests
-    ]
+        ))
+    
+    return result
 
 
 @router.get("/borrows/user/{user_id}")
@@ -440,22 +445,27 @@ def get_user_borrows(
         ).order_by(BookRequest.created_at.desc())
     ).all()
     
-    return [
-        BorrowRequestResponse(
+    result = []
+    for req in requests:
+        # Manually load relationships
+        member = session.get(User, req.member_id)
+        book = session.get(Book, req.book_id) if req.book_id else None
+        
+        result.append(BorrowRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=req.member.name,
-            member_email=req.member.email,
-            book_id=req.book_id,
-            book_title=req.book.title,
-            book_author=req.book.author,
-            book_cover_url=req.book.cover_image_url,
+            member_name=member.name if member else "Unknown User",
+            member_email=member.email if member else "unknown@email.com",
+            book_id=req.book_id if req.book_id else 0,
+            book_title=book.title if book else "Unknown Book",
+            book_author=book.author if book else "Unknown Author",
+            book_cover_url=book.cover_image_url if book else None,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at
-        )
-        for req in requests
-    ]
+        ))
+    
+    return result
 
 
 @router.post("/borrows/{borrow_id}/approve")
@@ -466,7 +476,7 @@ def approve_borrow_request(
 ):
     """Approve a borrow request"""
     user_email = current_user.email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     
     if not admin:
         raise HTTPException(
@@ -531,7 +541,7 @@ def handover_book(
 ):
     """Handover book to member (physical collection)"""
     user_email = current_user.email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     
     if not admin:
         raise HTTPException(
@@ -599,7 +609,7 @@ def reject_borrow_request(
 ):
     """Reject a borrow request"""
     user_email = current_user.email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     
     if not admin:
         raise HTTPException(
@@ -679,6 +689,12 @@ def return_book(
         book_copy.status = bookStatus.AVAILABLE
         session.add(book_copy)
     
+    # Update borrow request status to completed
+    borrow_request = session.get(BookRequest, borrow_id)
+    if borrow_request:
+        borrow_request.status = requestStatus.COMPLETED
+        session.add(borrow_request)
+    
     session.commit()
     session.refresh(issue_book)
     
@@ -696,29 +712,33 @@ def get_all_donation_requests(
     current_user: dict = Depends(require_admin),
     session: Session = Depends(get_session)
 ):
-    """Get all donation requests"""
+    """Get all donation requests with member details"""
     requests = session.exec(
         select(BookRequest).where(
             BookRequest.request_type == requestType.DONATION
         ).order_by(BookRequest.created_at.desc())
     ).all()
     
-    return [
-        DonationRequestResponse(
+    result = []
+    for req in requests:
+        # Manually load member relationship
+        member = session.get(User, req.member_id)
+        
+        result.append(DonationRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=req.member.name,
-            member_email=req.member.email,
-            donation_title=req.donation_title,
-            donation_author=req.donation_author,
-            donation_year=req.donation_year,
-            donation_pages=req.donation_pages,
+            member_name=member.name if member else "Unknown User",
+            member_email=member.email if member else "unknown@email.com",
+            donation_title=req.donation_title or "Unknown Title",
+            donation_author=req.donation_author or "Unknown Author",
+            donation_year=req.donation_year or 0,
+            donation_pages=req.donation_pages or 0,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at
-        )
-        for req in requests
-    ]
+        ))
+    
+    return result
 
 
 @router.get("/donations/user/{user_id}")
@@ -735,22 +755,26 @@ def get_user_donations(
         ).order_by(BookRequest.created_at.desc())
     ).all()
     
-    return [
-        DonationRequestResponse(
+    result = []
+    for req in requests:
+        # Manually load member relationship
+        member = session.get(User, req.member_id)
+        
+        result.append(DonationRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=req.member.name,
-            member_email=req.member.email,
-            donation_title=req.donation_title,
-            donation_author=req.donation_author,
-            donation_year=req.donation_year,
-            donation_pages=req.donation_pages,
+            member_name=member.name if member else "Unknown User",
+            member_email=member.email if member else "unknown@email.com",
+            donation_title=req.donation_title or "Unknown Title",
+            donation_author=req.donation_author or "Unknown Author",
+            donation_year=req.donation_year or 0,
+            donation_pages=req.donation_pages or 0,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at
-        )
-        for req in requests
-    ]
+        ))
+    
+    return result
 
 
 @router.post("/donations/{donation_id}/approve")
@@ -761,7 +785,7 @@ def approve_donation_request(
 ):
     """Approve a donation request"""
     user_email = current_user.email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     
     if not admin:
         raise HTTPException(
@@ -873,7 +897,7 @@ def reject_donation_request(
 ):
     """Reject a donation request"""
     user_email = current_user.email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     
     if not admin:
         raise HTTPException(
@@ -918,30 +942,25 @@ def get_all_users(
     current_user: dict = Depends(require_admin),
     session: Session = Depends(get_session)
 ):
-    """Get all users (members and admins)"""
-    members = session.exec(select(Member)).all()
-    admins = session.exec(select(Admin)).all()
+    """Get all users (members and admins) with role information"""
+    all_users = session.exec(select(User)).all()
     
     users = []
-    
-    for member in members:
+    for user in all_users:
+        # Manually load role relationship
+        role = session.get(Role, user.role_id)
+        role_name = role.name if role else "guest"
+        
         users.append({
-            "id": member.id,
-            "name": member.name,
-            "email": member.email,
-            "role": member.role.value,
-            "profile_photo_url": member.profile_photo_url,
-            "user_type": "member"
-        })
-    
-    for admin in admins:
-        users.append({
-            "id": admin.id,
-            "name": admin.name,
-            "email": admin.email,
-            "role": admin.role.value,
-            "profile_photo_url": admin.profile_photo_url,
-            "user_type": "admin"
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": role_name,
+            "profile_photo_url": user.profile_photo_url,
+            "user_type": role_name,  # "admin" or "member"
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "is_verified": user.is_verified,
+            "is_active": user.is_active
         })
     
     return users
@@ -954,7 +973,7 @@ def get_specific_user_stats(
     session: Session = Depends(get_session)
 ):
     """Get specific user activity statistics"""
-    member = session.get(Member, user_id)
+    member = session.get(User, user_id)
     
     if not member:
         raise HTTPException(
@@ -1016,21 +1035,41 @@ def update_user_role(
     session: Session = Depends(get_session)
 ):
     """Update user role"""
-    # Try to find user in members
-    member = session.get(Member, user_id)
+    # Try to find user
+    user = session.get(User, user_id)
     
-    if not member:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
     
-    # For now, just return success (role change between member/admin requires data migration)
+    # Validate role name
+    valid_roles = ["admin", "member", "guest"]
+    if new_role not in valid_roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
+        )
+    
+    # Get the role from database
+    role = session.exec(select(Role).where(Role.name == new_role)).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role '{new_role}' not found in database"
+        )
+    
+    # Update user's role
+    user.role_id = role.id
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    
     return {
-        "message": "User role update requested",
+        "message": f"User role updated to {new_role} successfully",
         "user_id": user_id,
-        "new_role": new_role,
-        "note": "Role changes require database migration"
+        "new_role": new_role
     }
 
 
@@ -1042,7 +1081,7 @@ def update_user_status(
     session: Session = Depends(get_session)
 ):
     """Activate/deactivate user"""
-    member = session.get(Member, user_id)
+    member = session.get(User, user_id)
     
     if not member:
         raise HTTPException(
@@ -1050,13 +1089,16 @@ def update_user_status(
             detail="User not found"
         )
     
-    # Note: User model doesn't have is_active field yet
-    # This is a placeholder response
+    # Update user's active status
+    member.is_active = is_active
+    session.add(member)
+    session.commit()
+    session.refresh(member)
+    
     return {
         "message": f"User {'activated' if is_active else 'deactivated'} successfully",
         "user_id": user_id,
-        "is_active": is_active,
-        "note": "User status field not yet implemented in database"
+        "is_active": is_active
     }
 
 
@@ -1070,7 +1112,7 @@ def issue_book_directly(
 ):
     """Issue a book directly to a member (bypass request workflow)"""
     user_email = current_user.email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     
     if not admin:
         raise HTTPException(
@@ -1079,7 +1121,7 @@ def issue_book_directly(
         )
     
     # Verify member exists
-    member = session.get(Member, data.member_id)
+    member = session.get(User, data.member_id)
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

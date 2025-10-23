@@ -75,86 +75,54 @@ const History = () => {
 
   // Combine and filter data - transform API data to match UI expectations
   const transformBorrowHistory = borrowHistory.map(borrow => {
-    const book = borrow.book_copy?.book || {};
-    
-    // Now we have specific date fields from the backend migration
-    // Use the actual timestamp fields for each status transition
-    // If the new fields are null, fallback to updated_at for current status
-    let approvedDate = borrow.approved_at;       // When admin approved
-    let handoverDate = borrow.handed_over_at;    // When book was handed over
-    let returnDate = borrow.returned_at;         // When book was returned
-    
-    // Fallback logic for existing records that don't have the new date fields populated
-    if (!approvedDate && (borrow.status === 'approved' || borrow.status === 'active' || borrow.status === 'returned')) {
-      approvedDate = borrow.updated_at; // Fallback to updated_at
-    }
-    if (!handoverDate && (borrow.status === 'active' || borrow.status === 'returned')) {
-      handoverDate = borrow.updated_at; // Fallback to updated_at
-    }
-    if (!returnDate && borrow.status === 'returned') {
-      returnDate = borrow.updated_at; // Fallback to updated_at
-    }
-    
+    // API returns flat structure with book data at top level
     return {
       id: borrow.id,
       type: 'borrow',
       book: {
-        id: book.id || borrow.book_copy_id || borrow.id,
-        title: book.title || t('common.unknownBook'),
-        author: book.author || t('common.unknownAuthor'),
-        isbn: book.isbn || null,
-        published_year: book.published_year || null,
-        pages: book.pages || null,
-        category: book.category || null,
-        image_url: book.cover || book.image_url || null,
-        cover_public_id: book.cover_public_id || null
+        id: borrow.book_id,
+        title: borrow.book_title || t('common.unknownBook'),
+        author: borrow.book_author || t('common.unknownAuthor'),
+        isbn: null,
+        published_year: null,
+        pages: null,
+        category: null,
+        image_url: borrow.book_cover_url || borrow.book_cover || null,
+        cover_public_id: null
       },
       status: borrow.status,
       requestDate: borrow.created_at,
-      approvedDate: approvedDate,
-      handoverDate: handoverDate,
-      returnDate: returnDate,
-      dueDate: borrow.book_copy?.due_date || null,
-      updatedAt: borrow.updated_at // Keep reference to updated_at for rejected status
+      approvedDate: borrow.reviewed_at,  // When admin reviewed/approved
+      handoverDate: borrow.collected_at, // When book was collected
+      returnDate: null, // TODO: Add return date field when available from API
+      dueDate: borrow.due_date || null,  // Due date from IssueBook
+      isOverdue: borrow.is_overdue || false, // Overdue flag from API
+      overdueDays: borrow.overdue_days || 0, // Days overdue
+      updatedAt: borrow.created_at // Fallback
     };
   });
 
   const transformDonationHistory = donationHistory.map(donation => {
-    const book = donation.book_copy?.book || {};
-    
-    // Now we have specific date fields from the backend migration
-    // Use the actual timestamp fields for each status transition
-    // If the new fields are null, fallback to updated_at for current status
-    let approvedDate = donation.approved_at;     // When admin approved
-    let completedDate = donation.completed_at;   // When donation was completed
-    
-    // Fallback logic for existing records that don't have the new date fields populated
-    if (!approvedDate && (donation.status === 'approved' || donation.status === 'completed')) {
-      approvedDate = donation.updated_at; // Fallback to updated_at
-    }
-    if (!completedDate && donation.status === 'completed') {
-      completedDate = donation.updated_at; // Fallback to updated_at
-    }
-    
+    // API returns flat structure with donation data at top level
     return {
       id: donation.id,
       type: 'donation',
       book: {
-        id: book.id || donation.id,
-        title: book.title || donation.book_copy?.book?.title || t('history.donatedBook'),
-        author: book.author || donation.book_copy?.book?.author || t('common.unknownAuthor'),
-        isbn: book.isbn || null,
-        published_year: book.published_year || null,
-        pages: book.pages || null,
-        category: book.category || null,
-        image_url: book.cover || book.image_url || null,
-        cover_public_id: book.cover_public_id || null
+        id: donation.id, // Use donation ID as book ID
+        title: donation.donation_title || t('history.donatedBook'),
+        author: donation.donation_author || t('common.unknownAuthor'),
+        isbn: null,
+        published_year: donation.donation_year || null,
+        pages: donation.donation_pages || null,
+        category: null,
+        image_url: null, // Donations don't have cover images
+        cover_public_id: null
       },
       status: donation.status,
       requestDate: donation.created_at,
-      approvedDate: approvedDate,
-      completedDate: completedDate,
-      updatedAt: donation.updated_at // Keep reference to updated_at for rejected status
+      approvedDate: donation.reviewed_at, // When admin reviewed/approved
+      completedDate: null, // TODO: Add completed date field
+      updatedAt: donation.created_at // Fallback
     };
   });
 
@@ -184,7 +152,8 @@ const History = () => {
     const statusConfig = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: t('status.pending') },
       approved: { bg: 'bg-blue-100', text: 'text-blue-800', label: t('status.approved') },
-      active: { bg: 'bg-green-100', text: 'text-green-800', label: t('status.active') },
+      collected: { bg: 'bg-green-100', text: 'text-green-800', label: t('status.collected') },
+      return_requested: { bg: 'bg-purple-100', text: 'text-purple-800', label: t('status.return_requested') },
       returned: { bg: 'bg-gray-100', text: 'text-gray-800', label: t('status.returned') },
       completed: { bg: 'bg-green-100', text: 'text-green-800', label: t('status.completed') },
       rejected: { bg: 'bg-red-100', text: 'text-red-800', label: t('status.rejected') }
@@ -238,9 +207,29 @@ const History = () => {
     }
   };
 
-  const handleReturn = async (itemId) => {
-    // TODO: Implement return book functionality
-    console.log('Returning book with ID:', itemId);
+  const returnBookMutation = useMutation({
+    mutationFn: apiServices.borrows.returnBook,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['borrowHistory']);
+      queryClient.invalidateQueries(['userBorrows', user?.id]);
+      queryClient.invalidateQueries(['userStats']);
+      toast.success('বই সফলভাবে ফেরত দেওয়া হয়েছে');
+    },
+    onError: (error) => {
+      console.error('Return book error:', error);
+      const errorMessage = error.response?.data?.detail || error.response?.data?.message || error.message || 'বই ফেরত দিতে ব্যর্থ';
+      toast.error(`বই ফেরত দেওয়ার ত্রুটি: ${errorMessage}`);
+    }
+  });
+
+  const handleReturn = async (item) => {
+    setConfirmModal({
+      isOpen: true,
+      item: item,
+      type: 'return',
+      title: 'বই ফেরত দিন',
+      message: `আপনি কি নিশ্চিত যে আপনি "${item.book.title}" বইটি ফেরত দিতে চান?`
+    });
   };
 
   const handleCancel = (item) => {
@@ -254,16 +243,22 @@ const History = () => {
     });
   };
 
-  const confirmCancel = async () => {
+  const confirmAction = async () => {
     try {
       const item = confirmModal.item;
-      if (item.type === 'borrow') {
-        await cancelBorrowMutation.mutateAsync(item.id);
-      } else if (item.type === 'donation') {
-        await cancelDonationMutation.mutateAsync(item.id);
+      const actionType = confirmModal.type;
+      
+      if (actionType === 'return') {
+        await returnBookMutation.mutateAsync(item.id);
+      } else if (actionType === 'cancel') {
+        if (item.type === 'borrow') {
+          await cancelBorrowMutation.mutateAsync(item.id);
+        } else if (item.type === 'donation') {
+          await cancelDonationMutation.mutateAsync(item.id);
+        }
       }
     } catch (error) {
-      console.error('Cancel error:', error);
+      console.error('Action error:', error);
       // Error handling is done in mutation onError callbacks
     }
   };
@@ -372,7 +367,8 @@ const History = () => {
               <option value="all">{t('history.allStatus')}</option>
               <option value="pending">{t('status.pending')}</option>
               <option value="approved">{t('status.approved')}</option>
-              <option value="active">{t('status.active')}</option>
+              <option value="collected">{t('status.collected')}</option>
+              <option value="return_requested">{t('status.return_requested')}</option>
               <option value="returned">{t('status.returned')}</option>
               <option value="completed">{t('status.completed')}</option>
               <option value="rejected">{t('status.rejected')}</option>
@@ -404,15 +400,24 @@ const History = () => {
                   <div className="flex-1">
                     <div className="flex items-start space-x-4 mb-4">
                       {/* Book Cover */}
-                      <div className="w-16 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        <OptimizedImage
-                          publicId={item.book.cover_public_id || item.book.image_url}
-                          alt={item.book.title}
-                          type="bookCover"
-                          size="thumbnail"
-                          className="w-full h-full object-cover"
-                          placeholderText="Book"
-                        />
+                      <div className="w-16 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        {item.book.image_url ? (
+                          <img
+                            src={item.book.image_url}
+                            alt={item.book.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className="flex flex-col items-center justify-center text-gray-400 p-2" 
+                          style={{display: item.book.image_url ? 'none' : 'flex'}}
+                        >
+                          <BookOpen className="h-6 w-6" />
+                        </div>
                       </div>
 
                       {/* Book Details */}
@@ -520,18 +525,20 @@ const History = () => {
                               </div>
                             )}
                             
-                            {/* Due Date - Show for active borrows */}
-                            {item.type === 'borrow' && item.dueDate && item.status === 'active' && (
+                            {/* Due Date - Show for collected and return_requested borrows */}
+                            {item.type === 'borrow' && item.dueDate && (item.status === 'collected' || item.status === 'return_requested') && (
                               <div>
                                 <span className="text-gray-500 block">{t('history.dueDate')}:</span>
                                 <p className={`font-medium ${
-                                  new Date(item.dueDate) < new Date()
+                                  item.isOverdue
                                     ? 'text-red-600'
                                     : 'text-orange-600'
                                 }`}>
                                   {formatDate(item.dueDate)}
-                                  {new Date(item.dueDate) < new Date() && (
-                                    <span className="block text-xs text-red-500">{t('history.overdue')}</span>
+                                  {item.isOverdue && item.overdueDays > 0 && (
+                                    <span className="block text-xs text-red-600 font-semibold">
+                                      মেয়াদ শেষ - {item.overdueDays} দিন অতিক্রান্ত
+                                    </span>
                                   )}
                                 </p>
                               </div>
@@ -568,7 +575,7 @@ const History = () => {
                               </div>
                             )}
                             
-                            {item.status === 'active' && (
+                            {item.status === 'collected' && (
                               <div className="md:col-span-2 lg:col-span-3">
                                 <div className="bg-green-50 border border-green-200 rounded p-2">
                                   <span className="text-green-800 text-xs font-medium">
@@ -599,13 +606,20 @@ const History = () => {
                             {t('history.viewBook')} →
                           </button>
                           
-                          {item.status === 'active' && item.type === 'borrow' && (
+                          {item.status === 'collected' && item.type === 'borrow' && (
                             <button 
-                              onClick={() => handleReturn(item.id)}
-                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                              onClick={() => handleReturn(item)}
+                              disabled={returnBookMutation.isPending}
+                              className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {t('history.returnBook')}
+                              {returnBookMutation.isPending ? 'ফেরত দেওয়া হচ্ছে...' : 'বই ফেরত দিন'}
                             </button>
+                          )}
+                          
+                          {item.status === 'return_requested' && item.type === 'borrow' && (
+                            <span className="text-purple-600 text-sm font-medium">
+                              ফেরত অনুরোধ জমা হয়েছে
+                            </span>
                           )}
                           
                           {(item.status === 'pending' || item.status === 'approved') && (
@@ -651,11 +665,11 @@ const History = () => {
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false, item: null, type: null })}
-        onConfirm={confirmCancel}
+        onConfirm={confirmAction}
         title={confirmModal.title}
         message={confirmModal.message}
-        type="danger"
-        confirmText={t('history.cancel')}
+        type={confirmModal.type === 'return' ? 'warning' : 'danger'}
+        confirmText={confirmModal.type === 'return' ? 'ফেরত দিন' : t('history.cancel')}
         cancelText={t('common.cancel')}
       />
     </div>

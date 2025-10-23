@@ -1,9 +1,10 @@
 from db import get_session
-from models import Member, Admin, BookRequest, IssueBook, requestType, requestStatus
+from models import User, Role, BookRequest, IssueBook, requestType, requestStatus
 from sqlmodel import select, Session, SQLModel
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from auth import get_current_user
 from typing import Optional
+from datetime import datetime
 from storage import upload_profile_photo
 
 router = APIRouter()
@@ -16,6 +17,7 @@ class UserProfileResponse(SQLModel):
     email: str
     role: str
     profile_photo_url: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 
 class UserStatsResponse(SQLModel):
@@ -34,31 +36,21 @@ def get_current_user_profile(
     """Get current authenticated user's profile"""
     user_email = current_user.email
     
-    # Try to find in members first
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
-    if member:
-        return UserProfileResponse(
-            id=member.id,
-            name=member.name,
-            email=member.email,
-            role=member.role.value,
-            profile_photo_url=member.profile_photo_url
+    # Find user in database
+    user = session.exec(select(User).where(User.email == user_email)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found"
         )
     
-    # Try to find in admins
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
-    if admin:
-        return UserProfileResponse(
-            id=admin.id,
-            name=admin.name,
-            email=admin.email,
-            role=admin.role.value,
-            profile_photo_url=admin.profile_photo_url
-        )
-    
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User profile not found"
+    return UserProfileResponse(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        role=user.role.name,
+        profile_photo_url=user.profile_photo_url,
+        created_at=user.created_at
     )
 
 
@@ -72,41 +64,29 @@ def update_current_user_profile(
     """Update current authenticated user's profile"""
     user_email = current_user.email
     
-    # Try to find in members first
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
-    if member:
-        if name:
-            member.name = name
-        session.add(member)
-        session.commit()
-        session.refresh(member)
-        return UserProfileResponse(
-            id=member.id,
-            name=member.name,
-            email=member.email,
-            role=member.role.value,
-            profile_photo_url=member.profile_photo_url
+    # Find user in database
+    user = session.exec(select(User).where(User.email == user_email)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found"
         )
     
-    # Try to find in admins
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
-    if admin:
-        if name:
-            admin.name = name
-        session.add(admin)
-        session.commit()
-        session.refresh(admin)
-        return UserProfileResponse(
-            id=admin.id,
-            name=admin.name,
-            email=admin.email,
-            role=admin.role.value,
-            profile_photo_url=admin.profile_photo_url
-        )
+    # Update fields
+    if name:
+        user.name = name
     
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User profile not found"
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    
+    return UserProfileResponse(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        role=user.role.name,
+        profile_photo_url=user.profile_photo_url,
+        created_at=user.created_at
     )
 
 
@@ -119,27 +99,27 @@ def get_current_user_stats(
     """Get current authenticated user's activity statistics"""
     user_email = current_user.email
     
-    # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
-    if not member:
-        # If user is admin, return zeros
-        admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
-        if admin:
-            return UserStatsResponse(
-                total_borrows=0,
-                active_borrows=0,
-                total_donations=0,
-                pending_requests=0
-            )
+    # Find user
+    user = session.exec(select(User).where(User.email == user_email)).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User profile not found"
         )
     
+    # If user is admin, return zeros (admins don't borrow/donate)
+    if user.role.name == "admin":
+        return UserStatsResponse(
+            total_borrows=0,
+            active_borrows=0,
+            total_donations=0,
+            pending_requests=0
+        )
+    
     # Get borrow statistics
     total_borrows = len(session.exec(
         select(BookRequest).where(
-            BookRequest.member_id == member.id,
+            BookRequest.member_id == user.id,
             BookRequest.request_type == requestType.BORROW
         )
     ).all())
@@ -147,15 +127,15 @@ def get_current_user_stats(
     # Get active borrows (issued and not returned)
     active_borrows = len(session.exec(
         select(IssueBook).where(
-            IssueBook.member_id == member.id,
-            IssueBook.return_date.is_(None)
+            IssueBook.member_id == user.id,
+            IssueBook.return_date == None
         )
     ).all())
     
     # Get donation statistics
     total_donations = len(session.exec(
         select(BookRequest).where(
-            BookRequest.member_id == member.id,
+            BookRequest.member_id == user.id,
             BookRequest.request_type == requestType.DONATION
         )
     ).all())
@@ -163,7 +143,7 @@ def get_current_user_stats(
     # Get pending requests (both borrow and donation)
     pending_requests = len(session.exec(
         select(BookRequest).where(
-            BookRequest.member_id == member.id,
+            BookRequest.member_id == user.id,
             BookRequest.status.in_([requestStatus.PENDING, requestStatus.APPROVED])
         )
     ).all())
@@ -184,37 +164,26 @@ def get_user_profile_by_id(
     session: Session = Depends(get_session)
 ):
     """Get user profile by ID (accessible to authenticated users)"""
-    # Try to find in members first
-    member = session.get(Member, user_id)
-    if member:
-        return UserProfileResponse(
-            id=member.id,
-            name=member.name,
-            email=member.email,
-            role=member.role.value,
-            profile_photo_url=member.profile_photo_url
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )
     
-    # Try to find in admins
-    admin = session.get(Admin, user_id)
-    if admin:
-        return UserProfileResponse(
-            id=admin.id,
-            name=admin.name,
-            email=admin.email,
-            role=admin.role.value,
-            profile_photo_url=admin.profile_photo_url
-        )
-    
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User not found"
+    return UserProfileResponse(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        role=user.role.name,
+        profile_photo_url=user.profile_photo_url,
+        created_at=user.created_at
     )
 
 
 # POST /users/me/upload-profile-image - Upload profile image
 @router.post("/me/upload-profile-image")
-async def upload_user_profile_image(
+async def upload_user_profile_photo_url(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
     session: Session = Depends(get_session)
@@ -230,33 +199,23 @@ async def upload_user_profile_image(
         )
     
     try:
-        # Find user and determine type
-        member = session.exec(select(Member).where(Member.email == user_email)).first()
-        if member:
-            file_url = await upload_profile_photo(file, member.id, "member")
-            member.profile_photo_url = file_url
-            session.add(member)
-            session.commit()
-            return {
-                "message": "Profile image uploaded successfully",
-                "url": file_url
-            }
+        # Find user
+        user = session.exec(select(User).where(User.email == user_email)).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found"
+            )
         
-        admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
-        if admin:
-            file_url = await upload_profile_photo(file, admin.id, "admin")
-            admin.profile_photo_url = file_url
-            session.add(admin)
-            session.commit()
-            return {
-                "message": "Profile image uploaded successfully",
-                "url": file_url
-            }
+        file_url = await upload_profile_photo(file, user.id, user.role.name)
+        user.profile_photo_url = file_url
+        session.add(user)
+        session.commit()
         
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
-        )
+        return {
+            "message": "Profile image uploaded successfully",
+            "url": file_url
+        }
     
     except HTTPException:
         raise
@@ -287,30 +246,21 @@ async def upload_user_cover_image(
     # Note: User model doesn't have cover_image_url field yet
     # For now, we'll upload it but won't store the URL in the database
     try:
-        # Find user and determine type
-        member = session.exec(select(Member).where(Member.email == user_email)).first()
-        if member:
-            # Upload as profile photo for now (since cover_image_url field doesn't exist)
-            file_url = await upload_profile_photo(file, member.id, "member_cover")
-            return {
-                "message": "Cover image uploaded successfully",
-                "url": file_url,
-                "note": "Cover image field not yet implemented in user model"
-            }
+        # Find user
+        user = session.exec(select(User).where(User.email == user_email)).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found"
+            )
         
-        admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
-        if admin:
-            file_url = await upload_profile_photo(file, admin.id, "admin_cover")
-            return {
-                "message": "Cover image uploaded successfully",
-                "url": file_url,
-                "note": "Cover image field not yet implemented in user model"
-            }
-        
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
-        )
+        # Upload as profile photo for now (since cover_image_url field doesn't exist)
+        file_url = await upload_profile_photo(file, user.id, f"{user.role.name}_cover")
+        return {
+            "message": "Cover image uploaded successfully",
+            "url": file_url,
+            "note": "Cover image field not yet implemented in user model"
+        }
     
     except HTTPException:
         raise

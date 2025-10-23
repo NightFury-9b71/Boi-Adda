@@ -1,6 +1,6 @@
 from db import get_session
 from models import (
-    BookCopy, Member, Admin, BookRequest, IssueBook,
+    BookCopy, User, User, BookRequest, IssueBook,
     requestType, requestStatus, bookStatus
 )
 from sqlmodel import select, Session, SQLModel
@@ -45,7 +45,7 @@ def issue_book_from_donation(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

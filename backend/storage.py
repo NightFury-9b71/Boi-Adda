@@ -1,21 +1,34 @@
 import os
-from typing import BinaryIO
+from typing import BinaryIO, Optional
 from fastapi import UploadFile, HTTPException
 from dotenv import load_dotenv
-from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Supabase client
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
+# Try to initialize Supabase client if credentials are available
+supabase = None
+SUPABASE_ENABLED = False
+
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.getenv("SUPABASE_URL")
+    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+    
+    if SUPABASE_URL and SUPABASE_KEY:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        SUPABASE_ENABLED = True
+        print("✅ Supabase Storage initialized successfully")
+    else:
+        print("⚠️  Supabase credentials not found. Storage features will be disabled.")
+except ImportError:
+    print("⚠️  Supabase package not installed. Storage features will be disabled.")
+except Exception as e:
+    print(f"⚠️  Failed to initialize Supabase: {e}. Storage features will be disabled.")
 
 # Storage buckets
 BOOK_COVERS_BUCKET = "book-covers"
-USER_PROFILES_BUCKET = "user-profiles"
+USER_PROFILES_BUCKET = "profile-pictures"
 
 # Allowed file extensions
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
@@ -30,6 +43,12 @@ async def upload_book_cover(file: UploadFile, book_id: int) -> str:
     Upload a book cover image to Supabase Storage
     Returns the public URL of the uploaded image
     """
+    if not SUPABASE_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="Storage service is not available. Please configure Supabase credentials."
+        )
+    
     if not validate_image_file(file.filename):
         raise HTTPException(
             status_code=400,
@@ -68,6 +87,12 @@ async def upload_profile_photo(file: UploadFile, user_id: int, user_type: str) -
     user_type should be either 'admin' or 'member'
     Returns the public URL of the uploaded image
     """
+    if not SUPABASE_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="Storage service is not available. Please configure Supabase credentials."
+        )
+    
     if not validate_image_file(file.filename):
         raise HTTPException(
             status_code=400,
@@ -102,6 +127,9 @@ async def upload_profile_photo(file: UploadFile, user_id: int, user_type: str) -
 
 def delete_book_cover(book_id: int):
     """Delete a book cover from Supabase Storage"""
+    if not SUPABASE_ENABLED:
+        return True  # Silently succeed if storage is not enabled
+    
     try:
         # Try to delete all possible extensions
         for ext in ALLOWED_IMAGE_EXTENSIONS:
@@ -116,6 +144,9 @@ def delete_book_cover(book_id: int):
 
 def delete_profile_photo(user_id: int, user_type: str):
     """Delete a user profile photo from Supabase Storage"""
+    if not SUPABASE_ENABLED:
+        return True  # Silently succeed if storage is not enabled
+    
     try:
         # Try to delete all possible extensions
         for ext in ALLOWED_IMAGE_EXTENSIONS:
@@ -130,6 +161,12 @@ def delete_profile_photo(user_id: int, user_type: str):
 
 def get_public_url(bucket: str, file_path: str) -> str:
     """Get the public URL of a file in Supabase Storage"""
+    if not SUPABASE_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="Storage service is not available. Please configure Supabase credentials."
+        )
+    
     try:
         return supabase.storage.from_(bucket).get_public_url(file_path)
     except Exception as e:

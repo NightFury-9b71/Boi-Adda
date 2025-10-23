@@ -1,5 +1,5 @@
 from db import get_session
-from models import Book, BookCopy, Member, BookRequest, requestType, requestStatus, bookStatus, IssueBook
+from models import Book, BookCopy, User, BookRequest, requestType, requestStatus, bookStatus, IssueBook
 from sqlmodel import select, Session, SQLModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime
@@ -24,6 +24,9 @@ class BorrowResponse(SQLModel):
     created_at: datetime
     reviewed_at: Optional[datetime] = None
     collected_at: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    is_overdue: bool = False
+    overdue_days: int = 0
 
 
 class IssuedBookResponse(SQLModel):
@@ -49,7 +52,7 @@ def create_borrow_request(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -129,7 +132,7 @@ def get_my_borrow_requests(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -144,8 +147,16 @@ def get_my_borrow_requests(
         ).order_by(BookRequest.created_at.desc())
     ).all()
     
-    return [
-        BorrowResponse(
+    result = []
+    for req in requests:
+        # Get issue book record if collected or return_requested
+        issue_book = None
+        if req.status in [requestStatus.COLLECTED, requestStatus.RETURN_REQUESTED]:
+            issue_book = session.exec(
+                select(IssueBook).where(IssueBook.request_id == req.id)
+            ).first()
+        
+        result.append(BorrowResponse(
             id=req.id,
             book_id=req.book_id,
             book_title=req.book.title,
@@ -154,10 +165,13 @@ def get_my_borrow_requests(
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at,
-            collected_at=req.collected_at
-        )
-        for req in requests
-    ]
+            collected_at=req.collected_at,
+            due_date=issue_book.due_date if issue_book else None,
+            is_overdue=issue_book.is_overdue if issue_book else False,
+            overdue_days=issue_book.overdue_days if issue_book else 0
+        ))
+    
+    return result
 
 
 # GET /borrows/history - Get borrow history (issued books)
@@ -170,7 +184,7 @@ def get_borrow_history(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -211,7 +225,7 @@ def cancel_borrow_request(
     user_email = current_user.email
     
     # Find member
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -254,4 +268,82 @@ def cancel_borrow_request(
     return {
         "message": "Borrow request cancelled successfully",
         "request_id": borrow_id
+    }
+
+
+# PUT /borrows/{borrow_id}/return - Request to return a book
+@router.put("/{borrow_id}/return", status_code=status.HTTP_200_OK)
+def request_return_book(
+    borrow_id: int,
+    current_user: dict = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Request to return a borrowed book (member initiates, admin processes)"""
+    user_email = current_user.email
+    
+    # Find member
+    member = session.exec(select(User).where(User.email == user_email)).first()
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member profile not found."
+        )
+    
+    # Find the borrow request
+    borrow_request = session.get(BookRequest, borrow_id)
+    
+    if not borrow_request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Borrow request not found"
+        )
+    
+    # Verify the request belongs to the member
+    if borrow_request.member_id != member.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to return this book"
+        )
+    
+    # Verify it's a borrow request
+    if borrow_request.request_type != requestType.BORROW:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This is not a borrow request"
+        )
+    
+    # Can only request return for collected books
+    if borrow_request.status != requestStatus.COLLECTED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot return book with status: {borrow_request.status.value}. Only collected books can be returned."
+        )
+    
+    # Find the issue record
+    issue_book = session.exec(
+        select(IssueBook).where(IssueBook.request_id == borrow_id)
+    ).first()
+    
+    if not issue_book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Issue record not found for this borrow request"
+        )
+    
+    if issue_book.return_date is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Book already returned"
+        )
+    
+    # Update borrow request status to return_requested (waiting for admin approval)
+    borrow_request.status = requestStatus.RETURN_REQUESTED
+    session.add(borrow_request)
+    
+    session.commit()
+    
+    return {
+        "message": "Return request submitted successfully. Waiting for admin approval.",
+        "request_id": borrow_request.id,
+        "status": borrow_request.status.value
     }

@@ -2,31 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-import os
-from dotenv import load_dotenv
-from supabase import create_client, Client
+from datetime import datetime, timedelta
 from sqlmodel import Session, select
-from models import userRole, Admin, Member
+from models import User, Role
 from db import get_session
 from storage import upload_profile_photo, delete_profile_photo
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Initialize Supabase client
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://tdtnxwyhttbchhxpsiqe.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-
-if not SUPABASE_KEY:
-    raise ValueError(
-        "SUPABASE_KEY environment variable is required!\n"
-        "Please create a .env file with:\n"
-        "SUPABASE_URL=https://tdtnxwyhttbchhxpsiqe.supabase.co\n"
-        "SUPABASE_KEY=your_supabase_anon_key_here\n\n"
-        "Get your key from: https://supabase.com/dashboard → Your Project → Settings → API"
-    )
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+from auth_utils import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    create_refresh_token,
+    verify_token,
+    generate_verification_code
+)
 
 router = APIRouter()
 security = HTTPBearer()
@@ -37,7 +25,7 @@ class SignUpRequest(BaseModel):
     email: EmailStr
     password: str
     name: str
-    role: userRole = userRole.MEMBER
+    role: str = "member"  # Default to member role
 
 
 class SignInRequest(BaseModel):
@@ -62,313 +50,457 @@ class AuthResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: str
+    id: int
     email: str
     name: Optional[str]
     role: str
     profile_photo_url: Optional[str] = None
+    created_at: Optional[str] = None
+    is_verified: bool
 
 
 class MessageResponse(BaseModel):
     message: str
 
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
 # Dependency to get current user from token
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    session: Session = Depends(get_session)
+) -> User:
     """
     Validates the JWT token and returns the user data.
     Usage: current_user = Depends(get_current_user)
     """
     try:
         token = credentials.credentials
-        # Verify the token with Supabase
-        user = supabase.auth.get_user(token)
-        if not user:
+        # Verify the token
+        payload = verify_token(token, "access")
+        if not payload:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-        return user.user
+        
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        
+        # Get user from database
+        user = session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return user
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid authentication credentials: {str(e)}")
 
 
 # Dependency to require admin role
-async def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
+async def require_admin(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> User:
     """
     Checks if the current user has admin role.
     Usage: admin_user = Depends(require_admin)
     """
-    user_metadata = current_user.user_metadata or {}
-    role = user_metadata.get("role", "guest")
+    # Load the role relationship
+    user_with_role = session.get(User, current_user.id)
+    role = session.get(Role, user_with_role.role_id)
     
-    if role != userRole.ADMIN:
+    if role.name != "admin":
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
 
 # Dependency to require member or admin role
-async def require_member_or_admin(current_user: dict = Depends(get_current_user)) -> dict:
+async def require_member_or_admin(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> User:
     """
     Checks if the current user has member or admin role.
     Usage: user = Depends(require_member_or_admin)
     """
-    user_metadata = current_user.user_metadata or {}
-    role = user_metadata.get("role", "guest")
+    user_with_role = session.get(User, current_user.id)
+    role = session.get(Role, user_with_role.role_id)
     
-    if role not in [userRole.MEMBER, userRole.ADMIN]:
+    if role.name not in ["member", "admin"]:
         raise HTTPException(status_code=403, detail="Member or Admin privileges required")
     return current_user
 
 
 @router.post("/signup", response_model=MessageResponse)
-async def sign_up(request: SignUpRequest):
+async def sign_up(request: SignUpRequest, session: Session = Depends(get_session)):
     """
     Register a new user with email and password.
     By default, users are created with MEMBER role unless specified.
-    Supabase will send a verification OTP code via the "Confirm signup" email template.
+    A verification code will be sent (in production, this would be via email).
     """
     try:
-        # Sign up the user - this triggers the "Confirm signup" email template
-        response = supabase.auth.sign_up({
-            "email": request.email,
-            "password": request.password,
-            "options": {
-                "data": {
-                    "name": request.name,
-                    "role": request.role
-                }
-            }
-        })
+        # Check if user already exists
+        existing_user = session.exec(select(User).where(User.email == request.email)).first()
+        if existing_user:
+            if not existing_user.is_verified:
+                # Generate new verification code
+                verification_code = generate_verification_code()
+                existing_user.verification_code = verification_code
+                existing_user.verification_code_expires = datetime.now() + timedelta(hours=24)
+                session.add(existing_user)
+                session.commit()
+                
+                # TODO: Send verification email here
+                print(f"Verification code for {request.email}: {verification_code}")
+                
+                return MessageResponse(
+                    message=f"This email is already registered but not verified. A new verification code has been generated: {verification_code}"
+                )
+            raise HTTPException(status_code=400, detail="Email already registered and verified")
         
-        if not response.user:
-            raise HTTPException(status_code=400, detail="Failed to create user")
+        # Get role from database
+        role = session.exec(select(Role).where(Role.name == request.role)).first()
+        if not role:
+            # Create role if it doesn't exist
+            role = Role(name=request.role, description=f"{request.role.capitalize()} role")
+            session.add(role)
+            session.commit()
+            session.refresh(role)
+        
+        # Hash password
+        password_hash = get_password_hash(request.password)
+        
+        # Generate verification code
+        verification_code = generate_verification_code()
+        
+        # Create new user
+        new_user = User(
+            name=request.name,
+            email=request.email,
+            password_hash=password_hash,
+            role_id=role.id,
+            is_verified=False,
+            is_active=True,  # New users are active by default
+            verification_code=verification_code,
+            verification_code_expires=datetime.now() + timedelta(hours=24)
+        )
+        
+        session.add(new_user)
+        session.commit()
+        
+        # TODO: Send verification email here
+        # For now, just print it (in production, send via email)
+        print(f"Verification code for {request.email}: {verification_code}")
         
         return MessageResponse(
-            message="Registration successful! Please check your email for a 6-digit verification code."
+            message=f"Registration successful! Your verification code is: {verification_code}. Please verify your email."
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        error_message = str(e)
-        
-        # Handle the case where user exists but is unverified
-        if "already registered" in error_message.lower() or "already been registered" in error_message.lower():
-            # Try to resend verification
-            try:
-                supabase.auth.resend({
-                    "type": "signup",
-                    "email": request.email
-                })
-                return MessageResponse(
-                    message="This email is already registered but not verified. We've sent you a new verification code!"
-                )
-            except:
-                raise HTTPException(
-                    status_code=400, 
-                    detail="This email is already registered. If you haven't verified it yet, please check your email or try password reset."
-                )
-        
-        raise HTTPException(status_code=400, detail=error_message)
+        session.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/verify-email", response_model=MessageResponse)
-async def verify_email(request: VerifyEmailRequest):
+async def verify_email(
+    request: VerifyEmailRequest,
+    session: Session = Depends(get_session)
+):
     """
-    Verify user email with the 6-digit OTP code sent via email.
+    Verify user email with the 6-digit verification code.
     """
     try:
-        # Verify OTP for email signup
-        response = supabase.auth.verify_otp({
-            "email": request.email,
-            "token": request.token,
-            "type": "email"  # Changed from "signup" to "email" for OTP verification
-        })
+        # Find user by email
+        user = session.exec(select(User).where(User.email == request.email)).first()
         
-        if not response.user:
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if user.is_verified:
+            return MessageResponse(message="Email already verified. You can sign in.")
+        
+        # Check verification code
+        if not user.verification_code or user.verification_code != request.token:
             raise HTTPException(status_code=400, detail="Invalid verification code")
+        
+        # Check if code expired
+        if user.verification_code_expires and datetime.now() > user.verification_code_expires:
+            raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new one.")
+        
+        # Mark user as verified
+        user.is_verified = True
+        user.verification_code = None
+        user.verification_code_expires = None
+        session.add(user)
+        session.commit()
         
         return MessageResponse(
             message="Email verified successfully! You can now sign in."
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        error_message = str(e)
-        if "expired" in error_message.lower():
-            raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new one.")
-        elif "invalid" in error_message.lower():
-            raise HTTPException(status_code=400, detail="Invalid verification code. Please check and try again.")
-        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/resend-verification", response_model=MessageResponse)
-async def resend_verification(request: ResendVerificationRequest):
+async def resend_verification(request: ResendVerificationRequest, session: Session = Depends(get_session)):
     """
-    Resend verification OTP code to the user's email.
+    Resend verification code to the user's email.
     """
     try:
-        # Use sign_in_with_otp to send OTP code
-        supabase.auth.sign_in_with_otp({
-            "email": request.email,
-            "options": {
-                "should_create_user": False  # Don't create new user, just send OTP
-            }
-        })
+        user = session.exec(select(User).where(User.email == request.email)).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Email not found. Please register first.")
+        
+        if user.is_verified:
+            return MessageResponse(message="Email already verified. You can sign in.")
+        
+        # Generate new verification code
+        verification_code = generate_verification_code()
+        user.verification_code = verification_code
+        user.verification_code_expires = datetime.now() + timedelta(hours=24)
+        session.add(user)
+        session.commit()
+        
+        # TODO: Send verification email here
+        print(f"New verification code for {request.email}: {verification_code}")
         
         return MessageResponse(
-            message="Verification code sent! Please check your email for a 6-digit code."
+            message=f"Verification code sent! Your code is: {verification_code}"
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        error_message = str(e)
-        if "not found" in error_message.lower():
-            raise HTTPException(status_code=404, detail="Email not found. Please register first.")
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/signin", response_model=AuthResponse)
-async def sign_in(request: SignInRequest):
+async def sign_in(
+    request: SignInRequest,
+    session: Session = Depends(get_session)
+):
     """
     Sign in with email and password.
     Returns access token and refresh token.
     """
     try:
-        response = supabase.auth.sign_in_with_password({
-            "email": request.email,
-            "password": request.password
-        })
+        # Find user by email
+        user = session.exec(select(User).where(User.email == request.email)).first()
         
-        if not response.session:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        user_metadata = response.user.user_metadata or {}
+        # Verify password
+        if not verify_password(request.password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        # Check if email is verified
+        if not user.is_verified:
+            raise HTTPException(status_code=401, detail="Please verify your email before signing in")
+        
+        # Get user role
+        role = session.get(Role, user.role_id)
+        
+        # Create tokens
+        token_data = {"user_id": user.id, "email": user.email, "role": role.name}
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
         
         return AuthResponse(
-            access_token=response.session.access_token,
-            refresh_token=response.session.refresh_token,
+            access_token=access_token,
+            refresh_token=refresh_token,
             user={
-                "id": response.user.id,
-                "email": response.user.email,
-                "name": user_metadata.get("name", ""),
-                "role": user_metadata.get("role", "guest")
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "role": role.name,
+                "is_verified": user.is_verified
             },
             message="Signed in successfully"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 
 @router.post("/signout", response_model=MessageResponse)
-async def sign_out(current_user: dict = Depends(get_current_user)):
+async def sign_out(current_user: User = Depends(get_current_user)):
     """
     Sign out the current user.
     Requires valid authentication token.
+    Note: JWT tokens are stateless, so this is mainly for client-side cleanup.
     """
-    try:
-        supabase.auth.sign_out()
-        return MessageResponse(message="Signed out successfully")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return MessageResponse(message="Signed out successfully")
 
 
 @router.post("/refresh", response_model=AuthResponse)
-async def refresh_token(refresh_token: str):
+async def refresh_token(request: RefreshTokenRequest, session: Session = Depends(get_session)):
     """
     Refresh the access token using a refresh token.
     """
     try:
-        response = supabase.auth.refresh_session(refresh_token)
-        
-        if not response.session:
+        # Verify refresh token
+        payload = verify_token(request.refresh_token, "refresh")
+        if not payload:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
         
-        user_metadata = response.user.user_metadata or {}
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        
+        # Get user from database
+        user = session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # Get user role
+        role = session.get(Role, user.role_id)
+        
+        # Create new tokens
+        token_data = {"user_id": user.id, "email": user.email, "role": role.name}
+        new_access_token = create_access_token(token_data)
+        new_refresh_token = create_refresh_token(token_data)
         
         return AuthResponse(
-            access_token=response.session.access_token,
-            refresh_token=response.session.refresh_token,
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
             user={
-                "id": response.user.id,
-                "email": response.user.email,
-                "name": user_metadata.get("name", ""),
-                "role": user_metadata.get("role", "guest")
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "role": role.name,
+                "is_verified": user.is_verified
             },
             message="Token refreshed successfully"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token refresh failed: {str(e)}")
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: dict = Depends(get_current_user), session: Session = Depends(get_session)):
+async def get_me(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     """
     Get current user information including profile photo from database.
     Requires valid authentication token.
     """
-    user_metadata = current_user.user_metadata or {}
-    role = user_metadata.get("role", "guest")
-    email = current_user.email
-    
-    # Get profile photo from database
-    profile_photo_url = None
-    if role == userRole.ADMIN:
-        user = session.exec(select(Admin).where(Admin.email == email)).first()
-        if user:
-            profile_photo_url = user.profile_photo_url
-    elif role == userRole.MEMBER:
-        user = session.exec(select(Member).where(Member.email == email)).first()
-        if user:
-            profile_photo_url = user.profile_photo_url
+    # Get user role
+    role = session.get(Role, current_user.role_id)
     
     return UserResponse(
         id=current_user.id,
         email=current_user.email,
-        name=user_metadata.get("name", ""),
-        role=role,
-        profile_photo_url=profile_photo_url
+        name=current_user.name,
+        role=role.name,
+        profile_photo_url=current_user.profile_photo_url,
+        created_at=current_user.created_at.isoformat() if current_user.created_at else None,
+        is_verified=current_user.is_verified
     )
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(email: EmailStr):
+async def forgot_password(email: EmailStr, session: Session = Depends(get_session)):
     """
-    Send password reset email.
+    Send password reset code.
     """
     try:
-        supabase.auth.reset_password_email(email)
-        return MessageResponse(message="Password reset email sent. Please check your inbox.")
+        user = session.exec(select(User).where(User.email == email)).first()
+        
+        if not user:
+            # Don't reveal if email exists
+            return MessageResponse(message="If the email exists, a password reset code has been sent.")
+        
+        # Generate reset code
+        reset_code = generate_verification_code()
+        user.verification_code = reset_code
+        user.verification_code_expires = datetime.now() + timedelta(hours=1)
+        session.add(user)
+        session.commit()
+        
+        # TODO: Send reset email here
+        print(f"Password reset code for {email}: {reset_code}")
+        
+        return MessageResponse(message=f"Password reset code sent! Your code is: {reset_code}")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-async def reset_password(token: str, new_password: str):
+async def reset_password(request: ResetPasswordRequest, session: Session = Depends(get_session)):
     """
-    Reset password using the token from email.
+    Reset password using the code from email.
     """
     try:
-        supabase.auth.update_user({
-            "password": new_password
-        })
+        user = session.exec(select(User).where(User.email == request.email)).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check reset code
+        if not user.verification_code or user.verification_code != request.code:
+            raise HTTPException(status_code=400, detail="Invalid reset code")
+        
+        # Check if code expired
+        if user.verification_code_expires and datetime.now() > user.verification_code_expires:
+            raise HTTPException(status_code=400, detail="Reset code has expired. Please request a new one.")
+        
+        # Update password
+        user.password_hash = get_password_hash(request.new_password)
+        user.verification_code = None
+        user.verification_code_expires = None
+        session.add(user)
+        session.commit()
+        
         return MessageResponse(message="Password reset successfully")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = None
+
+
 @router.put("/update-profile", response_model=UserResponse)
-async def update_profile(name: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def update_profile(
+    request: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
     """
     Update user profile information.
     Requires valid authentication token.
     """
     try:
-        update_data = {}
-        if name:
-            user_metadata = current_user.user_metadata or {}
-            user_metadata["name"] = name
-            update_data["data"] = user_metadata
+        user = session.get(User, current_user.id)
         
-        response = supabase.auth.update_user(update_data)
-        user_metadata = response.user.user_metadata or {}
+        if request.name:
+            user.name = request.name
+        
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        
+        # Get user role
+        role = session.get(Role, user.role_id)
         
         return UserResponse(
-            id=response.user.id,
-            email=response.user.email,
-            name=user_metadata.get("name", ""),
-            role=user_metadata.get("role", "guest")
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            role=role.name,
+            profile_photo_url=user.profile_photo_url,
+            created_at=user.created_at.isoformat() if user.created_at else None,
+            is_verified=user.is_verified
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -377,7 +509,7 @@ async def update_profile(name: Optional[str] = None, current_user: dict = Depend
 @router.post("/profile-photo", response_model=MessageResponse)
 async def upload_user_profile_photo(
     file: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
@@ -385,28 +517,17 @@ async def upload_user_profile_photo(
     Requires valid authentication token.
     """
     try:
-        # Get user metadata
-        user_metadata = current_user.user_metadata or {}
-        role = user_metadata.get("role", "guest")
-        email = current_user.email
+        # Get user role
+        role = session.get(Role, current_user.role_id)
         
-        # Find the user in database by email
-        if role == userRole.ADMIN:
-            user = session.exec(select(Admin).where(Admin.email == email)).first()
-            user_type = "admin"
-        elif role == userRole.MEMBER:
-            user = session.exec(select(Member).where(Member.email == email)).first()
-            user_type = "member"
-        else:
+        if role.name == "guest":
             raise HTTPException(status_code=403, detail="Guest users cannot upload profile photos")
         
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found in database")
-        
-        # Upload photo to Supabase Storage
-        photo_url = await upload_profile_photo(file, user.id, user_type)
+        # Upload photo to storage
+        photo_url = await upload_profile_photo(file, current_user.id, role.name)
         
         # Update database with photo URL
+        user = session.get(User, current_user.id)
         user.profile_photo_url = photo_url
         session.add(user)
         session.commit()
@@ -421,7 +542,7 @@ async def upload_user_profile_photo(
 
 @router.delete("/profile-photo", response_model=MessageResponse)
 async def delete_user_profile_photo(
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
@@ -429,28 +550,17 @@ async def delete_user_profile_photo(
     Requires valid authentication token.
     """
     try:
-        # Get user metadata
-        user_metadata = current_user.user_metadata or {}
-        role = user_metadata.get("role", "guest")
-        email = current_user.email
+        # Get user role
+        role = session.get(Role, current_user.role_id)
         
-        # Find the user in database by email
-        if role == userRole.ADMIN:
-            user = session.exec(select(Admin).where(Admin.email == email)).first()
-            user_type = "admin"
-        elif role == userRole.MEMBER:
-            user = session.exec(select(Member).where(Member.email == email)).first()
-            user_type = "member"
-        else:
+        if role.name == "guest":
             raise HTTPException(status_code=403, detail="Guest users don't have profile photos")
         
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found in database")
-        
-        # Delete from Supabase Storage
-        delete_profile_photo(user.id, user_type)
+        # Delete from storage
+        delete_profile_photo(current_user.id, role.name)
         
         # Update database
+        user = session.get(User, current_user.id)
         user.profile_photo_url = None
         session.add(user)
         session.commit()
@@ -462,3 +572,67 @@ async def delete_user_profile_photo(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete profile photo: {str(e)}")
 
+
+# Secret endpoint to create admin
+class CreateAdminRequest(BaseModel):
+    secret_code: str
+    name: str
+    email: EmailStr
+    password: str
+
+
+@router.post("/create-admin", response_model=MessageResponse)
+async def create_admin(
+    request: CreateAdminRequest,
+    session: Session = Depends(get_session)
+):
+    """
+    Create an admin user with a secret code.
+    This endpoint requires the secret code 'illusion' to create an admin.
+    The admin will be automatically verified.
+    """
+    # Verify secret code
+    if request.secret_code != "illusion":
+        raise HTTPException(status_code=403, detail="Invalid secret code")
+    
+    # Check if user already exists
+    existing_user = session.exec(select(User).where(User.email == request.email)).first()
+    
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists with this email")
+    
+    try:
+        # Get admin role from database
+        admin_role = session.exec(select(Role).where(Role.name == "admin")).first()
+        if not admin_role:
+            # Create admin role if it doesn't exist
+            admin_role = Role(name="admin", description="Administrator role")
+            session.add(admin_role)
+            session.commit()
+            session.refresh(admin_role)
+        
+        # Hash password
+        password_hash = get_password_hash(request.password)
+        
+        # Create admin in local database (auto-verified)
+        new_admin = User(
+            name=request.name,
+            email=request.email,
+            password_hash=password_hash,
+            role_id=admin_role.id,
+            is_verified=True,  # Auto-verify admin
+            is_active=True  # Admins are active by default
+        )
+        
+        session.add(new_admin)
+        session.commit()
+        session.refresh(new_admin)
+        
+        return MessageResponse(
+            message=f"Admin created successfully! Email: {request.email}. Admin can now login with their credentials."
+        )
+        
+    except Exception as e:
+        # Rollback database changes
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to create admin: {str(e)}")

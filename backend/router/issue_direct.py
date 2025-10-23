@@ -1,6 +1,6 @@
 from db import get_session
 from models import (
-    BookCopy, Member, Admin, IssueBook,
+    BookCopy, User, IssueBook,
     bookStatus
 )
 from sqlmodel import select, Session, SQLModel
@@ -47,7 +47,7 @@ def issue_book_directly(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -55,7 +55,7 @@ def issue_book_directly(
         )
     
     # Verify member exists
-    member = session.get(Member, data.member_id)
+    member = session.get(User, data.member_id)
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

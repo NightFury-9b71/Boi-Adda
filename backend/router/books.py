@@ -33,8 +33,13 @@ class BookResponse(SQLModel):
     published_year: int
     pages: int
     cover_image_url: Optional[str] = None
+    cover: Optional[str] = None  # Alias for cover_image_url for frontend compatibility
+    cover_public_id: Optional[str] = None  # For Cloudinary integration
+    category_id: Optional[int] = None
     total_copies: int
     available_copies: int
+    times_borrowed: int = 0
+    created_at: Optional[datetime] = None
 
 
 class BookDetailResponse(BookResponse):
@@ -81,8 +86,13 @@ def list_books(
             published_year=book.published_year,
             pages=book.pages,
             cover_image_url=book.cover_image_url,
+            cover=book.cover_image_url,  # Alias for frontend
+            cover_public_id=None,  # TODO: Add Cloudinary support
+            category_id=book.category_id,
             total_copies=len(book.copies),
-            available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE])
+            available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
+            times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
+            created_at=None  # TODO: Add created_at to Book model
         )
         for book in books
     ]
@@ -118,8 +128,13 @@ def search_books(
             published_year=book.published_year,
             pages=book.pages,
             cover_image_url=book.cover_image_url,
+            cover=book.cover_image_url,  # Alias for frontend
+            cover_public_id=None,  # TODO: Add Cloudinary support
+            category_id=book.category_id,
             total_copies=len(book.copies),
-            available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE])
+            available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
+            times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
+            created_at=None  # TODO: Add created_at to Book model
         )
         for book in books
     ]
@@ -157,8 +172,13 @@ def get_book_details(
         published_year=book.published_year,
         pages=book.pages,
         cover_image_url=book.cover_image_url,
+        cover=book.cover_image_url,  # Alias for frontend
+        cover_public_id=None,  # TODO: Add Cloudinary support
+        category_id=book.category_id,
         total_copies=len(book.copies),
         available_copies=available_copies,
+        times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
+        created_at=None,  # TODO: Add created_at to Book model
         reserved_copies=reserved_copies,
         issued_copies=issued_copies,
         damaged_copies=damaged_copies,
@@ -224,8 +244,13 @@ def create_book(
         published_year=book.published_year,
         pages=book.pages,
         cover_image_url=book.cover_image_url,
+        cover=book.cover_image_url,
+        cover_public_id=None,
+        category_id=book.category_id,
         total_copies=0,
-        available_copies=0
+        available_copies=0,
+        times_borrowed=0,
+        created_at=None
     )
 
 
@@ -286,8 +311,13 @@ def update_book(
         published_year=book.published_year,
         pages=book.pages,
         cover_image_url=book.cover_image_url,
+        cover=book.cover_image_url,
+        cover_public_id=None,
+        category_id=book.category_id,
         total_copies=len(book.copies),
-        available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE])
+        available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
+        times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
+        created_at=None
     )
 
 

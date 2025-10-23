@@ -68,8 +68,9 @@ const BookDetailsPage = () => {
     if (!user || !userBorrows || userBorrows.length === 0) return null;
     
     const borrow = userBorrows.find(borrow => {
-      const borrowBookId = borrow.book_copy?.book?.id || borrow.book_copy?.book_id;
-      const isActiveStatus = ['pending', 'approved', 'active'].includes(borrow.status);
+      // API returns book_id directly in the borrow object
+      const borrowBookId = borrow.book_id;
+      const isActiveStatus = ['pending', 'approved', 'collected', 'return_requested'].includes(borrow.status);
       return borrowBookId === parseInt(id) && isActiveStatus;
     });
     
@@ -104,7 +105,7 @@ const BookDetailsPage = () => {
           iconColor: 'text-blue-600',
           icon: CheckCircle
         };
-      case 'active':
+      case 'collected':
         return {
           text: 'আপনার কাছে আছে',
           description: 'এই বইটি বর্তমানে আপনার কাছে রয়েছে',
@@ -112,6 +113,15 @@ const BookDetailsPage = () => {
           textColor: 'text-green-800',
           iconColor: 'text-green-600',
           icon: CheckCircle
+        };
+      case 'return_requested':
+        return {
+          text: 'ফেরত অনুরোধ জমা হয়েছে',
+          description: 'আপনার বই ফেরত অনুরোধ অ্যাডমিনের অনুমোদনের জন্য অপেক্ষমাণ',
+          className: 'bg-purple-50 border-purple-200',
+          textColor: 'text-purple-800',
+          iconColor: 'text-purple-600',
+          icon: Clock
         };
       default:
         return null;
@@ -133,25 +143,16 @@ const BookDetailsPage = () => {
       }
 
       // Check if book has available copies
-      if (!book.total_copies || book.total_copies === 0) {
+      if (!book.available_copies || book.available_copies === 0) {
         toast.error('এই বইয়ের কোন কপি পাওয়া যাচ্ছে না');
         return;
       }
 
       setIsBorrowLoading(true);
 
-      // Get available book copies for this book
-      const availableCopies = await apiServices.bookCopies.getAvailableForBook(book.id);
-      
-      if (!availableCopies || availableCopies.length === 0) {
-        toast.error('এই বইয়ের কোন কপি এখন উপলব্ধ নেই');
-        return;
-      }
-
-      // Use the first available copy
+      // Create borrow request with just book_id (backend handles finding available copy)
       const borrowData = {
-        user_id: user.id,
-        book_copy_id: availableCopies[0].id
+        book_id: book.id
       };
 
       await apiServices.borrows.createBorrow(borrowData);
@@ -163,7 +164,19 @@ const BookDetailsPage = () => {
       queryClient.invalidateQueries(['book', id]);
     } catch (error) {
       console.error('Borrow request error:', error);
-      toast.error(`ধার অনুরোধ পাঠাতে সমস্যা হয়েছে: ${error.response?.data?.detail || 'অজানা ত্রুটি'}`);
+      
+      // Get detailed error message
+      let errorMessage = 'অজানা ত্রুটি';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`ধার অনুরোধ পাঠাতে সমস্যা হয়েছে: ${errorMessage}`);
     } finally {
       setIsBorrowLoading(false);
     }
@@ -281,22 +294,32 @@ const BookDetailsPage = () => {
               {/* Book Cover */}
               <div className="flex-shrink-0 mx-auto md:mx-0">
                 <div className="relative">
-                  <div className="w-56 h-80 bg-gray-100 rounded-lg overflow-hidden shadow-lg">
-                    <OptimizedImage
-                      publicId={book.cover_public_id || book.cover}
-                      alt={book.title}
-                      type="bookCover"
-                      size="default"
-                      className="w-full h-full object-cover"
-                      placeholderText={book.title}
-                    />
+                  <div className="w-56 h-80 bg-gray-100 rounded-lg overflow-hidden shadow-lg flex items-center justify-center">
+                    {book.cover || book.cover_image_url ? (
+                      <img
+                        src={book.cover || book.cover_image_url}
+                        alt={book.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="flex flex-col items-center justify-center text-gray-400 p-4" 
+                      style={{display: (book.cover || book.cover_image_url) ? 'none' : 'flex'}}
+                    >
+                      <BookOpen className="h-16 w-16 mb-2" />
+                      <span className="text-sm text-center">{book.title}</span>
+                    </div>
                   </div>
                   
                   {/* Availability Badge */}
                   <div className="absolute top-3 right-3">
-                    {book.total_copies > 0 ? (
+                    {book.available_copies > 0 ? (
                       <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium shadow-sm">
-                        {book.total_copies} কপি আছে
+                        {book.available_copies} কপি আছে
                       </span>
                     ) : (
                       <span className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-medium shadow-sm">
@@ -353,7 +376,7 @@ const BookDetailsPage = () => {
                   <h3 className="font-semibold text-gray-900 mb-3">বইটির পরিসংখ্যান</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{book.total_copies}</div>
+                      <div className="text-2xl font-bold text-green-600">{book.available_copies}</div>
                       <div className="text-sm text-gray-600">উপলব্ধ কপি</div>
                     </div>
                     <div className="text-center">
@@ -406,7 +429,7 @@ const BookDetailsPage = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">বই ধার নিন</h3>
             
-            {book.total_copies > 0 ? (
+            {book.available_copies > 0 ? (
               <div className="space-y-4">
                 {(() => {
                   const statusDisplay = getBorrowStatusDisplay();
@@ -451,7 +474,7 @@ const BookDetailsPage = () => {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <div className="flex items-center text-green-800 text-sm">
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    <span>{book.total_copies} কপি উপলব্ধ</span>
+                    <span>{book.available_copies} কপি উপলব্ধ</span>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 from db import get_session
-from models import Book, BookCopy, Member, BookRequest, requestType, requestStatus, bookStatus
+from models import Book, BookCopy, User, BookRequest, requestType, requestStatus, bookStatus
 from sqlmodel import select, Session, SQLModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime
@@ -49,7 +49,7 @@ def create_borrow_request(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -134,7 +134,7 @@ def get_member_borrow_requests(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -175,7 +175,7 @@ def get_borrow_request_details(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -230,7 +230,7 @@ def cancel_borrow_request(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

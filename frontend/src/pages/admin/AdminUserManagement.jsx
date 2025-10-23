@@ -318,7 +318,7 @@ const AdminUserManagement = () => {
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-white p-0.5 shadow-sm overflow-hidden">
                           <OptimizedImage
-                            publicId={user.profile_public_id || user.profile_image}
+                            publicId={user.profile_public_id || user.profile_photo_url}
                             alt={user.name}
                             type="userProfile"
                             size="small"
@@ -487,7 +487,7 @@ const UserDetailsModal = ({ user, onClose }) => {
             <div className="flex items-center">
               <div className="h-16 w-16 rounded-full bg-white p-1 shadow-lg overflow-hidden">
                 <OptimizedImage
-                  publicId={user.profile_public_id || user.profile_image}
+                  publicId={user.profile_public_id || user.profile_photo_url}
                   alt={user.name}
                   type="userProfile"
                   size="large"

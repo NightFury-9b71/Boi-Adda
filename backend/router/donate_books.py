@@ -1,6 +1,6 @@
 from db import get_session
 from models import (
-    Book, BookCopy, Member, Admin, BookRequest,
+    Book, BookCopy, User, User, BookRequest,
     requestType, requestStatus, bookStatus
 )
 from sqlmodel import select, Session, SQLModel
@@ -74,7 +74,7 @@ def create_donation_request(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -133,7 +133,7 @@ def get_member_donation_requests(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -177,7 +177,7 @@ def get_donation_request_details(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -232,7 +232,7 @@ def cancel_donation_request(
     user_email = current_user.email
     
     # Find member by email
-    member = session.exec(select(Member).where(Member.email == user_email)).first()
+    member = session.exec(select(User).where(User.email == user_email)).first()
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -290,7 +290,7 @@ def get_pending_donation_requests(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -335,7 +335,7 @@ def get_all_donation_requests(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -385,7 +385,7 @@ def accept_donation(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -486,7 +486,7 @@ def reject_donation(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -540,7 +540,7 @@ def get_completed_donations(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -585,7 +585,7 @@ def upload_books_directly(
     user_email = current_user.email
     
     # Find admin by email
-    admin = session.exec(select(Admin).where(Admin.email == user_email)).first()
+    admin = session.exec(select(User).where(User.email == user_email)).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

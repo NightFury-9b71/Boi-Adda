@@ -46,7 +46,7 @@ const DashboardPage = () => {
 
   // Get user's active and pending borrows
   const currentBorrows = userBorrows.filter(borrow => 
-    ['pending', 'approved', 'active'].includes(borrow.status)
+    ['pending', 'approved', 'collected'].includes(borrow.status)
   ).slice(0, 4); // Show only first 4
 
   return (
@@ -211,15 +211,16 @@ const DashboardPage = () => {
           ) : currentBorrows.length > 0 ? (
             <div className="space-y-3">
               {currentBorrows.map((borrow) => {
-                const book = borrow.book_copy?.book || {};
                 const getStatusInfo = (status) => {
                   switch (status) {
                     case 'pending':
                       return { text: t('status.pending'), color: 'bg-yellow-100 text-yellow-800' };
                     case 'approved':
                       return { text: t('status.approved'), color: 'bg-blue-100 text-blue-800' };
-                    case 'active':
-                      return { text: t('status.active'), color: 'bg-green-100 text-green-800' };
+                    case 'collected':
+                      return { text: t('status.collected'), color: 'bg-green-100 text-green-800' };
+                    case 'return_requested':
+                      return { text: t('status.return_requested'), color: 'bg-purple-100 text-purple-800' };
                     default:
                       return { text: t('common.unknown'), color: 'bg-gray-100 text-gray-800' };
                   }
@@ -229,17 +230,29 @@ const DashboardPage = () => {
                 
                 return (
                   <div key={borrow.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
-                       onClick={() => navigate(`/books/${book.id}`)}>
+                       onClick={() => navigate(`/books/${borrow.book_id}`)}>
                     <div className="flex items-center space-x-3">
                       <div className="h-10 w-8 bg-gradient-to-br from-green-100 to-green-200 rounded flex items-center justify-center">
                         <BookOpen className="h-4 w-4 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{book.title || t('common.unknownBook')}</p>
-                        <p className="text-sm text-gray-600">{book.author || t('common.unknownAuthor')}</p>
+                        <p className="font-medium text-gray-900">{borrow.book_title || t('common.unknownBook')}</p>
+                        <p className="text-sm text-gray-600">{borrow.book_author || t('common.unknownAuthor')}</p>
                         <p className="text-xs text-gray-500">
                           {t('common.applicationDate')}: {new Date(borrow.created_at).toLocaleDateString('bn-BD')}
                         </p>
+                        {(borrow.status === 'collected' || borrow.status === 'return_requested') && borrow.due_date && (
+                          <p className={`text-xs font-medium mt-1 ${
+                            borrow.is_overdue ? 'text-red-600' : 'text-orange-600'
+                          }`}>
+                            ফেরতের তারিখ: {new Date(borrow.due_date).toLocaleDateString('bn-BD')}
+                            {borrow.is_overdue && borrow.overdue_days > 0 && (
+                              <span className="ml-1 text-red-600 font-semibold">
+                                (মেয়াদ শেষ - {borrow.overdue_days} দিন অতিক্রান্ত)
+                              </span>
+                            )}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">

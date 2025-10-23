@@ -171,9 +171,9 @@ const Sidebar = () => {
         <div className="flex items-center space-x-3 cursor-pointer transition-all duration-300 hover:scale-105 rounded-lg p-2 hover:bg-white hover:shadow-lg"
              onClick={() => navigate('/profile')}>
           <div className="h-12 w-12 rounded-full flex items-center justify-center overflow-hidden shadow-md transition-all duration-300 hover:shadow-xl hover:shadow-yellow-400/50 hover:scale-110">
-            {user?.profile_image ? (
+            {user?.profile_photo_url ? (
               <img 
-                src={user.profile_image} 
+                src={user.profile_photo_url} 
                 alt="Profile" 
                 className="w-full h-full object-cover transition-all duration-300 hover:brightness-110"
               />
