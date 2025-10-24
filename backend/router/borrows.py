@@ -1,6 +1,7 @@
 from db import get_session
 from models import Book, BookCopy, User, BookRequest, requestType, requestStatus, bookStatus, IssueBook
 from sqlmodel import select, Session, SQLModel
+from sqlalchemy.orm import selectinload
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime
 from auth import get_current_user
@@ -139,9 +140,9 @@ def get_my_borrow_requests(
             detail="Member profile not found."
         )
     
-    # Get all borrow requests for this member
+    # Get all borrow requests for this member with book relationship loaded
     requests = session.exec(
-        select(BookRequest).where(
+        select(BookRequest).options(selectinload(BookRequest.book)).where(
             BookRequest.member_id == member.id,
             BookRequest.request_type == requestType.BORROW
         ).order_by(BookRequest.created_at.desc())

@@ -139,20 +139,7 @@ async def sign_up(request: SignUpRequest, session: Session = Depends(get_session
         # Check if user already exists
         existing_user = session.exec(select(User).where(User.email == request.email)).first()
         if existing_user:
-            if not existing_user.is_verified:
-                # Generate new verification code
-                verification_code = generate_verification_code()
-                existing_user.verification_code = verification_code
-                existing_user.verification_code_expires = datetime.now() + timedelta(hours=24)
-                session.add(existing_user)
-                session.commit()
-                
-                # TODO: Send verification email here
-                print(f"Verification code for {request.email}: {verification_code}")
-                
-                return MessageResponse(
-                    message=f"This email is already registered but not verified. A new verification code has been generated: {verification_code}"
-                )
+            # Since we auto-verify users now, all existing users should be verified
             raise HTTPException(status_code=400, detail="এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে। লগইন করুন।")
         
         # Get role from database
@@ -167,30 +154,26 @@ async def sign_up(request: SignUpRequest, session: Session = Depends(get_session
         # Hash password
         password_hash = get_password_hash(request.password)
         
-        # Generate verification code
-        verification_code = generate_verification_code()
-        
-        # Create new user
+        # Create new user (automatically verified)
         new_user = User(
             name=request.name,
             email=request.email,
             password_hash=password_hash,
             role_id=role.id,
-            is_verified=False,
+            is_verified=True,  # Auto-verify users
             is_active=True,  # New users are active by default
-            verification_code=verification_code,
-            verification_code_expires=datetime.now() + timedelta(hours=24)
+            verification_code=None,  # No verification code needed
+            verification_code_expires=None  # No expiration needed
         )
         
         session.add(new_user)
         session.commit()
         
-        # TODO: Send verification email here
-        # For now, just print it (in production, send via email)
-        print(f"Verification code for {request.email}: {verification_code}")
+        # User is automatically verified - no email verification needed
+        print(f"User registered and verified successfully: {request.email}")
         
         return MessageResponse(
-            message=f"Registration successful! Your verification code is: {verification_code}. Please verify your email."
+            message="রেজিস্ট্রেশন সফল! এখন লগইন করুন।"
         )
     except HTTPException:
         raise

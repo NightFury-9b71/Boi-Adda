@@ -4,6 +4,7 @@ from models import (
     BookRequest, requestType, requestStatus, IssueBook
 )
 from sqlmodel import select, Session, SQLModel, func
+from sqlalchemy.orm import selectinload
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from datetime import datetime, timedelta
 from auth import require_admin, get_current_user
@@ -403,26 +404,24 @@ def get_all_borrow_requests(
 ):
     """Get all borrow requests with member and book details"""
     requests = session.exec(
-        select(BookRequest).where(
-            BookRequest.request_type == requestType.BORROW
-        ).order_by(BookRequest.created_at.desc())
+        select(BookRequest)
+        .options(selectinload(BookRequest.member), selectinload(BookRequest.book))
+        .where(BookRequest.request_type == requestType.BORROW)
+        .order_by(BookRequest.created_at.desc())
     ).all()
     
     result = []
     for req in requests:
-        # Manually load relationships
-        member = session.get(User, req.member_id)
-        book = session.get(Book, req.book_id) if req.book_id else None
-        
+        # Use loaded relationships instead of manual queries
         result.append(BorrowRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=member.name if member else "Unknown User",
-            member_email=member.email if member else "unknown@email.com",
+            member_name=req.member.name if req.member else "Unknown User",
+            member_email=req.member.email if req.member else "unknown@email.com",
             book_id=req.book_id if req.book_id else 0,
-            book_title=book.title if book else "Unknown Book",
-            book_author=book.author if book else "Unknown Author",
-            book_cover_url=book.cover_image_url if book else None,
+            book_title=req.book.title if req.book else "Unknown Book",
+            book_author=req.book.author if req.book else "Unknown Author",
+            book_cover_url=req.book.cover_image_url if req.book else None,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at
@@ -439,7 +438,9 @@ def get_user_borrows(
 ):
     """Get all borrow requests for a specific user"""
     requests = session.exec(
-        select(BookRequest).where(
+        select(BookRequest)
+        .options(selectinload(BookRequest.member), selectinload(BookRequest.book))
+        .where(
             BookRequest.member_id == user_id,
             BookRequest.request_type == requestType.BORROW
         ).order_by(BookRequest.created_at.desc())
@@ -447,19 +448,16 @@ def get_user_borrows(
     
     result = []
     for req in requests:
-        # Manually load relationships
-        member = session.get(User, req.member_id)
-        book = session.get(Book, req.book_id) if req.book_id else None
-        
+        # Use loaded relationships instead of manual queries
         result.append(BorrowRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=member.name if member else "Unknown User",
-            member_email=member.email if member else "unknown@email.com",
+            member_name=req.member.name if req.member else "Unknown User",
+            member_email=req.member.email if req.member else "unknown@email.com",
             book_id=req.book_id if req.book_id else 0,
-            book_title=book.title if book else "Unknown Book",
-            book_author=book.author if book else "Unknown Author",
-            book_cover_url=book.cover_image_url if book else None,
+            book_title=req.book.title if req.book else "Unknown Book",
+            book_author=req.book.author if req.book else "Unknown Author",
+            book_cover_url=req.book.cover_image_url if req.book else None,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at
@@ -714,21 +712,20 @@ def get_all_donation_requests(
 ):
     """Get all donation requests with member details"""
     requests = session.exec(
-        select(BookRequest).where(
-            BookRequest.request_type == requestType.DONATION
-        ).order_by(BookRequest.created_at.desc())
+        select(BookRequest)
+        .options(selectinload(BookRequest.member))
+        .where(BookRequest.request_type == requestType.DONATION)
+        .order_by(BookRequest.created_at.desc())
     ).all()
     
     result = []
     for req in requests:
-        # Manually load member relationship
-        member = session.get(User, req.member_id)
-        
+        # Use loaded member relationship
         result.append(DonationRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=member.name if member else "Unknown User",
-            member_email=member.email if member else "unknown@email.com",
+            member_name=req.member.name if req.member else "Unknown User",
+            member_email=req.member.email if req.member else "unknown@email.com",
             donation_title=req.donation_title or "Unknown Title",
             donation_author=req.donation_author or "Unknown Author",
             donation_year=req.donation_year or 0,
@@ -749,7 +746,9 @@ def get_user_donations(
 ):
     """Get all donation requests for a specific user"""
     requests = session.exec(
-        select(BookRequest).where(
+        select(BookRequest)
+        .options(selectinload(BookRequest.member))
+        .where(
             BookRequest.member_id == user_id,
             BookRequest.request_type == requestType.DONATION
         ).order_by(BookRequest.created_at.desc())
@@ -757,14 +756,12 @@ def get_user_donations(
     
     result = []
     for req in requests:
-        # Manually load member relationship
-        member = session.get(User, req.member_id)
-        
+        # Use loaded member relationship
         result.append(DonationRequestResponse(
             id=req.id,
             member_id=req.member_id,
-            member_name=member.name if member else "Unknown User",
-            member_email=member.email if member else "unknown@email.com",
+            member_name=req.member.name if req.member else "Unknown User",
+            member_email=req.member.email if req.member else "unknown@email.com",
             donation_title=req.donation_title or "Unknown Title",
             donation_author=req.donation_author or "Unknown Author",
             donation_year=req.donation_year or 0,
