@@ -81,22 +81,22 @@ async def get_current_user(
         # Verify the token
         payload = verify_token(token, "access")
         if not payload:
-            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+            raise HTTPException(status_code=401, detail="আপনার লগইন সেশন শেষ হয়ে গেছে। আবার লগইন করুন।")
         
         user_id = payload.get("user_id")
         if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+            raise HTTPException(status_code=401, detail="লগইন তথ্য সঠিক নয়। আবার লগইন করুন।")
         
         # Get user from database
         user = session.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=401, detail="User not found")
+            raise HTTPException(status_code=401, detail="ব্যবহারকারী খুঁজে পাওয়া যায়নি। আবার লগইন করুন।")
         
         return user
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Invalid authentication credentials: {str(e)}")
+        raise HTTPException(status_code=401, detail="লগইন যাচাই করতে সমস্যা। আবার লগইন করুন।")
 
 
 # Dependency to require admin role
@@ -110,7 +110,7 @@ async def require_admin(current_user: User = Depends(get_current_user), session:
     role = session.get(Role, user_with_role.role_id)
     
     if role.name != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required")
+        raise HTTPException(status_code=403, detail="অ্যাডমিন অনুমতি প্রয়োজন।")
     return current_user
 
 
@@ -124,7 +124,7 @@ async def require_member_or_admin(current_user: User = Depends(get_current_user)
     role = session.get(Role, user_with_role.role_id)
     
     if role.name not in ["member", "admin"]:
-        raise HTTPException(status_code=403, detail="Member or Admin privileges required")
+        raise HTTPException(status_code=403, detail="সদস্য বা অ্যাডমিন অনুমতি প্রয়োজন।")
     return current_user
 
 
@@ -153,7 +153,7 @@ async def sign_up(request: SignUpRequest, session: Session = Depends(get_session
                 return MessageResponse(
                     message=f"This email is already registered but not verified. A new verification code has been generated: {verification_code}"
                 )
-            raise HTTPException(status_code=400, detail="Email already registered and verified")
+            raise HTTPException(status_code=400, detail="এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে। লগইন করুন।")
         
         # Get role from database
         role = session.exec(select(Role).where(Role.name == request.role)).first()
@@ -212,18 +212,18 @@ async def verify_email(
         user = session.exec(select(User).where(User.email == request.email)).first()
         
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="ব্যবহারকারী খুঁজে পাওয়া যায়নি।")
         
         if user.is_verified:
-            return MessageResponse(message="Email already verified. You can sign in.")
+            return MessageResponse(message="ইমেইল ইতিমধ্যে যাচাই করা হয়েছে। লগইন করতে পারেন।")
         
         # Check verification code
         if not user.verification_code or user.verification_code != request.token:
-            raise HTTPException(status_code=400, detail="Invalid verification code")
+            raise HTTPException(status_code=400, detail="যাচাইকরণ কোড ভুল।")
         
         # Check if code expired
         if user.verification_code_expires and datetime.now() > user.verification_code_expires:
-            raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new one.")
+            raise HTTPException(status_code=400, detail="যাচাইকরণ কোডের মেয়াদ শেষ। নতুন কোড চান।")
         
         # Mark user as verified
         user.is_verified = True
@@ -233,7 +233,7 @@ async def verify_email(
         session.commit()
         
         return MessageResponse(
-            message="Email verified successfully! You can now sign in."
+            message="ইমেইল সফলভাবে যাচাই হয়েছে! এখন লগইন করতে পারেন।"
         )
     except HTTPException:
         raise
@@ -250,7 +250,7 @@ async def resend_verification(request: ResendVerificationRequest, session: Sessi
         user = session.exec(select(User).where(User.email == request.email)).first()
         
         if not user:
-            raise HTTPException(status_code=404, detail="Email not found. Please register first.")
+            raise HTTPException(status_code=404, detail="ইমেইল খুঁজে পাওয়া যায়নি। প্রথমে রেজিস্টার করুন।")
         
         if user.is_verified:
             return MessageResponse(message="Email already verified. You can sign in.")
@@ -288,15 +288,15 @@ async def sign_in(
         user = session.exec(select(User).where(User.email == request.email)).first()
         
         if not user:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            raise HTTPException(status_code=401, detail="ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।")
         
         # Verify password
         if not verify_password(request.password, user.password_hash):
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            raise HTTPException(status_code=401, detail="ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।")
         
         # Check if email is verified
         if not user.is_verified:
-            raise HTTPException(status_code=401, detail="Please verify your email before signing in")
+            raise HTTPException(status_code=401, detail="প্রথমে আপনার ইমেইল যাচাই করুন। ইমেইল চেক করুন।")
         
         # Get user role
         role = session.get(Role, user.role_id)
@@ -321,7 +321,7 @@ async def sign_in(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="লগইন করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।")
 
 
 @router.post("/signout", response_model=MessageResponse)
@@ -343,16 +343,16 @@ async def refresh_token(request: RefreshTokenRequest, session: Session = Depends
         # Verify refresh token
         payload = verify_token(request.refresh_token, "refresh")
         if not payload:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+            raise HTTPException(status_code=401, detail="রিফ্রেশ টোকেন সঠিক নয়।")
         
         user_id = payload.get("user_id")
         if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+            raise HTTPException(status_code=401, detail="টোকেন সঠিক নয়।")
         
         # Get user from database
         user = session.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=401, detail="User not found")
+            raise HTTPException(status_code=401, detail="ব্যবহারকারী পাওয়া যায়নি।")
         
         # Get user role
         role = session.get(Role, user.role_id)
@@ -377,7 +377,7 @@ async def refresh_token(request: RefreshTokenRequest, session: Session = Depends
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Token refresh failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="টোকেন রিফ্রেশ করতে সমস্যা হয়েছে।")
 
 
 @router.get("/me", response_model=UserResponse)
@@ -446,15 +446,15 @@ async def reset_password(request: ResetPasswordRequest, session: Session = Depen
         user = session.exec(select(User).where(User.email == request.email)).first()
         
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="ব্যবহারকারী পাওয়া যায়নি।")
         
         # Check reset code
         if not user.verification_code or user.verification_code != request.code:
-            raise HTTPException(status_code=400, detail="Invalid reset code")
+            raise HTTPException(status_code=400, detail="রিসেট কোড সঠিক নয়।")
         
         # Check if code expired
         if user.verification_code_expires and datetime.now() > user.verification_code_expires:
-            raise HTTPException(status_code=400, detail="Reset code has expired. Please request a new one.")
+            raise HTTPException(status_code=400, detail="রিসেট কোডের মেয়াদ শেষ। দয়া করে নতুন কোড চান।")
         
         # Update password
         user.password_hash = get_password_hash(request.new_password)
@@ -490,18 +490,18 @@ async def change_password(
         
         # Verify current password
         if not verify_password(request.current_password, user.password_hash):
-            raise HTTPException(status_code=400, detail="Current password is incorrect")
+            raise HTTPException(status_code=400, detail="বর্তমান পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।")
         
         # Update password
         user.password_hash = get_password_hash(request.new_password)
         session.add(user)
         session.commit()
         
-        return MessageResponse(message="Password changed successfully")
+        return MessageResponse(message="পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!")
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।")
 
 
 class UpdateProfileRequest(BaseModel):
@@ -559,7 +559,7 @@ async def upload_user_profile_photo(
         role = session.get(Role, current_user.role_id)
         
         if role.name == "guest":
-            raise HTTPException(status_code=403, detail="Guest users cannot upload profile photos")
+            raise HTTPException(status_code=403, detail="গেস্ট ব্যবহারকারীরা প্রোফাইল ছবি আপলোড করতে পারেন না।")
         
         # Upload photo to storage
         photo_url = await upload_profile_photo(file, current_user.id, role.name)
@@ -575,7 +575,7 @@ async def upload_user_profile_photo(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload profile photo: {str(e)}")
+        raise HTTPException(status_code=500, detail="প্রোফাইল ছবি আপলোড করতে সমস্যা হয়েছে।")
 
 
 @router.delete("/profile-photo", response_model=MessageResponse)
@@ -592,7 +592,7 @@ async def delete_user_profile_photo(
         role = session.get(Role, current_user.role_id)
         
         if role.name == "guest":
-            raise HTTPException(status_code=403, detail="Guest users don't have profile photos")
+            raise HTTPException(status_code=403, detail="গেস্ট ব্যবহারকারীদের প্রোফাইল ছবি নেই।")
         
         # Delete from storage
         delete_profile_photo(current_user.id, role.name)
@@ -608,7 +608,7 @@ async def delete_user_profile_photo(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete profile photo: {str(e)}")
+        raise HTTPException(status_code=500, detail="প্রোফাইল ছবি মুছতে সমস্যা হয়েছে।")
 
 
 # Secret endpoint to create admin
@@ -631,13 +631,13 @@ async def create_admin(
     """
     # Verify secret code
     if request.secret_code != "illusion":
-        raise HTTPException(status_code=403, detail="Invalid secret code")
+        raise HTTPException(status_code=403, detail="সিক্রেট কোড সঠিক নয়।")
     
     # Check if user already exists
     existing_user = session.exec(select(User).where(User.email == request.email)).first()
     
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists with this email")
+        raise HTTPException(status_code=400, detail="এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে।")
     
     try:
         # Get admin role from database
@@ -673,4 +673,4 @@ async def create_admin(
     except Exception as e:
         # Rollback database changes
         session.rollback()
-        raise HTTPException(status_code=400, detail=f"Failed to create admin: {str(e)}")
+        raise HTTPException(status_code=400, detail="অ্যাডমিন তৈরি করতে সমস্যা হয়েছে।")

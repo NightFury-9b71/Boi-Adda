@@ -52,7 +52,7 @@ def issue_book_directly(
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Admin profile not found. Please contact system administrator."
+            detail="অ্যাডমিন প্রোফাইল খুঁজে পাওয়া যায়নি। সিস্টেম অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করুন।"
         )
     
     # Verify member exists
@@ -60,7 +60,7 @@ def issue_book_directly(
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Member not found"
+            detail="সদস্য খুঁজে পাওয়া যায়নি।"
         )
     
     # Get the book copy
@@ -68,14 +68,14 @@ def issue_book_directly(
     if not book_copy:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Book copy not found"
+            detail="বইয়ের কপি খুঁজে পাওয়া যায়নি।"
         )
     
     # Check if copy is available or reserved
     if book_copy.status not in [bookStatus.AVAILABLE, bookStatus.RESERVED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot issue book with status: {book_copy.status.value}. Book must be available or reserved."
+            detail="এই বইটি বর্তমানে ইস্যু করার জন্য উপলব্ধ নেই।"
         )
     
     # Check if member already has this book issued
@@ -90,7 +90,7 @@ def issue_book_directly(
     if existing_issue:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This member already has this book copy issued"
+            detail="এই সদস্যের কাছে ইতিমধ্যে এই বইয়ের কপি ইস্যু করা আছে।"
         )
     
     # Create IssueBook record

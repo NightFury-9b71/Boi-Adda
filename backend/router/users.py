@@ -41,7 +41,7 @@ def get_current_user_profile(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
+            detail="ব্যবহারকারীর প্রোফাইল খুঁজে পাওয়া যায়নি।"
         )
     
     return UserProfileResponse(
@@ -69,7 +69,7 @@ def update_current_user_profile(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
+            detail="ব্যবহারকারীর প্রোফাইল খুঁজে পাওয়া যায়নি।"
         )
     
     # Update fields
@@ -104,7 +104,7 @@ def get_current_user_stats(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
+            detail="ব্যবহারকারীর প্রোফাইল খুঁজে পাওয়া যায়নি।"
         )
     
     # If user is admin, return zeros (admins don't borrow/donate)
@@ -168,7 +168,7 @@ def get_user_profile_by_id(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail="ব্যবহারকারী খুঁজে পাওয়া যায়নি।"
         )
     
     return UserProfileResponse(
@@ -195,7 +195,7 @@ async def upload_user_profile_photo_url(
     if not file.content_type.startswith('image/'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an image"
+            detail="শুধুমাত্র ছবি আপলোড করুন।"
         )
     
     try:
@@ -204,7 +204,7 @@ async def upload_user_profile_photo_url(
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found"
+                detail="ব্যবহারকারীর প্রোফাইল খুঁজে পাওয়া যায়নি।"
             )
         
         file_url = await upload_profile_photo(file, user.id, user.role.name)
@@ -213,7 +213,7 @@ async def upload_user_profile_photo_url(
         session.commit()
         
         return {
-            "message": "Profile image uploaded successfully",
+            "message": "প্রোফাইল ছবি সফলভাবে আপলোড হয়েছে!",
             "url": file_url
         }
     
@@ -222,7 +222,7 @@ async def upload_user_profile_photo_url(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image: {str(e)}"
+            detail="প্রোফাইল ছবি আপলোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।"
         )
 
 
@@ -240,7 +240,7 @@ async def upload_user_cover_image(
     if not file.content_type.startswith('image/'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an image"
+            detail="শুধুমাত্র ছবি আপলোড করুন।"
         )
     
     # Note: User model doesn't have cover_image_url field yet
@@ -251,13 +251,13 @@ async def upload_user_cover_image(
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found"
+                detail="ব্যবহারকারীর প্রোফাইল খুঁজে পাওয়া যায়নি।"
             )
         
         # Upload as profile photo for now (since cover_image_url field doesn't exist)
         file_url = await upload_profile_photo(file, user.id, f"{user.role.name}_cover")
         return {
-            "message": "Cover image uploaded successfully",
+            "message": "কভার ছবি সফলভাবে আপলোড হয়েছে!",
             "url": file_url,
             "note": "Cover image field not yet implemented in user model"
         }
@@ -267,5 +267,5 @@ async def upload_user_cover_image(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image: {str(e)}"
+            detail="কভার ছবি আপলোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।"
         )

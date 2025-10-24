@@ -23,7 +23,7 @@ async def upload_book_cover_image(
         # Check if book exists
         book = session.get(Book, book_id)
         if not book:
-            raise HTTPException(status_code=404, detail="Book not found")
+            raise HTTPException(status_code=404, detail="বই খুঁজে পাওয়া যায়নি।")
         
         # Upload cover to Supabase Storage
         cover_url = await upload_book_cover(file, book_id)
@@ -35,7 +35,7 @@ async def upload_book_cover_image(
         session.refresh(book)
         
         return {
-            "message": "Book cover uploaded successfully",
+            "message": "বইয়ের কভার সফলভাবে আপলোড হয়েছে!",
             "public_id": cover_url,  # For compatibility with frontend
             "url": cover_url,
             "secure_url": cover_url,
@@ -51,7 +51,7 @@ async def upload_book_cover_image(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload book cover: {str(e)}")
+        raise HTTPException(status_code=500, detail="বইয়ের কভার আপলোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।")
 
 
 @router.delete("/books/{book_id}/cover")
@@ -68,7 +68,7 @@ async def delete_book_cover_image(
         # Check if book exists
         book = session.get(Book, book_id)
         if not book:
-            raise HTTPException(status_code=404, detail="Book not found")
+            raise HTTPException(status_code=404, detail="বই খুঁজে পাওয়া যায়নি।")
         
         # Delete from Supabase Storage
         delete_book_cover(book_id)
@@ -78,12 +78,12 @@ async def delete_book_cover_image(
         session.add(book)
         session.commit()
         
-        return {"message": "Book cover deleted successfully"}
+        return {"message": "বইয়ের কভার সফলভাবে মুছে ফেলা হয়েছে!"}
     
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete book cover: {str(e)}")
+        raise HTTPException(status_code=500, detail="বইয়ের কভার মুছতে সমস্যা হয়েছে।")
 
 
 @router.get("/books/{book_id}")
@@ -97,7 +97,7 @@ async def get_book_with_cover(
     """
     book = session.get(Book, book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(status_code=404, detail="বই খুঁজে পাওয়া যায়নি।")
     
     return {
         "id": book.id,

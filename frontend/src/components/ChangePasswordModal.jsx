@@ -14,13 +14,15 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
   const changePasswordMutation = useMutation({
     mutationFn: apiServices.auth.changePassword,
-    onSuccess: () => {
-      toast.success('পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে');
+    onSuccess: (data) => {
+      // Use backend success message
+      toast.success(data.message || 'পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!');
       onClose();
       resetForm();
     },
     onError: (error) => {
-      const errorMessage = error?.response?.data?.detail || 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে';
+      // Use backend error message or friendly fallback
+      const errorMessage = error?.response?.data?.detail || 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
       toast.error(errorMessage);
     }
   });
@@ -36,14 +38,34 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Simple validation
-    if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-      toast.error('সব ফিল্ড পূরণ করুন');
+    // User-friendly validation
+    if (!formData.currentPassword) {
+      toast.error('দয়া করে বর্তমান পাসওয়ার্ড দিন');
+      return;
+    }
+
+    if (!formData.newPassword) {
+      toast.error('দয়া করে নতুন পাসওয়ার্ড দিন');
+      return;
+    }
+
+    if (!formData.confirmPassword) {
+      toast.error('দয়া করে নতুন পাসওয়ার্ড নিশ্চিত করুন');
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('নতুন পাসওয়ার্ড মিলছে না');
+      toast.error('নতুন পাসওয়ার্ড দুইবার একই রকম লিখুন');
+      return;
+    }
+
+    if (formData.newPassword.length < 4) {
+      toast.error('নতুন পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে');
+      return;
+    }
+
+    if (formData.currentPassword === formData.newPassword) {
+      toast.error('নতুন পাসওয়ার্ড আগের পাসওয়ার্ড থেকে ভিন্ন হতে হবে');
       return;
     }
 

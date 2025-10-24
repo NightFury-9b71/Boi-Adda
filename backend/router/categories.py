@@ -64,7 +64,7 @@ def get_category_details(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
+            detail="ক্যাটেগরি খুঁজে পাওয়া যায়নি।"
         )
     
     return CategoryResponse(
@@ -93,7 +93,7 @@ def create_category(
     if existing_category:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category with this name already exists"
+            detail="এই নামের ক্যাটেগরি ইতিমধ্যে বিদ্যমান।"
         )
     
     # Create new category
@@ -130,7 +130,7 @@ def update_category(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
+            detail="ক্যাটেগরি খুঁজে পাওয়া যায়নি।"
         )
     
     # Update only provided fields
@@ -146,7 +146,7 @@ def update_category(
         if existing_category:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Category with this name already exists"
+                detail="এই নামের ক্যাটেগরি ইতিমধ্যে বিদ্যমান।"
             )
         
         category.name = category_data.name
@@ -181,7 +181,7 @@ def delete_category(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
+            detail="ক্যাটেগরি খুঁজে পাওয়া যায়নি।"
         )
     
     # Delete the category
@@ -189,7 +189,7 @@ def delete_category(
     session.commit()
     
     return {
-        "message": "Category deleted successfully",
+        "message": "ক্যাটেগরি সফলভাবে মুছে ফেলা হয়েছে!",
         "category_id": category_id,
         "category_name": category.name
     }

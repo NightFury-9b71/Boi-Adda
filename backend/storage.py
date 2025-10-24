@@ -46,13 +46,13 @@ async def upload_book_cover(file: UploadFile, book_id: int) -> str:
     if not SUPABASE_ENABLED:
         raise HTTPException(
             status_code=503,
-            detail="Storage service is not available. Please configure Supabase credentials."
+            detail="স্টোরেজ সেবা উপলব্ধ নেই। দয়া করে পরে চেষ্টা করুন।"
         )
     
     if not validate_image_file(file.filename):
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+            detail="ভুল ফাইল টাইপ। শুধুমাত্র ছবি আপলোড করুন (JPG, PNG, GIF)।"
         )
     
     # Generate unique filename
@@ -76,7 +76,7 @@ async def upload_book_cover(file: UploadFile, book_id: int) -> str:
         return public_url
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload book cover: {str(e)}")
+        raise HTTPException(status_code=500, detail="বইয়ের কভার আপলোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।")
     finally:
         # Reset file pointer
         await file.seek(0)
@@ -90,13 +90,13 @@ async def upload_profile_photo(file: UploadFile, user_id: int, user_type: str) -
     if not SUPABASE_ENABLED:
         raise HTTPException(
             status_code=503,
-            detail="Storage service is not available. Please configure Supabase credentials."
+            detail="স্টোরেজ সেবা উপলব্ধ নেই। দয়া করে পরে চেষ্টা করুন।"
         )
     
     if not validate_image_file(file.filename):
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+            detail="ভুল ফাইল টাইপ। শুধুমাত্র ছবি আপলোড করুন (JPG, PNG, GIF)।"
         )
     
     # Generate unique filename
@@ -120,7 +120,7 @@ async def upload_profile_photo(file: UploadFile, user_id: int, user_type: str) -
         return public_url
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload profile photo: {str(e)}")
+        raise HTTPException(status_code=500, detail="প্রোফাইল ছবি আপলোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।")
     finally:
         # Reset file pointer
         await file.seek(0)
@@ -140,7 +140,7 @@ def delete_book_cover(book_id: int):
                 pass  # File might not exist with this extension
         return True
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete book cover: {str(e)}")
+        raise HTTPException(status_code=500, detail="বইয়ের কভার মুছতে সমস্যা হয়েছে।")
 
 def delete_profile_photo(user_id: int, user_type: str):
     """Delete a user profile photo from Supabase Storage"""
@@ -157,17 +157,17 @@ def delete_profile_photo(user_id: int, user_type: str):
                 pass  # File might not exist with this extension
         return True
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete profile photo: {str(e)}")
+        raise HTTPException(status_code=500, detail="প্রোফাইল ছবি মুছতে সমস্যা হয়েছে।")
 
 def get_public_url(bucket: str, file_path: str) -> str:
     """Get the public URL of a file in Supabase Storage"""
     if not SUPABASE_ENABLED:
         raise HTTPException(
             status_code=503,
-            detail="Storage service is not available. Please configure Supabase credentials."
+            detail="স্টোরেজ সেবা উপলব্ধ নেই। দয়া করে পরে চেষ্টা করুন।"
         )
     
     try:
         return supabase.storage.from_(bucket).get_public_url(file_path)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get public URL: {str(e)}")
+        raise HTTPException(status_code=500, detail="ফাইল লিঙ্ক পেতে সমস্যা হয়েছে।")

@@ -34,26 +34,26 @@ def upload_books_directly(
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Admin profile not found. Please contact system administrator."
+            detail="অ্যাডমিন প্রোফাইল খুঁজে পাওয়া যায়নি। সিস্টেম অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করুন।"
         )
     
     # Validate book data
     if data.published_year < 1000 or data.published_year > datetime.now().year:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid publication year"
+            detail="প্রকাশের বছর সঠিক নয়।"
         )
     
     if data.pages <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Pages must be greater than 0"
+            detail="পৃষ্ঠা সংখ্যা ০ এর চেয়ে বেশি হতে হবে।"
         )
     
     if data.copies_to_add <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Number of copies must be greater than 0"
+            detail="কপির সংখ্যা ০ এর চেয়ে বেশি হতে হবে।"
         )
     
     # Check if book already exists in library
