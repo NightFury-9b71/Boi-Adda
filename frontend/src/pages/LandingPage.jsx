@@ -166,9 +166,6 @@ const RegistrationForm = ({ formData, setFormData, onSubmit, loading, setIsLogin
 const LandingPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showVerification, setShowVerification] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [registeredEmail, setRegisteredEmail] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -184,7 +181,6 @@ const LandingPage = () => {
   const { t } = useTranslation();
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   const navigate = useNavigate();
 
   // Fetch real stats from API
@@ -223,9 +219,19 @@ const LandingPage = () => {
         }
         setIsRegisterLoading(true);
         const result = await register(formData);
-        setRegisteredEmail(formData.email);
-        setShowVerification(true);
         // Success toast is handled by AuthContext
+        // Skip verification and redirect to login
+        setShowAuthModal(false);
+        setIsLogin(true);
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          address: '',
+          phone: '',
+        });
       }
     } catch (error) {
       // Error toasts are handled by AuthContext, only handle form-specific validation errors here
@@ -238,76 +244,7 @@ const LandingPage = () => {
     }
   };
 
-  const handleVerification = async (e) => {
-    e.preventDefault();
-    if (!verificationCode || verificationCode.length !== 6) {
-      toast.error('দয়া করে 6 সংখ্যার কোড লিখুন');
-      return;
-    }
-    
-    try {
-      setIsVerifying(true);
-      await apiServices.auth.verifyEmail({
-        email: registeredEmail,
-        token: verificationCode
-      });
-      toast.success('✅ ইমেইল যাচাই সফল! এখন লগইন করুন');
-      setShowVerification(false);
-      setShowAuthModal(false);
-      setIsLogin(true);
-      setVerificationCode('');
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        address: '',
-        phone: '',
-      });
-    } catch (error) {
-      const errorMessage = error.response?.data?.detail || error.message;
-      
-      if (error.response?.status === 400) {
-        if (errorMessage?.includes('Invalid') || errorMessage?.includes('invalid')) {
-          toast.error('❌ কোডটি ভুল বা মেয়াদ শেষ হয়েছে। পুনরায় কোড পাঠান');
-        } else if (errorMessage?.includes('expired')) {
-          toast.error('⏰ কোডের মেয়াদ শেষ। নতুন কোড পাঠান');
-        } else if (errorMessage?.includes('email')) {
-          toast.error('📧 ইমেইল খুঁজে পাওয়া যায়নি। আবার রেজিস্টার করুন');
-        } else {
-          toast.error(errorMessage || '❌ যাচাই ব্যর্থ। সঠিক কোড লিখুন');
-        }
-      } else if (error.response?.status === 404) {
-        toast.error('📧 ইমেইল খুঁজে পাওয়া যায়নি। আবার রেজিস্টার করুন');
-      } else if (error.response?.status === 500) {
-        toast.error('🔧 সার্ভার সমস্যা। কিছুক্ষণ পর চেষ্টা করুন');
-      } else {
-        toast.error(errorMessage || '❌ যাচাই ব্যর্থ। আবার চেষ্টা করুন');
-      }
-    } finally {
-      setIsVerifying(false);
-    }
-  };
 
-  const handleResendCode = async () => {
-    try {
-      await apiServices.auth.resendVerification({ email: registeredEmail });
-      toast.success('✉️ নতুন কোড পাঠানো হয়েছে! আপনার ইমেইল চেক করুন');
-    } catch (error) {
-      const errorMessage = error.response?.data?.detail || error.message;
-      
-      if (error.response?.status === 400) {
-        toast.error('⚠️ ইমেইল ঠিক নেই বা ইতিমধ্যে যাচাই করা হয়েছে');
-      } else if (error.response?.status === 429) {
-        toast.error('⏰ অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ অপেক্ষা করুন');
-      } else if (error.response?.status === 500) {
-        toast.error('🔧 সার্ভার সমস্যা। কিছুক্ষণ পর চেষ্টা করুন');
-      } else {
-        toast.error(errorMessage || '❌ কোড পাঠানো ব্যর্থ। আবার চেষ্টা করুন');
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -607,86 +544,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Email Verification Modal */}
-      {showVerification && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-in fade-in zoom-in duration-300">
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center mb-4">
-                <div className="bg-gradient-to-br from-green-400 to-green-600 p-3 rounded-full">
-                  <Shield className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">
-                ইমেইল যাচাই করুন
-              </h2>
-              <p className="text-gray-600 text-sm">
-                আমরা <span className="font-semibold">{registeredEmail}</span> এ একটি যাচাই কোড পাঠিয়েছি
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="verification-code" className="block text-sm font-medium text-gray-700 mb-2">
-                  যাচাই কোড (৬ ডিজিট)
-                </label>
-                <input
-                  id="verification-code"
-                  type="text"
-                  maxLength="6"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="000000"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-2xl tracking-widest font-semibold"
-                  autoFocus
-                />
-              </div>
-              
-              <button
-                onClick={handleVerification}
-                disabled={isVerifying || verificationCode.length !== 6}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {isVerifying ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    যাচাই করা হচ্ছে...
-                  </span>
-                ) : (
-                  'যাচাই করুন'
-                )}
-              </button>
-              
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  onClick={handleResendCode}
-                  className="text-green-600 hover:text-green-700 font-medium hover:underline transition"
-                >
-                  পুনরায় কোড পাঠান
-                </button>
-                <button
-                  onClick={() => {
-                    setShowVerification(false);
-                    setVerificationCode('');
-                  }}
-                  className="text-gray-600 hover:text-gray-700 font-medium hover:underline transition"
-                >
-                  ফিরে যান
-                </button>
-              </div>
-            </div>
-            
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-xs text-gray-500 text-center">
-                কোড পাননি? আপনার স্প্যাম ফোল্ডার চেক করুন অথবা পুনরায় কোড পাঠান
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Features Section */}
       <section id="features" className="py-16 sm:py-20 bg-gradient-to-br from-gray-50 to-green-50">

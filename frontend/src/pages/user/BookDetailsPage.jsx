@@ -22,8 +22,10 @@ import {
   Plus
 } from 'lucide-react';
 import { toast } from '../../utils/toast';
+import { getSafeDate, getSafeNumber, getSafeString } from '../../utils/dataHelpers';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useConfirmation } from '../../contexts/ConfirmationContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import OptimizedImage from '../../components/OptimizedImage';
 
@@ -32,6 +34,7 @@ const BookDetailsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { confirmSubmit } = useConfirmation();
   const { t } = useTranslation();
   const [isBorrowLoading, setIsBorrowLoading] = useState(false);
 
@@ -148,6 +151,18 @@ const BookDetailsPage = () => {
         return;
       }
 
+      // Show confirmation modal
+      const confirmed = await confirmSubmit(
+        `"${book.title}" বইটি ধার নিন`,
+        `আপনি কি নিশ্চিত যে "${book.title}" বইটি ধার নিতে চান? একবার অনুরোধ পাঠানোর পর এটি বাতিল করা যাবে না।`,
+        'ধার নিন',
+        'বাতিল'
+      );
+
+      if (!confirmed) {
+        return; // User cancelled
+      }
+
       setIsBorrowLoading(true);
 
       // Create borrow request with just book_id (backend handles finding available copy)
@@ -156,7 +171,7 @@ const BookDetailsPage = () => {
       };
 
       await apiServices.borrows.createBorrow(borrowData);
-      toast.success(t('messages.borrowRequestSent', { title: book.title }));
+      toast.success(`"${book.title}" বইয়ের জন্য ধার অনুরোধ পাঠানো হয়েছে! অ্যাডমিনের অনুমোদনের জন্য অপেক্ষা করুন।`);
       
       // Refresh the user's borrows to update the UI
       queryClient.invalidateQueries(['userBorrows', user.id]);
@@ -183,8 +198,7 @@ const BookDetailsPage = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'অজানা';
-    return new Date(dateString).toLocaleDateString('bn-BD');
+    return getSafeDate(dateString, 'অজানা');
   };
 
   const handleShare = async () => {

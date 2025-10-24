@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '../../utils/toast';
+import { getSafeCategoryName } from '../../utils/dataHelpers';
 import { 
   Book, 
   Search, 
@@ -43,8 +44,9 @@ const AdminBookManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [showBookDetails, setShowBookDetails] = useState(false);
+  const [deletingBookId, setDeletingBookId] = useState(null);
 
-  // Fetch all books
+  // Fetch books
   const { data: books = [], isLoading: booksLoading } = useQuery({
     queryKey: ['admin', 'books'],
     queryFn: apiServices.books.getBooks,
@@ -88,12 +90,33 @@ const AdminBookManagement = () => {
   // Delete book mutation
   const deleteBookMutation = useMutation({
     mutationFn: apiServices.books.deleteBook,
-    onSuccess: () => {
-      toast.success('বই সফলভাবে মুছে ফেলা হয়েছে!');
+    onSuccess: (data, bookId) => {
+      toast.success(data?.message || 'বই সফলভাবে মুছে ফেলা হয়েছে!');
       queryClient.invalidateQueries(['admin', 'books']);
+      setDeletingBookId(null);
     },
-    onError: (error) => {
-      toast.error('বই মুছতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+    onError: (error, bookId) => {
+      console.error('Delete book error:', error);
+      setDeletingBookId(null);
+      
+      const errorDetail = error?.response?.data?.detail || error?.message || '';
+      
+      // Handle specific error cases
+      if (error?.response?.status === 404) {
+        toast.error('❌ বইটি খুঁজে পাওয়া যায়নি');
+      } else if (error?.response?.status === 400 && 
+                 (errorDetail.includes('বই ধার') || errorDetail.includes('issued') || errorDetail.includes('borrowed'))) {
+        toast.error('❌ এই বইটি বর্তমানে ধার দেওয়া হয়েছে। প্রথমে বই ফেরত নিন।', { duration: 6000 });
+      } else if (error?.response?.status === 400 && 
+                 (errorDetail.includes('foreign key') || errorDetail.includes('constraint'))) {
+        toast.error('❌ এই বইটির সাথে অন্যান্য ডেটা সংযুক্ত রয়েছে। মুছে ফেলা যাবে না।', { duration: 6000 });
+      } else if (error?.response?.status === 403) {
+        toast.error('❌ আপনার এই বইটি মুছে ফেলার অনুমতি নেই');
+      } else if (error?.response?.status === 500) {
+        toast.error('🔧 সার্ভার সমস্যা। অনুগ্রহ করে পরে চেষ্টা করুন');
+      } else {
+        toast.error(`❌ বই মুছতে সমস্যা হয়েছে: ${errorDetail || 'অজানা সমস্যা'}`);
+      }
     }
   });
 
@@ -116,7 +139,7 @@ const AdminBookManagement = () => {
   const getCategoryName = (categoryId) => {
     if (!categoryId) return 'বিভাগহীন';
     const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : 'অজানা বিভাগ';
+    return getSafeCategoryName(category?.name);
   };
 
   const handleEditBook = (book) => {
@@ -125,8 +148,16 @@ const AdminBookManagement = () => {
   };
 
   const handleDeleteBook = async (book) => {
-    const confirmed = await confirmDelete(`"${book.title}" বইটি`);
+    const confirmed = await confirmDelete(
+      `"${book.title}" বইটি মুছে ফেলুন`,
+      `আপনি কি নিশ্চিত যে "${book.title}" বইটি মুছে ফেলতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।`,
+      'মুছে ফেলুন',
+      'বাতিল',
+      'danger'
+    );
+    
     if (confirmed) {
+      setDeletingBookId(book.id);
       deleteBookMutation.mutate(book.id);
     }
   };
@@ -337,10 +368,15 @@ const AdminBookManagement = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteBook(book)}
-                        className="text-red-600 hover:text-red-700"
-                        title="মুছে ফেলুন"
+                        disabled={deletingBookId === book.id}
+                        className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        title={deletingBookId === book.id ? "মুছে ফেলা হচ্ছে..." : "মুছে ফেলুন"}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {deletingBookId === book.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   </div>

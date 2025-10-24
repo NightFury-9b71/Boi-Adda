@@ -4,6 +4,7 @@ import { BookOpen, BookMarked, Clock, Gift, AlertCircle, Search, HistoryIcon, Us
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
+import { getSafeBookTitle, getSafeAuthor, getSafeDate } from '../../utils/dataHelpers';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -44,9 +45,9 @@ const DashboardPage = () => {
     rejected: 0
   };
 
-  // Get user's active and pending borrows
+  // Get user's collected borrows (actually borrowed books) and return requested books
   const currentBorrows = userBorrows.filter(borrow => 
-    ['pending', 'approved', 'collected'].includes(borrow.status)
+    ['collected', 'return_requested'].includes(borrow.status)
   ).slice(0, 4); // Show only first 4
 
   return (
@@ -184,10 +185,12 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Current Borrows */}
+        {/* Currently Borrowed Books */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">{t('dashboard.currentBorrows')}</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {t('language') === 'bn' ? 'বর্তমানে আপনার কাছে থাকা বই' : 'Currently Borrowed Books'}
+            </h2>
             <button 
               onClick={() => navigate('/history')}
               className="text-green-600 hover:text-green-700 text-sm font-medium"
@@ -236,16 +239,16 @@ const DashboardPage = () => {
                         <BookOpen className="h-4 w-4 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{borrow.book_title || t('common.unknownBook')}</p>
-                        <p className="text-sm text-gray-600">{borrow.book_author || t('common.unknownAuthor')}</p>
+                        <p className="font-medium text-gray-900">{getSafeBookTitle(borrow.book_title)}</p>
+                        <p className="text-sm text-gray-600">{getSafeAuthor(borrow.book_author)}</p>
                         <p className="text-xs text-gray-500">
-                          {t('common.applicationDate')}: {new Date(borrow.created_at).toLocaleDateString('bn-BD')}
+                          {t('common.applicationDate')}: {getSafeDate(borrow.created_at)}
                         </p>
                         {(borrow.status === 'collected' || borrow.status === 'return_requested') && borrow.due_date && (
                           <p className={`text-xs font-medium mt-1 ${
                             borrow.is_overdue ? 'text-red-600' : 'text-orange-600'
                           }`}>
-                            ফেরতের তারিখ: {new Date(borrow.due_date).toLocaleDateString('bn-BD')}
+                            ফেরতের তারিখ: {getSafeDate(borrow.due_date)}
                             {borrow.is_overdue && borrow.overdue_days > 0 && (
                               <span className="ml-1 text-red-600 font-semibold">
                                 (মেয়াদ শেষ - {borrow.overdue_days} দিন অতিক্রান্ত)
@@ -270,7 +273,9 @@ const DashboardPage = () => {
               <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <BookMarked className="h-6 w-6 text-gray-400" />
               </div>
-              <p className="text-gray-500 text-sm">{t('dashboard.noBorrows')}</p>
+              <p className="text-gray-500 text-sm">
+                {t('language') === 'bn' ? 'আপনার কাছে বর্তমানে কোনো বই নেই' : 'You currently have no borrowed books'}
+              </p>
               <button
                 onClick={() => navigate('/books')}
                 className="mt-2 text-green-600 hover:text-green-700 text-sm font-medium"

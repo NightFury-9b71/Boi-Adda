@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '../../utils/toast';
+import { getSafeUserName, getSafeBookTitle, getSafeAuthor, getSafeNumber, getSafeDate } from '../../utils/dataHelpers';
 import { 
   Gift, 
   Search, 
@@ -80,8 +81,8 @@ const AdminDonationManagement = () => {
 
   // Filter donations based on search and status
   const filteredDonations = donations.filter(donation => {
-    const donorName = donation.member_name || 'অজানা';
-    const bookTitle = donation.donation_title || 'অজানা বই';
+    const donorName = getSafeUserName(donation.member_name);
+    const bookTitle = getSafeBookTitle(donation.donation_title);
     
     const matchesSearch = donorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          bookTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
