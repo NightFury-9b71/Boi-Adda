@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { data, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '../utils/toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { BookOpen, Users, Heart, Share2, RefreshCw, TrendingUp, ArrowRight, CheckCircle, Shield, Clock, Menu, X, Star} from 'lucide-react';
@@ -210,7 +210,7 @@ const LandingPage = () => {
         }
         setIsLoginLoading(true);
         await login(formData);
-        toast.success('সফলভাবে লগইন হয়েছে!');
+        // Success toast is handled by AuthContext
         navigate('/dashboard');
       } else {
         if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -225,35 +225,13 @@ const LandingPage = () => {
         const result = await register(formData);
         setRegisteredEmail(formData.email);
         setShowVerification(true);
-        toast.success(result.message || 'রেজিস্ট্রেশন সফল! আপনার ইমেইল যাচাই করুন');
+        // Success toast is handled by AuthContext
       }
     } catch (error) {
-      // Handle different error types with user-friendly messages
+      // Error toasts are handled by AuthContext, only handle form-specific validation errors here
       const errorMessage = error.response?.data?.detail || error.message;
-      
-      if (isLogin) {
-        if (error.response?.status === 401) {
-          toast.error('ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন');
-        } else if (error.response?.status === 400) {
-          toast.error('ইমেইল যাচাই করুন। সঠিক ইমেইল লিখুন');
-        } else if (errorMessage?.includes('verify') || errorMessage?.includes('verification')) {
-          toast.error('আপনার ইমেইল এখনো যাচাই করা হয়নি। ইমেইল চেক করুন');
-        } else {
-          toast.error(errorMessage || 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন');
-        }
-      } else {
-        if (error.response?.status === 400) {
-          if (errorMessage?.includes('email') || errorMessage?.includes('Email')) {
-            toast.error('এই ইমেইল দিয়ে ইতিমধ্যে একাউন্ট আছে');
-          } else if (errorMessage?.includes('password')) {
-            toast.error('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে');
-          } else {
-            toast.error(errorMessage || 'রেজিস্ট্রেশন ব্যর্থ। আবার চেষ্টা করুন');
-          }
-        } else {
-          toast.error(errorMessage || 'রেজিস্ট্রেশন ব্যর্থ। আবার চেষ্টা করুন');
-        }
-      }
+      console.error('Auth error:', error);
+      // AuthContext handles the toast notifications for auth errors
     } finally {
       setIsLoginLoading(false);
       setIsRegisterLoading(false);

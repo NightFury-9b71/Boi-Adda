@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '../../utils/toast';
 import PasswordInput from '../../components/PasswordInput';
 import { 
   Users, 
@@ -34,13 +34,16 @@ import OptimizedImage from '../../components/OptimizedImage';
 
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();
-  const { confirmUpdate } = useConfirmation();
+  const { confirmUpdate, confirmDelete } = useConfirmation();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState(null);
+  const [updatingStatusUserId, setUpdatingStatusUserId] = useState(null);
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState(null);
 
   // Fetch all users
   const { data: users = [], isLoading } = useQuery({
@@ -55,9 +58,13 @@ const AdminUserManagement = () => {
     onSuccess: () => {
       toast.success('ব্যবহারকারীর ভূমিকা সফলভাবে আপডেট হয়েছে!');
       queryClient.invalidateQueries(['admin', 'users']);
+      setUpdatingRoleUserId(null);
     },
     onError: (error) => {
-      toast.error('ভূমিকা আপডেট করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      console.error('Role update error:', error);
+      const errorMessage = error?.response?.data?.detail || error?.message || 'অজানা সমস্যা';
+      toast.error('ভূমিকা আপডেট করতে সমস্যা হয়েছে: ' + errorMessage);
+      setUpdatingRoleUserId(null);
     }
   });
 
@@ -68,9 +75,57 @@ const AdminUserManagement = () => {
       const action = variables.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়';
       toast.success(`ব্যবহারকারী সফলভাবে ${action} করা হয়েছে!`);
       queryClient.invalidateQueries(['admin', 'users']);
+      setUpdatingStatusUserId(null);
     },
     onError: (error) => {
-      toast.error('স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      console.error('Status update error:', error);
+      const errorMessage = error?.response?.data?.detail || error?.message || 'অজানা সমস্যা';
+      toast.error('স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে: ' + errorMessage);
+      setUpdatingStatusUserId(null);
+    }
+  });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId) => apiServices.admin.deleteUser(userId),
+    onSuccess: (data) => {
+      toast.success(data.message || 'ব্যবহারকারী সফলভাবে মুছে ফেলা হয়েছে!');
+      queryClient.invalidateQueries(['admin', 'users']);
+      setDeletingUserId(null);
+    },
+    onError: (error) => {
+      console.error('Delete user error:', error);
+      setDeletingUserId(null);
+      
+      const errorDetail = error?.response?.data?.detail || error?.message || '';
+      
+      // Handle specific error messages from backend
+      if (errorDetail.includes('Cannot delete user with') && errorDetail.includes('pending requests')) {
+        toast.error('❌ এই ব্যবহারকারীর অমীমাংসিত অনুরোধ রয়েছে। প্রথমে সকল অনুরোধ প্রক্রিয়া করুন।', { duration: 6000 });
+      } else if (errorDetail.includes('Cannot delete user with') && errorDetail.includes('active book issues')) {
+        toast.error('❌ এই ব্যবহারকারীর কাছে এখনও বই রয়েছে। প্রথমে সকল বই ফেরত নিন।', { duration: 6000 });
+      } else if (errorDetail.includes('Cannot delete user with') && errorDetail.includes('historical data')) {
+        toast.error('❌ এই ব্যবহারকারীর ঐতিহাসিক ডেটা রয়েছে যা মুছে ফেলা যাবে না।', { duration: 6000 });
+      } else if (errorDetail.includes('Cannot delete your own account')) {
+        toast.error('❌ আপনি নিজের অ্যাকাউন্ট মুছে ফেলতে পারবেন না।', { duration: 6000 });
+      } else if (errorDetail.includes('NotNullViolation') || 
+          errorDetail.includes('null value') || 
+          errorDetail.includes('bookrequest') ||
+          errorDetail.includes('foreign key constraint')) {
+        toast.error(
+          '❌ এই ব্যবহারকারীকে মুছে ফেলা যাবে না কারণ তার সাথে বই ধার বা দানের রেকর্ড রয়েছে। ' +
+          'প্রথমে সকল বই ধার ও দানের কার্যক্রম সম্পন্ন করুন।',
+          { duration: 6000 }
+        );
+      } else if (error?.response?.status === 404) {
+        toast.error('❌ ব্যবহারকারী খুঁজে পাওয়া যায়নি');
+      } else if (error?.response?.status === 403) {
+        toast.error('❌ আপনার এই ব্যবহারকারীকে মুছে ফেলার অনুমতি নেই');
+      } else if (error?.response?.status === 500) {
+        toast.error('🔧 সার্ভার সমস্যা। অনুগ্রহ করে পরে চেষ্টা করুন');
+      } else {
+        toast.error(`❌ ব্যবহারকারী মুছতে সমস্যা হয়েছে: ${errorDetail}`);
+      }
     }
   });
 
@@ -99,6 +154,7 @@ const AdminUserManagement = () => {
     );
     
     if (confirmed) {
+      setUpdatingRoleUserId(userId);
       updateUserRoleMutation.mutate({ userId, role: newRole });
     }
   };
@@ -113,7 +169,23 @@ const AdminUserManagement = () => {
     );
     
     if (confirmed) {
+      setUpdatingStatusUserId(userId);
       updateUserStatusMutation.mutate({ userId, isActive: newStatus });
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    const confirmed = await confirmDelete(
+      `আপনি কি নিশ্চিত যে "${userName}" ব্যবহারকারীকে মুছে ফেলতে চান?`,
+      'এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না। ব্যবহারকারীর সকল ডেটা স্থায়ীভাবে মুছে যাবে।',
+      'মুছে ফেলুন',
+      'বাতিল',
+      'danger'
+    );
+    
+    if (confirmed) {
+      setDeletingUserId(userId);
+      deleteUserMutation.mutate(userId);
     }
   };
 
@@ -341,16 +413,23 @@ const AdminUserManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <select
-                          value={user.role}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value, user.name)}
-                          className={`text-xs font-semibold px-2 py-1 rounded-full border-0 ${getRoleColor(user.role)}`}
-                          disabled={updateUserRoleMutation.isPending}
-                        >
-                          <option value="member">সদস্য</option>
-                          <option value="librarian">গ্রন্থাগারিক</option>
-                          <option value="admin">প্রশাসক</option>
-                        </select>
+                        {updatingRoleUserId === user.id ? (
+                          <div className="flex items-center text-xs px-2 py-1 rounded-full bg-gray-100">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600 mr-1"></div>
+                            আপডেট হচ্ছে...
+                          </div>
+                        ) : (
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value, user.name)}
+                            className={`text-xs font-semibold px-2 py-1 rounded-full border-0 ${getRoleColor(user.role)}`}
+                            disabled={updatingRoleUserId === user.id}
+                          >
+                            <option value="member">সদস্য</option>
+                            <option value="librarian">গ্রন্থাগারিক</option>
+                            <option value="admin">প্রশাসক</option>
+                          </select>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -374,14 +453,21 @@ const AdminUserManagement = () => {
                         </span>
                         <button
                           onClick={() => handleStatusToggle(user.id, user.is_active, user.name)}
-                          disabled={updateUserStatusMutation.isPending}
-                          className={`text-xs px-2 py-1 rounded transition-colors ${
+                          disabled={updatingStatusUserId === user.id}
+                          className={`text-xs px-2 py-1 rounded transition-colors flex items-center ${
                             user.is_active 
                               ? 'text-red-600 hover:bg-red-50 hover:text-red-700' 
                               : 'text-green-600 hover:bg-green-50 hover:text-green-700'
-                          } disabled:opacity-50`}
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
-                          {user.is_active ? 'নিষ্ক্রিয়' : 'সক্রিয়'}
+                          {updatingStatusUserId === user.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                              আপডেট হচ্ছে...
+                            </>
+                          ) : (
+                            user.is_active ? 'নিষ্ক্রিয়' : 'সক্রিয়'
+                          )}
                         </button>
                       </div>
                     </td>
@@ -389,18 +475,30 @@ const AdminUserManagement = () => {
                       {formatDate(user.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setShowUserDetails(true);
-                        }}
-                        className="text-green-600 hover:text-green-700 mr-3"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setShowUserDetails(true);
+                          }}
+                          className="text-green-600 hover:text-green-700 p-1 rounded transition-colors"
+                          title="বিস্তারিত দেখুন"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id, user.name)}
+                          disabled={deletingUserId === user.id}
+                          className="text-red-600 hover:text-red-700 p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                          title="ব্যবহারকারী মুছুন"
+                        >
+                          {deletingUserId === user.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

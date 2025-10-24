@@ -1102,6 +1102,90 @@ def update_user_status(
     }
 
 
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    session: Session = Depends(get_session)
+):
+    """Delete a user from the system"""
+    
+    # Check if user exists
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Prevent self-deletion
+    current_admin_email = current_user.email
+    if user.email == current_admin_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your own account"
+        )
+    
+    # Check if user has active book issues
+    active_issues = session.exec(
+        select(IssueBook).where(
+            IssueBook.member_id == user_id,
+            IssueBook.return_date.is_(None)
+        )
+    ).all()
+    
+    if active_issues:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete user with {len(active_issues)} active book issues. Please return all books first."
+        )
+    
+    # Check if user has any book requests (pending, approved, rejected, etc.)
+    all_requests = session.exec(
+        select(BookRequest).where(
+            BookRequest.member_id == user_id
+        )
+    ).all()
+    
+    if all_requests:
+        pending_count = len([r for r in all_requests if r.status == requestStatus.PENDING])
+        total_count = len(all_requests)
+        
+        if pending_count > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot delete user with {pending_count} pending requests. Please process all requests first."
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot delete user with {total_count} book request records. User has historical data that cannot be removed."
+            )
+    
+    # Store user info for response before deletion
+    user_name = user.name
+    user_email = user.email
+    
+    try:
+        # Delete the user
+        session.delete(user)
+        session.commit()
+        
+        return {
+            "message": f"User '{user_name}' ({user_email}) has been successfully deleted",
+            "deleted_user_id": user_id,
+            "deleted_user_name": user_name,
+            "deleted_user_email": user_email
+        }
+        
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete user: {str(e)}"
+        )
+
+
 # ===== DIRECT BOOK ISSUE =====
 
 @router.post("/issue")

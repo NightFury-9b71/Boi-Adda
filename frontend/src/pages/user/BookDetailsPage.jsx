@@ -21,7 +21,7 @@ import {
   Bookmark,
   Plus
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../utils/toast';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';

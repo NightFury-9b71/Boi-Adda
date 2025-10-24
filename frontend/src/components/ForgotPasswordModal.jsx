@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '../utils/toast';
 import { X, Mail, Key, ArrowRight } from 'lucide-react';
 import { apiServices } from '../api';
 import PasswordInput from './PasswordInput';

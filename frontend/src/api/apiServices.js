@@ -264,6 +264,10 @@ const apiServices = {
       });
       return response.data;
     },
+    deleteUser: async (userId) => {
+      const response = await apiClient.delete(API_ENDPOINTS.ADMIN.DELETE_USER(userId));
+      return response.data;
+    },
     getUserBorrows: async (userId) => {
       const response = await apiClient.get(API_ENDPOINTS.ADMIN.USER_BORROWS(userId));
       return response.data;

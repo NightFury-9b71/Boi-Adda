@@ -67,6 +67,7 @@ const API_ENDPOINTS = {
     USERS: '/admin/users',
     UPDATE_USER_ROLE: (userId) => `/admin/users/${userId}/role`,
     UPDATE_USER_STATUS: (userId) => `/admin/users/${userId}/status`,
+    DELETE_USER: (userId) => `/admin/users/${userId}`,
     ISSUE_BOOK: '/admin/issue',
     BORROW_REQUESTS: '/admin/borrows',
     APPROVE_BORROW: (borrowId) => `/admin/borrows/${borrowId}/approve`,

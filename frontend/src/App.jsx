@@ -28,7 +28,21 @@ const App = () => {
         <LanguageProvider>
           <AuthProvider>
             <ConfirmationProvider>
-              <Toaster position="top-right" richColors />
+              <Toaster 
+                position="top-right" 
+                richColors 
+                expand={false}
+                visibleToasts={3}
+                closeButton
+                duration={4000}
+                toastOptions={{
+                  style: {
+                    background: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                  },
+                }}
+              />
               <AppRoutes />
             </ConfirmationProvider>
           </AuthProvider>
