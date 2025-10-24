@@ -30,6 +30,10 @@ const apiServices = {
     getCurrentUser: async () => {
       const response = await apiClient.get(API_ENDPOINTS.AUTH.ME);
       return response.data;
+    },
+    changePassword: async (passwordData) => {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, passwordData);
+      return response.data;
     }
   },
 

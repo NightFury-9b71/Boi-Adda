@@ -19,13 +19,15 @@ import {
   CheckCircle,
   Loader2,
   RefreshCw,
-  Upload
+  Upload,
+  Lock
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import OptimizedImage from '../../components/OptimizedImage';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
 import cloudinaryService from '../../services/cloudinary';
 
 const ProfilePage = () => {
@@ -37,6 +39,7 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isUploadingProfile, setIsUploadingProfile] = useState(false);
   const [profilePreview, setProfilePreview] = useState(null);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const profileFileRef = useRef(null);
 
   // Form data state with proper initialization
@@ -649,10 +652,24 @@ const ProfilePage = () => {
                 <Clock className="h-4 w-4 mr-2" />
                 {t('profile.viewHistory')}
               </button>
+              
+              <button 
+                onClick={() => setShowChangePasswordModal(true)}
+                className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                {t('profile.changePassword')}
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+      />
     </div>
   );
 };

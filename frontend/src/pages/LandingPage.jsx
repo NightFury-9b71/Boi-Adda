@@ -70,9 +70,9 @@ const LoginForm = ({ formData, setFormData, onSubmit, loading }) => (
     </button>
     <p className="text-center text-sm text-gray-600">
       পাসওয়ার্ড ভুলে গেছেন?{' '}
-      <a href="#" className="text-green-600 hover:text-green-700 font-medium">
-        রিসেট করুন
-      </a>
+      <span className="text-green-600 font-medium">
+        অ্যাডমিনের সাথে যোগাযোগ করুন
+      </span>
     </p>
   </form>
 );

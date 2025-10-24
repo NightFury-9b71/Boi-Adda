@@ -11,6 +11,7 @@ const API_ENDPOINTS = {
     ME: '/auth/me',
     VERIFY_EMAIL: '/auth/verify-email',
     RESEND_VERIFICATION: '/auth/resend-verification',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
   // Book endpoints
   BOOKS: {

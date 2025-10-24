@@ -400,13 +400,17 @@ async def get_me(current_user: User = Depends(get_current_user), session: Sessio
     )
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(email: EmailStr, session: Session = Depends(get_session)):
+async def forgot_password(request: ForgotPasswordRequest, session: Session = Depends(get_session)):
     """
     Send password reset code.
     """
     try:
-        user = session.exec(select(User).where(User.email == email)).first()
+        user = session.exec(select(User).where(User.email == request.email)).first()
         
         if not user:
             # Don't reveal if email exists
@@ -420,7 +424,7 @@ async def forgot_password(email: EmailStr, session: Session = Depends(get_sessio
         session.commit()
         
         # TODO: Send reset email here
-        print(f"Password reset code for {email}: {reset_code}")
+        print(f"Password reset code for {request.email}: {reset_code}")
         
         return MessageResponse(message=f"Password reset code sent! Your code is: {reset_code}")
     except Exception as e:
@@ -460,6 +464,40 @@ async def reset_password(request: ResetPasswordRequest, session: Session = Depen
         session.commit()
         
         return MessageResponse(message="Password reset successfully")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password", response_model=MessageResponse)
+async def change_password(
+    request: ChangePasswordRequest, 
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """
+    Change password for authenticated user.
+    """
+    try:
+        # Use the current user directly (no need to query again)
+        user = current_user
+        
+        # Verify current password
+        if not verify_password(request.current_password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Update password
+        user.password_hash = get_password_hash(request.new_password)
+        session.add(user)
+        session.commit()
+        
+        return MessageResponse(message="Password changed successfully")
     except HTTPException:
         raise
     except Exception as e:
