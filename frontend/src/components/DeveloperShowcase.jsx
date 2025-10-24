@@ -6,12 +6,13 @@ export const DeveloperShowcase = () => {
   const [isTyping, setIsTyping] = useState(true);
   const [hoverEffect, setHoverEffect] = useState(false);
   
-  const skills = ['React Developer', 'UI/UX Designer', 'Problem Solver', 'Coffee Enthusiast'];
+  const skills = ['Full-Stack Developer', 'AI/ML Enthusiast', 'React Specialist', 'Problem Solver', 'Community Leader'];
   const codeLines = [
     "const developer = 'Abdullah Al Noman';",
-    "const passion = ['React', 'Design', 'Coffee'];",
-    "while(coding) { drinkCoffee(); }",
-    "console.log('Building dreams ✨');"
+    "const university = 'JUST CSE Student';",
+    "const passion = ['React', 'AI/ML', 'Community'];",
+    "while(coding) { drinkCoffee(); buildDreams(); }",
+    "console.log('Available for projects ✨');"
   ];
   
   useEffect(() => {
@@ -98,16 +99,16 @@ export const DeveloperShowcase = () => {
             </div>
             
             <p className="text-gray-300 text-sm mb-4">
-              Crafting digital experiences with passion & precision ✨
+              CSE Student at JUST • Assistant Treasurer of Robo Society Club ✨
               <br />
               <span className="text-green-400 text-xs">
-                "Code is poetry, design is art, coffee is fuel"
+                "Building innovative solutions • Participating in hackathons • Leading tech communities"
               </span>
             </p>
 
             {/* Tech Stack */}
             <div className="flex flex-wrap gap-2 mb-4">
-              {['React', 'JavaScript', 'UI/UX', 'Node.js', 'MongoDB'].map((tech) => (
+              {['React', 'FastAPI', 'Python', 'PostgreSQL', 'JavaScript', 'AI/ML', 'Node.js', 'MongoDB'].map((tech) => (
                 <span key={tech} className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded-full border border-gray-600 hover:bg-green-600 hover:text-white transition-colors cursor-default">
                   {tech}
                 </span>
@@ -118,7 +119,7 @@ export const DeveloperShowcase = () => {
           {/* Contact & Stats */}
           <div className="flex flex-col gap-4">
             {/* Contact Links */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <a 
                 href="mailto:nomanstine@gmail.com"
                 className="group flex items-center gap-2 bg-gray-700 hover:bg-green-600 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105"
@@ -126,18 +127,53 @@ export const DeveloperShowcase = () => {
                 <Mail className="h-4 w-4 text-gray-300 group-hover:text-white" />
                 <span className="text-sm text-gray-300 group-hover:text-white">Email</span>
               </a>
-              <button className="group flex items-center gap-2 bg-gray-700 hover:bg-purple-600 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+              <a
+                href="https://github.com/nomanstine"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-2 bg-gray-700 hover:bg-purple-600 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105"
+              >
                 <Github className="h-4 w-4 text-gray-300 group-hover:text-white" />
                 <span className="text-sm text-gray-300 group-hover:text-white">GitHub</span>
-              </button>
+              </a>
+              <a
+                href="https://nomanstine.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-2 bg-gray-700 hover:bg-blue-600 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105"
+              >
+                <Star className="h-4 w-4 text-gray-300 group-hover:text-white" />
+                <span className="text-sm text-gray-300 group-hover:text-white">Portfolio</span>
+              </a>
+            </div>
+
+            {/* Developer Page Link */}
+            <div className="mt-4">
+              <a
+                href="/developer"
+                className="group flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-white text-sm font-medium"
+              >
+                <Code className="h-4 w-4" />
+                <span>Learn More About Me</span>
+              </a>
             </div>
 
             {/* Quick Stats */}
             <div className="bg-gray-700/50 rounded-lg p-3 backdrop-blur-sm">
               <div className="grid grid-cols-2 gap-3 text-center">
                 <div>
-                  <div className="text-lg font-bold text-white">5+</div>
+                  <div className="text-lg font-bold text-white">8+</div>
                   <div className="text-xs text-gray-400">Projects</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white">6+</div>
+                  <div className="text-xs text-gray-400">Competitions</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-center mt-2">
+                <div>
+                  <div className="text-lg font-bold text-white">2.80</div>
+                  <div className="text-xs text-gray-400">CGPA</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-white flex items-center justify-center gap-1">
@@ -224,6 +260,14 @@ const EnhancedFooter = () => {
             © ২০২৫ বই আড্ডা। সকল অধিকার সংরক্ষিত।
             <span className="text-green-400 ml-2">♥</span> দিয়ে তৈরি JUST-এ
           </p>
+          <div className="mt-2">
+            <a
+              href="/developer"
+              className="text-gray-400 hover:text-green-400 text-xs transition-colors duration-300"
+            >
+              About the Developer
+            </a>
+          </div>
         </div>
       </div>
     </footer>

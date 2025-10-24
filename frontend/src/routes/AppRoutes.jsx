@@ -8,6 +8,7 @@ import { PublicLayout, ProtectedLayout, AdminLayout } from '../layouts/Layout';
 
 import LandingPage from '../pages/LandingPage';
 import NotFound from '../pages/NotFound';
+import DeveloperPage from '../pages/DeveloperPage';
 
 import Book from '../components/book';
 
@@ -49,6 +50,9 @@ const AppRoutes = () => {
         <Route path="books" element={<BooksLibrary />} />
         <Route path="book" element={<Book />} />
       </Route>
+
+      {/* Developer Portfolio Route */}
+      <Route path="/developer" element={<DeveloperPage />} />
 
       {/* Protected User Routes */}
       <Route path="/" element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
