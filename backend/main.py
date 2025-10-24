@@ -1,6 +1,11 @@
+import os
+from dotenv import load_dotenv
 from db import get_session, create_db_and_tables, drop_db_and_tables, SQLModel
 from fastapi import FastAPI, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+
+# Load environment variables
+load_dotenv()
 from router import (
     borrow_books, 
     donate_books, 
@@ -22,17 +27,15 @@ from router import (
 )
 from auth import router as auth_router
 
+
 app = FastAPI()
+
+origins = os.getenv("FRONTEND_URL", "http://localhost:5173,https://boi-adda.onrender.com").split(",")
 
 # CORS configuration - Allow frontend to access backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite default
-        "http://localhost:3000",  # React default
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[

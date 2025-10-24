@@ -5,7 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { BookOpen, Users, Heart, Share2, RefreshCw, TrendingUp, ArrowRight, CheckCircle, Shield, Clock, Menu, X, Star} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { apiServices } from '../api';;
+import { apiServices } from '../api';
+import PasswordInput from '../components/PasswordInput';
 
 // Animated Counter Component
 const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
@@ -46,13 +47,10 @@ const LoginForm = ({ formData, setFormData, onSubmit, loading }) => (
       />
     </div>
     <div>
-      <input
-        type="password"
+      <PasswordInput
         placeholder="পাসওয়ার্ড"
         value={formData.password}
         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-        required
         autoComplete="current-password"
       />
     </div>
@@ -123,24 +121,18 @@ const RegistrationForm = ({ formData, setFormData, onSubmit, loading, setIsLogin
       />
     </div>
     <div>
-      <input
-        type="password"
+      <PasswordInput
         placeholder="পাসওয়ার্ড"
         value={formData.password}
         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-        required
         autoComplete="new-password"
       />
     </div>
     <div>
-      <input
-        type="password"
+      <PasswordInput
         placeholder="পাসওয়ার্ড নিশ্চিত করুন"
         value={formData.confirmPassword}
         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-        required
         autoComplete="new-password"
       />
     </div>

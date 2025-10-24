@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import PasswordInput from '../../components/PasswordInput';
 import { 
   Users, 
   Search, 
@@ -772,13 +773,13 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               পাসওয়ার্ড *
             </label>
-            <input
-              type="password"
+            <PasswordInput
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              required
+              className="px-3 py-2"
+              placeholder="পাসওয়ার্ড"
+              autoComplete="new-password"
             />
           </div>
 

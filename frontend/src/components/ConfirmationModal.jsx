@@ -8,7 +8,8 @@ const ConfirmationModal = ({
   message, 
   confirmText = 'নিশ্চিত করুন', 
   cancelText = 'বাতিল',
-  type = 'default' // 'default', 'danger', 'warning'
+  type = 'default', // 'default', 'danger', 'warning'
+  isLoading = false
 }) => {
   if (!isOpen) return null;
 
@@ -53,7 +54,8 @@ const ConfirmationModal = ({
           <div className="flex items-center justify-end space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              disabled={isLoading}
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {cancelText}
             </button>
@@ -62,9 +64,17 @@ const ConfirmationModal = ({
                 onConfirm();
                 onClose();
               }}
-              className={`px-4 py-2 rounded-lg transition-colors ${typeStyles.confirmButton}`}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${typeStyles.confirmButton}`}
             >
-              {confirmText}
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  প্রক্রিয়াকরণ...
+                </>
+              ) : (
+                confirmText
+              )}
             </button>
           </div>
         </div>

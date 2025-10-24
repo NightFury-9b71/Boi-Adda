@@ -36,6 +36,7 @@ const BooksLibrary = () => {
     isOpen: false,
     book: null
   });
+  const [borrowingBookId, setBorrowingBookId] = useState(null);
 
   // API calls
   const { data: books = [], isLoading: booksLoading } = useQuery({
@@ -188,6 +189,7 @@ const BooksLibrary = () => {
   // Handle borrow confirmation
   const handleBorrowRequest = async (book) => {
     setConfirmModal({ isOpen: false, book: null });
+    setBorrowingBookId(book.id);
     
     try {
       // Check if book has available copies
@@ -222,6 +224,8 @@ const BooksLibrary = () => {
       }
       
       toast.error(`${t('books.borrowRequestError')}: ${errorMessage}`);
+    } finally {
+      setBorrowingBookId(null);
     }
   };
 
@@ -430,6 +434,8 @@ const BooksLibrary = () => {
                       
                       {(() => {
                         const statusDisplay = getBorrowStatusDisplay(book.id);
+                        const isLoadingThisBook = borrowingBookId === book.id;
+                        
                         if (statusDisplay) {
                           return (
                             <span className={statusDisplay.className}>
@@ -443,9 +449,17 @@ const BooksLibrary = () => {
                                 e.stopPropagation();
                                 showBorrowConfirmation(book);
                               }}
-                              className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors"
+                              disabled={isLoadingThisBook}
+                              className="bg-green-600 text-white text-xs px-3 py-1 rounded-full hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                             >
-                              {t('books.borrow')}
+                              {isLoadingThisBook ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent mr-1"></div>
+                                  অনুরোধ করা হচ্ছে...
+                                </>
+                              ) : (
+                                t('books.borrow')
+                              )}
                             </button>
                           );
                         } else {
@@ -530,6 +544,8 @@ const BooksLibrary = () => {
                         
                         {(() => {
                           const statusDisplay = getBorrowStatusDisplay(book.id);
+                          const isLoadingThisBook = borrowingBookId === book.id;
+                          
                           if (statusDisplay) {
                             return (
                               <span className={statusDisplay.className}>
@@ -543,9 +559,17 @@ const BooksLibrary = () => {
                                   e.stopPropagation();
                                   showBorrowConfirmation(book);
                                 }}
-                                className="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                                disabled={isLoadingThisBook}
+                                className="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                               >
-                                {t('books.borrow')}
+                                {isLoadingThisBook ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent mr-1"></div>
+                                    অনুরোধ করা হচ্ছে...
+                                  </>
+                                ) : (
+                                  t('books.borrow')
+                                )}
                               </button>
                             );
                           } else {
@@ -661,6 +685,7 @@ const BooksLibrary = () => {
         confirmText={t('books.yesBorrow')}
         cancelText={t('common.cancel')}
         type="default"
+        isLoading={borrowingBookId === confirmModal.book?.id}
       />
     </div>
   );
