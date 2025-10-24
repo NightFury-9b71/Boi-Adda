@@ -4,6 +4,7 @@ from models import (
     bookStatus
 )
 from sqlmodel import select, Session, SQLModel
+from sqlalchemy.orm import joinedload
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 from auth import require_admin
@@ -111,17 +112,24 @@ def issue_book_directly(
     session.add(issue_book)
     session.add(book_copy)
     session.commit()
-    session.refresh(issue_book)
+    
+    # Load the issue_book with relationships for the response
+    issue_book = session.exec(
+        select(IssueBook).where(IssueBook.id == issue_book.id).options(
+            joinedload(IssueBook.member),
+            joinedload(IssueBook.book_copy).joinedload(BookCopy.book)
+        )
+    ).first()
     
     return IssueBookResponse(
         id=issue_book.id,
         member_id=issue_book.member_id,
         member_name=issue_book.member.name,
         member_profile_photo=issue_book.member.profile_photo_url,
-        book_title=book_copy.book.title,
-        book_author=book_copy.book.author,
-        book_cover_url=book_copy.book.cover_image_url,
-        book_copy_id=book_copy.id,
+        book_title=issue_book.book_copy.book.title,
+        book_author=issue_book.book_copy.book.author,
+        book_cover_url=issue_book.book_copy.book.cover_image_url,
+        book_copy_id=issue_book.book_copy.id,
         issue_date=issue_book.issue_date,
         due_date=issue_book.due_date,
         return_date=issue_book.return_date,
