@@ -14,7 +14,7 @@ router = APIRouter()
 
 # Request/Response Models
 class IssueBookCreate(SQLModel):
-    member_id: int
+    user_id: int
     book_copy_id: int
 
 
@@ -1121,14 +1121,14 @@ def issue_book_directly(
         )
     
     # Verify member exists
-    member = session.get(User, data.member_id)
+    member = session.get(User, data.user_id)
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found"
         )
     
-    # Verify book copy exists and is available
+    # Verify book copy exists
     book_copy = session.get(BookCopy, data.book_copy_id)
     if not book_copy:
         raise HTTPException(
@@ -1136,10 +1136,26 @@ def issue_book_directly(
             detail="Book copy not found"
         )
     
-    if book_copy.status != bookStatus.AVAILABLE:
+    # Check if copy is available or reserved
+    if book_copy.status not in [bookStatus.AVAILABLE, bookStatus.RESERVED]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Book copy is not available. Current status: {book_copy.status}"
+            detail=f"Cannot issue book with status: {book_copy.status.value}. Book must be available or reserved."
+        )
+    
+    # Check if member already has this book issued
+    existing_issue = session.exec(
+        select(IssueBook).where(
+            IssueBook.member_id == data.user_id,
+            IssueBook.book_copy_id == data.book_copy_id,
+            IssueBook.return_date == None
+        )
+    ).first()
+    
+    if existing_issue:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This member already has this book copy issued"
         )
     
     # Create issue record
@@ -1147,7 +1163,7 @@ def issue_book_directly(
     due_date = issue_date + timedelta(days=14)
     
     issue_book = IssueBook(
-        member_id=data.member_id,
+        member_id=data.user_id,
         book_copy_id=data.book_copy_id,
         admin_id=admin.id,
         issue_date=issue_date,
@@ -1155,18 +1171,54 @@ def issue_book_directly(
     )
     
     session.add(issue_book)
+    session.flush()  # Get the issue_book.id
+    
+    # Create a BookRequest record to represent this as a borrow
+    borrow_request = BookRequest(
+        request_type=requestType.BORROW,
+        status=requestStatus.COLLECTED,
+        member_id=data.user_id,
+        book_id=book_copy.book_id,
+        reserved_copy_id=data.book_copy_id,
+        reviewed_by_id=admin.id,
+        reviewed_at=datetime.now(),
+        collected_at=datetime.now()
+    )
+    
+    session.add(borrow_request)
+    session.flush()  # Get the request.id
+    
+    # Link the issue to the request
+    issue_book.request_id = borrow_request.id
+    session.add(issue_book)
     
     # Update book copy status
     book_copy.status = bookStatus.ISSUED
     session.add(book_copy)
     
     session.commit()
-    session.refresh(issue_book)
+    
+    # Load the issue_book with relationships for response
+    from sqlalchemy.orm import joinedload
+    issue_book = session.exec(
+        select(IssueBook).where(IssueBook.id == issue_book.id).options(
+            joinedload(IssueBook.member),
+            joinedload(IssueBook.book_copy).joinedload(BookCopy.book)
+        )
+    ).first()
     
     return {
-        "message": "Book issued successfully",
-        "issue_id": issue_book.id,
-        "member_name": member.name,
-        "book_title": book_copy.book.title,
-        "due_date": due_date.isoformat()
+        "id": issue_book.id,
+        "member_id": issue_book.member_id,
+        "member_name": issue_book.member.name,
+        "member_profile_photo": issue_book.member.profile_photo_url,
+        "book_title": issue_book.book_copy.book.title,
+        "book_author": issue_book.book_copy.book.author,
+        "book_cover_url": issue_book.book_copy.book.cover_image_url,
+        "book_copy_id": issue_book.book_copy.id,
+        "issue_date": issue_book.issue_date,
+        "due_date": issue_book.due_date,
+        "return_date": issue_book.return_date,
+        "is_overdue": issue_book.is_overdue,
+        "message": f"Book issued directly. Due date: {issue_book.due_date.strftime('%Y-%m-%d')}"
     }

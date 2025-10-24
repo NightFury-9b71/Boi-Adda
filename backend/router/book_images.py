@@ -36,6 +36,9 @@ async def upload_book_cover_image(
         
         return {
             "message": "Book cover uploaded successfully",
+            "public_id": cover_url,  # For compatibility with frontend
+            "url": cover_url,
+            "secure_url": cover_url,
             "cover_url": cover_url,
             "book": {
                 "id": book.id,
