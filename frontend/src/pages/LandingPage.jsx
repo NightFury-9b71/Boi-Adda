@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { data, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from '../utils/toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
@@ -803,7 +803,11 @@ const LandingPage = () => {
               <span className="text-green-400 ml-2">♥</span> দিয়ে তৈরি JUST-এ
             </p>
             <p className="text-gray-400 text-xs mt-2">
-              Developed by Abdullah Al Noman | Email:{' '}
+              Developed by{' '}
+              <Link to="/developer" className="underline hover:text-green-400">
+                Abdullah Al Noman
+              </Link>{' '}
+              | Email:{' '}
               <a href="mailto:nomanstine@gmail.com" className="underline hover:text-green-400">
                 nomanstine@gmail.com
               </a>
