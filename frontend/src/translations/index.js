@@ -534,7 +534,7 @@ export const en = {
   },
 
   // App Name
-  appName: 'Boi Adda',
+  appName: 'বই আড্ডা',
 
   // Navigation
   nav: {
