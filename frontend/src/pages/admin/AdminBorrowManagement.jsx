@@ -539,7 +539,7 @@ const AdminBorrowManagement = () => {
                           </>
                         )}
 
-                        {borrow.status === 'return_requested' && (
+                        {(borrow.status === 'collected' || borrow.status === 'return_requested') && (
                           <button
                             onClick={() => handleReturn(borrow.id)}
                             disabled={returnBookMutation.isPending}
@@ -772,7 +772,7 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                 </>
               )}
 
-              {borrow.status === 'return_requested' && (
+              {(borrow.status === 'collected' || borrow.status === 'return_requested') && (
                 <button
                   onClick={() => {
                     onReturn();
@@ -783,10 +783,6 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                   <CheckCircle className="h-4 w-4 mr-2" />
                   বই ফেরত গ্রহণ করুন
                 </button>
-              )}
-
-              {borrow.status === 'collected' && (
-                <p className="text-blue-600 italic">বইটি বর্তমানে সদস্যের কাছে রয়েছে। ফেরত দিতে সদস্যকে অনুরোধ জানান।</p>
               )}
 
               {(borrow.status === 'completed' || borrow.status === 'rejected') && (

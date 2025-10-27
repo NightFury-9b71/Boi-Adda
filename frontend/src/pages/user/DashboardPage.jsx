@@ -45,9 +45,9 @@ const DashboardPage = () => {
     rejected: 0
   };
 
-  // Get user's collected borrows (actually borrowed books) and return requested books
+  // Get user's collected borrows (actually borrowed books)
   const currentBorrows = userBorrows.filter(borrow => 
-    ['collected', 'return_requested'].includes(borrow.status)
+    borrow.status === 'collected'
   ).slice(0, 4); // Show only first 4
 
   return (
