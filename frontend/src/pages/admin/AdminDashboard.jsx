@@ -73,7 +73,6 @@ const AdminDashboard = () => {
     users: {
       total: (users || []).length,
       active: (users || []).filter(user => user.role === 'member').length,
-      librarians: (users || []).filter(user => user.role === 'librarian').length,
       admins: (users || []).filter(user => user.role === 'admin').length,
     },
     books: {

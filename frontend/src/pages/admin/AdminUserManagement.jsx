@@ -35,6 +35,7 @@ import OptimizedImage from '../../components/OptimizedImage';
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();
   const { confirmUpdate, confirmDelete } = useConfirmation();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -144,7 +145,6 @@ const AdminUserManagement = () => {
   const handleRoleChange = async (userId, newRole, userName) => {
     const roleMap = {
       'admin': 'প্রশাসক',
-      'librarian': 'গ্রন্থাগারিক', 
       'member': 'সদস্য'
     };
     
@@ -192,7 +192,6 @@ const AdminUserManagement = () => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
-      case 'librarian': return 'bg-blue-100 text-blue-800';
       case 'member': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -201,7 +200,6 @@ const AdminUserManagement = () => {
   const getRoleIcon = (role) => {
     switch (role) {
       case 'admin': return Crown;
-      case 'librarian': return Shield;
       case 'member': return Users;
       default: return Users;
     }
@@ -210,7 +208,6 @@ const AdminUserManagement = () => {
   const getRoleName = (role) => {
     switch (role) {
       case 'admin': return 'প্রশাসক';
-      case 'librarian': return 'গ্রন্থাগারিক';
       case 'member': return 'সদস্য';
       default: return 'অজানা';
     }
@@ -295,19 +292,6 @@ const AdminUserManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">{t('admin.userManagement.librarians')}</p>
-              <p className="text-3xl font-bold text-blue-900">
-                {users.filter(u => u.role === 'librarian').length}
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Shield className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Search and Filters */}
@@ -336,7 +320,6 @@ const AdminUserManagement = () => {
             >
               <option value="all">{t('admin.userManagement.allRoles')}</option>
               <option value="admin">{t('admin.userManagement.admin')}</option>
-              <option value="librarian">{t('admin.userManagement.librarian')}</option>
               <option value="member">{t('admin.userManagement.member')}</option>
             </select>
           </div>
@@ -426,7 +409,6 @@ const AdminUserManagement = () => {
                             disabled={updatingRoleUserId === user.id}
                           >
                             <option value="member">{t('admin.userManagement.member')}</option>
-                            <option value="librarian">{t('admin.userManagement.librarian')}</option>
                             <option value="admin">{t('admin.userManagement.admin')}</option>
                           </select>
                         )}
@@ -543,6 +525,7 @@ const AdminUserManagement = () => {
 // User Details Modal Component
 const UserDetailsModal = ({ user, onClose }) => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   
   // Fetch user stats
   const { data: userStats, isLoading: statsLoading, error: statsError } = useQuery({
@@ -563,7 +546,6 @@ const UserDetailsModal = ({ user, onClose }) => {
   const getRoleName = (role) => {
     switch (role) {
       case 'admin': return 'প্রশাসক';
-      case 'librarian': return 'গ্রন্থাগারিক';
       case 'member': return 'সদস্য';
       default: return 'অজানা';
     }
@@ -673,7 +655,6 @@ const UserDetailsModal = ({ user, onClose }) => {
               
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                 user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                user.role === 'librarian' ? 'bg-blue-100 text-blue-800' :
                 'bg-green-100 text-green-800'
               }`}>
                 {getRoleName(user.role)}
@@ -784,6 +765,7 @@ const UserDetailsModal = ({ user, onClose }) => {
 
 // Create User Modal Component
 const CreateUserModal = ({ onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -918,7 +900,6 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
               <option value="member">{t('admin.userManagement.member')}</option>
-              <option value="librarian">{t('admin.userManagement.librarian')}</option>
               <option value="admin">{t('admin.userManagement.admin')}</option>
             </select>
           </div>

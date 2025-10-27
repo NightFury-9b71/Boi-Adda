@@ -617,8 +617,7 @@ const ProfilePage = () => {
                     <span className="text-sm font-medium text-gray-700">{t('profile.membership')}</span>
                   </div>
                   <span className="text-sm font-medium text-purple-600">
-                    {user?.role === 'admin' ? t('roles.admin') : 
-                     user?.role === 'librarian' ? t('roles.librarian') : t('roles.member')}
+                    {user?.role === 'admin' ? t('roles.admin') : t('roles.member')}
                   </span>
                 </div>
               </div>

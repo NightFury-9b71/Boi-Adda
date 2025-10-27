@@ -94,10 +94,10 @@ const History = () => {
       requestDate: borrow.created_at,
       approvedDate: borrow.reviewed_at,  // When admin reviewed/approved
       handoverDate: borrow.collected_at, // When book was collected
-      returnDate: borrow.return_date || null, // TODO: Add return date field when available from API
-      dueDate: borrow.due_date || null,  // Due date from IssueBook
-      isOverdue: borrow.is_overdue || false, // Overdue flag from API
-      overdueDays: borrow.overdue_days || 0, // Days overdue
+      returnDate: borrow.returnDate || null, // TODO: Add return date field when available from API
+      dueDate: borrow.dueDate || null,  // Due date from IssueBook
+      isOverdue: borrow.isOverdue || false, // Overdue flag from API
+      overdueDays: borrow.overdueDays || 0, // Days overdue
       updatedAt: borrow.created_at // Fallback
     };
   });

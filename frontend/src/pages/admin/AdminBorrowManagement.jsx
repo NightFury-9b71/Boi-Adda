@@ -22,6 +22,105 @@ import OptimizedImage from '../../components/OptimizedImage';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
 import UserTimeline from '../../components/UserTimeline';
 
+// Helper function to transform API responses into timeline activities
+const transformUserActivities = (borrows, donations) => {
+  const activities = [];
+
+  // Transform borrows into activities
+  borrows.forEach(borrow => {
+    // Pending borrow request
+    activities.push({
+      id: borrow.id,
+      type: 'borrow',
+      status: 'pending',
+      timestamp: borrow.created_at,
+      bookTitle: borrow.book_title,
+      bookAuthor: borrow.book_author
+    });
+
+    // Approved borrow (if reviewed)
+    if (borrow.reviewed_at && borrow.status !== 'pending') {
+      activities.push({
+        id: borrow.id,
+        type: 'borrow',
+        status: borrow.status === 'rejected' ? 'rejected' : 'approved',
+        timestamp: borrow.reviewed_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: borrow.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+      });
+    }
+
+    // Collected borrow (if collected)
+    if (borrow.collected_at && borrow.status === 'collected') {
+      activities.push({
+        id: borrow.id,
+        type: 'borrow',
+        status: 'collected',
+        timestamp: borrow.collected_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: 'বই ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে'
+      });
+    }
+
+    // Completed borrow (if completed)
+    if (borrow.updated_at && borrow.status === 'completed') {
+      activities.push({
+        id: borrow.id,
+        type: 'borrow',
+        status: 'completed',
+        timestamp: borrow.updated_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: 'বই ফেরত দেওয়া হয়েছে'
+      });
+    }
+  });
+
+  // Transform donations into activities
+  donations.forEach(donation => {
+    // Pending donation request
+    activities.push({
+      id: donation.id,
+      type: 'donation',
+      status: 'pending',
+      timestamp: donation.created_at,
+      bookTitle: donation.donation_title,
+      bookAuthor: donation.donation_author
+    });
+
+    // Approved donation (if reviewed)
+    if (donation.reviewed_at && donation.status !== 'pending') {
+      activities.push({
+        id: donation.id,
+        type: 'donation',
+        status: donation.status === 'rejected' ? 'rejected' : 'approved',
+        timestamp: donation.reviewed_at,
+        bookTitle: donation.donation_title,
+        bookAuthor: donation.donation_author,
+        notes: donation.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+      });
+    }
+
+    // Completed donation (if completed)
+    if (donation.completed_at && donation.status === 'completed') {
+      activities.push({
+        id: donation.id,
+        type: 'donation',
+        status: 'completed',
+        timestamp: donation.completed_at,
+        bookTitle: donation.donation_title,
+        bookAuthor: donation.donation_author,
+        notes: 'দান সম্পন্ন হয়েছে এবং বই লাইব্রেরিতে যোগ করা হয়েছে'
+      });
+    }
+  });
+
+  // Sort activities by timestamp (newest first)
+  return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+};
+
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();
   const { confirmUpdate, confirmSubmit } = useConfirmation();
@@ -38,6 +137,21 @@ const AdminBorrowManagement = () => {
   const { data: borrows = [], isLoading } = useQuery({
     queryKey: ['admin', 'borrows'],
     queryFn: apiServices.admin.getBorrowRequests,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch user activities for timeline (only when modal is open)
+  const { data: userBorrows = [] } = useQuery({
+    queryKey: ['admin', 'user-borrows', selectedBorrow?.member_id],
+    queryFn: () => selectedBorrow ? apiServices.admin.getUserBorrows(selectedBorrow.member_id) : [],
+    enabled: !!selectedBorrow && showBorrowDetails,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: userDonations = [] } = useQuery({
+    queryKey: ['admin', 'user-donations', selectedBorrow?.member_id],
+    queryFn: () => selectedBorrow ? apiServices.admin.getUserDonations(selectedBorrow.member_id) : [],
+    enabled: !!selectedBorrow && showBorrowDetails,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -621,6 +735,8 @@ const AdminBorrowManagement = () => {
             handover: handoverBorrowId === selectedBorrow.id,
             returning: returningBorrowId === selectedBorrow.id,
           }}
+          userBorrows={userBorrows}
+          userDonations={userDonations}
         />
       )}
     </div>
@@ -628,7 +744,7 @@ const AdminBorrowManagement = () => {
 };
 
 // Borrow Details Modal Component
-const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, onReturn, loadingStates }) => {
+const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, onReturn, loadingStates, userBorrows, userDonations }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -744,43 +860,7 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
               <UserTimeline
                 userId={borrow.member_id}
                 userName={borrow.member_name}
-                activities={[
-                  {
-                    id: borrow.id,
-                    type: 'borrow',
-                    status: 'pending',
-                    timestamp: borrow.created_at,
-                    bookTitle: borrow.book_title,
-                    bookAuthor: borrow.book_author
-                  },
-                  borrow.reviewed_at && borrow.status !== 'pending' && {
-                    id: borrow.id,
-                    type: 'borrow',
-                    status: borrow.status === 'rejected' ? 'rejected' : 'approved',
-                    timestamp: borrow.reviewed_at,
-                    bookTitle: borrow.book_title,
-                    bookAuthor: borrow.book_author,
-                    notes: borrow.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
-                  },
-                  borrow.collected_at && borrow.status === 'collected' && {
-                    id: borrow.id,
-                    type: 'borrow',
-                    status: 'collected',
-                    timestamp: borrow.collected_at,
-                    bookTitle: borrow.book_title,
-                    bookAuthor: borrow.book_author,
-                    notes: 'বই ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে'
-                  },
-                  borrow.updated_at && borrow.status === 'completed' && {
-                    id: borrow.id,
-                    type: 'borrow',
-                    status: 'completed',
-                    timestamp: borrow.updated_at,
-                    bookTitle: borrow.book_title,
-                    bookAuthor: borrow.book_author,
-                    notes: 'বই ফেরত দেওয়া হয়েছে'
-                  }
-                ].filter(Boolean)}
+                activities={transformUserActivities(userBorrows, userDonations)}
               />
             </div>
           </div>

@@ -22,7 +22,16 @@ SUPABASE_KEY=your_supabase_anon_key_here
 DATABASE_URL=sqlite:///./test.db
 ```
 
-### 3. Run the Application
+### 3. Set Up Database
+```bash
+# Create/update database tables
+python -c "from db import create_db_and_tables; create_db_and_tables()"
+
+# If you encounter column errors after model changes, run migrations
+python migrate.py
+```
+
+### 4. Run the Application
 ```bash
 uvicorn main:app --reload
 ```

@@ -62,7 +62,6 @@ export const bn = {
   // User Roles
   roles: {
     admin: 'প্রশাসক',
-    librarian: 'গ্রন্থাগারিক',
     member: 'সদস্য'
   },
 
@@ -536,7 +535,6 @@ export const bn = {
       copies: 'কপি',
       bookCategories: 'বই বিভাগ',
       members: 'সদস্য',
-      librarians: 'গ্রন্থাগারিক',
       admins: 'প্রশাসক'
     },
     // User Management specific
@@ -548,7 +546,6 @@ export const bn = {
       totalUsers: 'মোট ব্যবহারকারী',
       activeUsers: 'সক্রিয় ব্যবহারকারী',
       admins: 'প্রশাসক',
-      librarians: 'গ্রন্থাগারিক',
       searchPlaceholder: 'নাম বা ইমেইল দিয়ে খুঁজুন...',
       allRoles: 'সকল ভূমিকা',
       allStatuses: 'সকল অবস্থা',
@@ -563,7 +560,6 @@ export const bn = {
       noUsersFound: 'কোন ব্যবহারকারী পাওয়া যায়নি',
       member: 'সদস্য',
       admin: 'প্রশাসক',
-      librarian: 'গ্রন্থাগারিক',
       unknown: 'অজানা',
       viewDetails: 'বিস্তারিত দেখুন',
       deleteUser: 'ব্যবহারকারী মুছুন',
@@ -724,7 +720,6 @@ export const en = {
   // User Roles
   roles: {
     admin: 'Administrator',
-    librarian: 'Librarian',
     member: 'Member'
   },
 
@@ -733,6 +728,7 @@ export const en = {
     pending: 'Pending',
     approved: 'Approved',
     collected: 'Collected',
+    return_requested: 'Return Requested',
     completed: 'Completed',
     returned: 'Returned',
     rejected: 'Rejected',
@@ -1196,7 +1192,6 @@ export const en = {
       copies: 'copies',
       bookCategories: 'Book Categories',
       members: 'Members',
-      librarians: 'Librarians',
       admins: 'Admins'
     },
     // User Management specific
@@ -1208,7 +1203,6 @@ export const en = {
       totalUsers: 'Total Users',
       activeUsers: 'Active Users',
       admins: 'Admins',
-      librarians: 'Librarians',
       searchPlaceholder: 'Search by name or email...',
       allRoles: 'All Roles',
       allStatuses: 'All Statuses',
@@ -1223,7 +1217,6 @@ export const en = {
       noUsersFound: 'No users found',
       member: 'Member',
       admin: 'Admin',
-      librarian: 'Librarian',
       unknown: 'Unknown',
       viewDetails: 'View Details',
       deleteUser: 'Delete User',

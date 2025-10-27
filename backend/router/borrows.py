@@ -25,6 +25,7 @@ class BorrowResponse(SQLModel):
     created_at: datetime
     reviewed_at: Optional[datetime] = None
     collected_at: Optional[datetime] = None
+    return_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     is_overdue: bool = False
     overdue_days: int = 0
@@ -150,9 +151,9 @@ def get_my_borrow_requests(
     
     result = []
     for req in requests:
-        # Get issue book record if collected or return_requested
+        # Get issue book record if collected, return_requested, or completed (returned)
         issue_book = None
-        if req.status in [requestStatus.COLLECTED, requestStatus.RETURN_REQUESTED]:
+        if req.status in [requestStatus.COLLECTED, requestStatus.RETURN_REQUESTED, requestStatus.COMPLETED]:
             issue_book = session.exec(
                 select(IssueBook).where(IssueBook.request_id == req.id)
             ).first()
@@ -167,6 +168,7 @@ def get_my_borrow_requests(
             created_at=req.created_at,
             reviewed_at=req.reviewed_at,
             collected_at=req.collected_at,
+            return_date=issue_book.return_date if issue_book else None,
             due_date=issue_book.due_date if issue_book else None,
             is_overdue=issue_book.is_overdue if issue_book else False,
             overdue_days=issue_book.overdue_days if issue_book else 0

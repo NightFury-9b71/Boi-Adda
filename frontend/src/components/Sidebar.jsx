@@ -37,7 +37,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   
-  const isAdmin = user?.role === 'admin' || user?.role === 'librarian';
+  const isAdmin = user?.role === 'admin';
   const navigationItems = NavigationItems();
   const adminItems = AdminItems();
 
@@ -148,7 +148,7 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   
-  const isAdmin = user?.role === 'admin' || user?.role === 'librarian';
+  const isAdmin = user?.role === 'admin';
   const navigationItems = NavigationItems();
   const adminItems = AdminItems();
 

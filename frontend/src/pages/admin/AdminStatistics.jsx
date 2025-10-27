@@ -514,18 +514,7 @@ const AdminStatistics = () => {
                     <span className="font-medium text-sm lg:text-base">{userStats?.by_role?.member || 0}</span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm lg:text-base">গ্রন্থাগারিক</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 lg:w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-600 h-2 rounded-full" 
-                        style={{ width: `${((userStats?.by_role?.librarian || 0) / (userStats?.total_users || 1)) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="font-medium text-sm lg:text-base">{userStats?.by_role?.librarian || 0}</span>
-                  </div>
-                </div>
+
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 text-sm lg:text-base">অ্যাডমিন</span>
                   <div className="flex items-center space-x-2">
