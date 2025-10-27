@@ -217,27 +217,27 @@ const DonateBook = () => {
               <div className="flex items-center space-x-3 mb-4">
                 <Heart className="h-8 w-8 text-red-300 animate-pulse" />
                 <h1 className="text-3xl md:text-4xl font-bold">
-                  বই দান করুন
+                  {t('donation.hero.title')}
                 </h1>
               </div>
               <p className="text-lg md:text-xl mb-6 text-green-50">
-                একটি বই দান করে আলোকিত করুন অন্যের জীবন। আপনার পুরনো বইটি হতে পারে কারো নতুন জ্ঞানের উৎস।
+                {t('donation.hero.subtitle')}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                   <BookOpen className="h-6 w-6 mb-2" />
-                  <p className="font-semibold">জ্ঞান ভাগ করুন</p>
-                  <p className="text-sm text-green-100">আপনার বই অন্যদের শেখার সুযোগ দেয়</p>
+                  <p className="font-semibold">{t('donation.hero.shareKnowledge')}</p>
+                  <p className="text-sm text-green-100">{t('donation.hero.shareKnowledgeDesc')}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                   <Heart className="h-6 w-6 mb-2" />
-                  <p className="font-semibold">সমাজ সেবা করুন</p>
-                  <p className="text-sm text-green-100">শিক্ষার আলো ছড়িয়ে দিন সবার মাঝে</p>
+                  <p className="font-semibold">{t('donation.hero.serveSociety')}</p>
+                  <p className="text-sm text-green-100">{t('donation.hero.serveSocietyDesc')}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                   <Gift className="h-6 w-6 mb-2" />
-                  <p className="font-semibold">পরিবেশ রক্ষা করুন</p>
-                  <p className="text-sm text-green-100">বই পুনর্ব্যবহার করে সম্পদ বাঁচান</p>
+                  <p className="font-semibold">{t('donation.hero.protectEnvironment')}</p>
+                  <p className="text-sm text-green-100">{t('donation.hero.protectEnvironmentDesc')}</p>
                 </div>
               </div>
               <button
@@ -245,7 +245,7 @@ const DonateBook = () => {
                 className="bg-white text-green-700 px-8 py-3 rounded-lg font-semibold hover:bg-green-50 transition-all transform hover:scale-105 shadow-lg flex items-center space-x-2"
               >
                 <Gift className="h-5 w-5" />
-                <span>এখনই দান করুন</span>
+                <span>{t('donation.hero.donateNow')}</span>
               </button>
             </div>
             <div className="flex-shrink-0">
@@ -261,19 +261,19 @@ const DonateBook = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
               <p className="text-3xl font-bold text-blue-700">{userDonations.length}</p>
-              <p className="text-sm text-blue-600 font-medium">মোট দান</p>
+              <p className="text-sm text-blue-600 font-medium">{t('donation.stats.totalDonations')}</p>
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
               <p className="text-3xl font-bold text-yellow-700">
                 {userDonations.filter(d => d.status === 'pending').length}
               </p>
-              <p className="text-sm text-yellow-600 font-medium">অপেক্ষমাণ</p>
+              <p className="text-sm text-yellow-600 font-medium">{t('donation.stats.pending')}</p>
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
               <p className="text-3xl font-bold text-green-700">
                 {userDonations.filter(d => d.status === 'completed').length}
               </p>
-              <p className="text-sm text-green-600 font-medium">সম্পন্ন</p>
+              <p className="text-sm text-green-600 font-medium">{t('donation.stats.completed')}</p>
             </div>
           </div>
         </div>
@@ -282,7 +282,7 @@ const DonateBook = () => {
         <div className="bg-white rounded-2xl p-8 shadow-lg">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <AlertCircle className="h-6 w-6 mr-3 text-green-600" />
-            কীভাবে বই দান করবেন?
+            {t('donation.howToDonate.title')}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -294,15 +294,15 @@ const DonateBook = () => {
                   <span className="text-2xl font-bold text-green-600">১</span>
                 </div>
                 <Camera className="h-8 w-8 text-green-600 mb-3" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">অনলাইনে রিকোয়েস্ট করুন</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{t('donation.howToDonate.onlineRequest')}</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  "বই দান করুন" বাটনে ক্লিক করে বইয়ের তথ্য দিন। আমরা আপনার কাছ থেকে বই সংগ্রহ করে নেব।
+                  {t('donation.howToDonate.onlineRequestDesc')}
                 </p>
                 <button
                   onClick={() => setShowDonateModal(true)}
                   className="text-green-600 font-medium text-sm hover:text-green-700 flex items-center"
                 >
-                  রিকোয়েস্ট করুন →
+                  {t('donation.howToDonate.requestNow')} →
                 </button>
               </div>
             </div>
@@ -315,13 +315,13 @@ const DonateBook = () => {
                   <span className="text-2xl font-bold text-blue-600">২</span>
                 </div>
                 <BookOpen className="h-8 w-8 text-blue-600 mb-3" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">সরাসরি লাইব্রেরিতে আসুন</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{t('donation.howToDonate.visitLibrary')}</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  সরাসরি আমাদের লাইব্রেরিতে এসে বই দান করতে পারেন। আমরা আপনার বই গ্রহণ করব।
+                  {t('donation.howToDonate.visitLibraryDesc')}
                 </p>
                 <div className="text-sm text-gray-500">
-                  <p>সময়: সকাল ৯টা - সন্ধ্যা ৬টা</p>
-                  <p>সাপ্তাহিক ছুটি: শুক্রবার</p>
+                  <p>{t('donation.howToDonate.libraryHours')}</p>
+                  <p>{t('donation.howToDonate.libraryClosed')}</p>
                 </div>
               </div>
             </div>
@@ -336,12 +336,12 @@ const DonateBook = () => {
                 <svg className="h-8 w-8 text-purple-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">ফোন করুন</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{t('donation.howToDonate.callUs')}</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  আমাদের সাথে যোগাযোগ করুন এবং বই সংগ্রহের ব্যবস্থা করুন।
+                  {t('donation.howToDonate.callUsDesc')}
                 </p>
                 <a href="tel:+8801XXXXXXXXX" className="text-purple-600 font-semibold text-sm hover:text-purple-700 flex items-center">
-                  📞 +880 1XXX-XXXXXX
+                  📞 {t('donation.howToDonate.phoneNumber')}
                 </a>
               </div>
             </div>
@@ -351,24 +351,24 @@ const DonateBook = () => {
           <div className="bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-green-500 rounded-lg p-6">
             <h3 className="font-bold text-gray-900 mb-3 flex items-center">
               <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-              দান করার নিয়মাবলী
+              {t('donation.guidelines.title')}
             </h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start">
                 <span className="text-green-600 mr-2">✓</span>
-                <span>বইটি পড়ার যোগ্য অবস্থায় থাকতে হবে (ছেঁড়া বা ক্ষতিগ্রস্ত নয়)</span>
+                <span>{t('donation.guidelines.rule1')}</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-600 mr-2">✓</span>
-                <span>শিক্ষামূলক, সাহিত্য, বিজ্ঞান বা অন্যান্য উপকারী বিষয়ের বই হতে হবে</span>
+                <span>{t('donation.guidelines.rule2')}</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-600 mr-2">✓</span>
-                <span>বইয়ের সম্পূর্ণ তথ্য (নাম, লেখক, প্রকাশনা বছর) প্রদান করুন</span>
+                <span>{t('donation.guidelines.rule3')}</span>
               </li>
               <li className="flex items-start">
                 <span className="text-green-600 mr-2">✓</span>
-                <span>অশ্লীল, রাজনৈতিক বিতর্কিত বা সাম্প্রদায়িক বই গ্রহণযোগ্য নয়</span>
+                <span>{t('donation.guidelines.rule4')}</span>
               </li>
             </ul>
           </div>
@@ -379,7 +379,7 @@ const DonateBook = () => {
           <div className="bg-white rounded-2xl p-8 shadow-lg">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <Clock className="h-6 w-6 mr-3 text-green-600" />
-              আমার দানের ইতিহাস
+              {t('donation.history.title')}
             </h2>
             
             <div className="space-y-4">
@@ -403,7 +403,7 @@ const DonateBook = () => {
                         <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500">
                           <span>{donation.published_year}</span>
                           <span>•</span>
-                          <span>{donation.pages} পৃষ্ঠা</span>
+                          <span>{donation.pages} {t('donation.history.pages')}</span>
                         </div>
                       </div>
                     </div>
@@ -471,8 +471,8 @@ const DonateBookModal = ({
             <div className="flex items-center space-x-3">
               <Gift className="h-6 w-6" />
               <div>
-                <h2 className="text-2xl font-bold">বই দান করুন</h2>
-                <p className="text-green-100 text-sm">বইয়ের সম্পূর্ণ তথ্য দিন</p>
+                <h2 className="text-2xl font-bold">{t('donation.modal.title')}</h2>
+                <p className="text-green-100 text-sm">{t('donation.modal.subtitle')}</p>
               </div>
             </div>
             <button
@@ -492,11 +492,11 @@ const DonateBookModal = ({
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">দয়া করে নিশ্চিত করুন:</p>
+                <p className="font-medium mb-1">{t('donation.modal.instructions')}</p>
                 <ul className="space-y-1 text-xs">
-                  <li>• বইটি পড়ার যোগ্য অবস্থায় আছে</li>
-                  <li>• সঠিক ও সম্পূর্ণ তথ্য প্রদান করছেন</li>
-                  <li>• বইটি শিক্ষামূলক বা উপকারী বিষয়ের</li>
+                  <li>• {t('donation.modal.instruction1')}</li>
+                  <li>• {t('donation.modal.instruction2')}</li>
+                  <li>• {t('donation.modal.instruction3')}</li>
                 </ul>
               </div>
             </div>
@@ -506,7 +506,7 @@ const DonateBookModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                বইয়ের নাম *
+                {t('donation.modal.bookTitle')}
               </label>
               <input
                 type="text"
@@ -514,14 +514,14 @@ const DonateBookModal = ({
                 value={formData.title}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                placeholder="যেমন: আমার দেখা নয়াচীন"
+                placeholder={t('donation.modal.bookTitlePlaceholder')}
                 required
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                লেখকের নাম *
+                {t('donation.modal.authorName')}
               </label>
               <input
                 type="text"
@@ -529,7 +529,7 @@ const DonateBookModal = ({
                 value={formData.author}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                placeholder="যেমন: বঙ্গবন্ধু শেখ মুজিবুর রহমান"
+                placeholder={t('donation.modal.authorPlaceholder')}
                 required
               />
             </div>
@@ -538,7 +538,7 @@ const DonateBookModal = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                বিভাগ
+                {t('donation.modal.category')}
               </label>
               <select
                 name="category_id"
@@ -546,7 +546,7 @@ const DonateBookModal = ({
                 onChange={handleInputChange}
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
               >
-                <option value="">নির্বাচন করুন</option>
+                <option value="">{t('donation.modal.selectCategory')}</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -557,7 +557,7 @@ const DonateBookModal = ({
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                প্রকাশনা বছর *
+                {t('donation.modal.publishYear')}
               </label>
               <input
                 type="number"
@@ -573,7 +573,7 @@ const DonateBookModal = ({
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                পৃষ্ঠা সংখ্যা *
+                {t('donation.modal.pageCount')}
               </label>
               <input
                 type="number"
@@ -582,7 +582,7 @@ const DonateBookModal = ({
                 onChange={handleInputChange}
                 min="1"
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                placeholder="যেমন: 250"
+                placeholder={t('donation.modal.pageCountPlaceholder')}
                 required
               />
             </div>
@@ -591,13 +591,13 @@ const DonateBookModal = ({
           {/* Book Condition */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              বইয়ের অবস্থা
+              {t('donation.modal.condition')}
             </label>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { value: 'excellent', label: 'চমৎকার', color: 'green', icon: '⭐' },
-                { value: 'good', label: 'ভালো', color: 'blue', icon: '👍' },
-                { value: 'fair', label: 'গ্রহণযোগ্য', color: 'yellow', icon: '✓' }
+                { value: 'excellent', label: t('donation.modal.conditionExcellent'), color: 'green', icon: '⭐' },
+                { value: 'good', label: t('donation.modal.conditionGood'), color: 'blue', icon: '👍' },
+                { value: 'fair', label: t('donation.modal.conditionFair'), color: 'yellow', icon: '✓' }
               ].map((condition) => (
                 <label 
                   key={condition.value} 
@@ -625,13 +625,13 @@ const DonateBookModal = ({
           {/* Cover Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              কভার আপলোড করুন
+              {t('donation.modal.uploadCover')}
             </label>
             
             <div className="flex flex-wrap gap-3 mb-4">
               <label className="cursor-pointer flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
                 <Upload className="h-4 w-4" />
-                <span>ছবি আপলোড</span>
+                <span>{t('donation.modal.uploadImage')}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -647,7 +647,7 @@ const DonateBookModal = ({
                   className="flex items-center space-x-2 px-5 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-md"
                 >
                   <Trash2 className="h-4 w-4" />
-                  <span>মুছুন</span>
+                  <span>{t('donation.modal.removeImage')}</span>
                 </button>
               )}
             </div>
@@ -655,7 +655,7 @@ const DonateBookModal = ({
             {/* Custom Image Preview */}
             {useCustomImage && imagePreview && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <p className="text-sm text-gray-600 mb-2">আপলোড করা ছবি:</p>
+                <p className="text-sm text-gray-600 mb-2">{t('donation.modal.uploadedImage')}</p>
                 <img
                   src={imagePreview}
                   alt="Custom book cover"
@@ -667,7 +667,7 @@ const DonateBookModal = ({
             {/* Default Cover Options */}
             {!useCustomImage && (
               <div>
-                <p className="text-sm text-gray-600 mb-3">অথবা নিচের থেকে একটি কভার নির্বাচন করুন:</p>
+                <p className="text-sm text-gray-600 mb-3">{t('donation.modal.selectCover')}</p>
                 <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto border-2 border-gray-200 rounded-lg p-3 bg-gray-50">
                   {availableCovers.map((cover) => (
                     <div
@@ -697,7 +697,7 @@ const DonateBookModal = ({
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              অতিরিক্ত বিবরণ
+              {t('donation.modal.additionalDescription')}
             </label>
             <textarea
               name="description"
@@ -713,7 +713,7 @@ const DonateBookModal = ({
           <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-5">
             <h4 className="font-bold text-gray-900 mb-3 flex items-center">
               <Eye className="h-5 w-5 mr-2 text-green-600" />
-              প্রিভিউ
+              {t('donation.modal.preview')}
             </h4>
             <div className="flex items-start space-x-4 bg-white rounded-lg p-4">
               <div className="w-20 h-28 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
@@ -736,10 +736,10 @@ const DonateBookModal = ({
               </div>
               <div className="flex-1">
                 <h5 className="font-bold text-gray-900 text-lg">
-                  {formData.title || 'বইয়ের নাম লিখুন'}
+                  {formData.title || t('donation.modal.bookTitlePlaceholder')}
                 </h5>
                 <p className="text-gray-600 mb-2">
-                  {formData.author || 'লেখকের নাম লিখুন'}
+                  {formData.author || t('donation.modal.authorPlaceholder')}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
@@ -747,7 +747,7 @@ const DonateBookModal = ({
                   </span>
                   {formData.pages && (
                     <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
-                      {formData.pages} পৃষ্ঠা
+                      {formData.pages} {t('donation.history.pages')}
                     </span>
                   )}
                   <span className={`px-3 py-1 rounded-full font-medium ${
@@ -755,8 +755,8 @@ const DonateBookModal = ({
                     formData.condition === 'good' ? 'bg-blue-100 text-blue-700' :
                     'bg-yellow-100 text-yellow-700'
                   }`}>
-                    {formData.condition === 'excellent' ? 'চমৎকার' :
-                     formData.condition === 'good' ? 'ভালো' : 'গ্রহণযোগ্য'}
+                    {formData.condition === 'excellent' ? t('donation.modal.conditionExcellent') :
+                     formData.condition === 'good' ? t('donation.modal.conditionGood') : t('donation.modal.conditionFair')}
                   </span>
                 </div>
               </div>
@@ -770,7 +770,7 @@ const DonateBookModal = ({
               onClick={onClose}
               className="px-6 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
             >
-              বাতিল
+              {t('donation.modal.cancel')}
             </button>
             <button
               type="submit"
@@ -778,7 +778,7 @@ const DonateBookModal = ({
               className="px-8 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium transition-all shadow-md"
             >
               <Gift className="h-5 w-5" />
-              <span>{isLoading ? 'প্রক্রিয়াকরণ...' : 'দান করুন'}</span>
+              <span>{isLoading ? t('donation.modal.processing') : t('donation.hero.donateNow')}</span>
             </button>
           </div>
         </form>

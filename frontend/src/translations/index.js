@@ -410,7 +410,78 @@ export const bn = {
     yearRequired: 'সঠিক প্রকাশনা বছর দিন',
     confirmTitle: 'বই দান নিশ্চিত করুন',
     confirmMessage: 'আপনি কি নিশ্চিত যে এই বইটি দান করতে চান? দান করার পর এটি প্রশাসকের অনুমোদনের জন্য পাঠানো হবে।',
-    totalDonations: 'মোট দান'
+    totalDonations: 'মোট দান',
+    // Donate page specific
+    hero: {
+      title: 'বই দান করুন',
+      subtitle: 'একটি বই দান করে আলোকিত করুন অন্যের জীবন। আপনার পুরনো বইটি হতে পারে কারো নতুন জ্ঞানের উৎস।',
+      donateNow: 'এখনই দান করুন',
+      shareKnowledge: 'জ্ঞান ভাগ করুন',
+      shareKnowledgeDesc: 'আপনার বই অন্যদের শেখার সুযোগ দেয়',
+      serveSociety: 'সমাজ সেবা করুন',
+      serveSocietyDesc: 'শিক্ষার আলো ছড়িয়ে দিন সবার মাঝে',
+      protectEnvironment: 'পরিবেশ রক্ষা করুন',
+      protectEnvironmentDesc: 'বই পুনর্ব্যবহার করে সম্পদ বাঁচান'
+    },
+    howToDonate: {
+      title: 'কীভাবে বই দান করবেন?',
+      onlineRequest: 'অনলাইনে রিকোয়েস্ট করুন',
+      onlineRequestDesc: '"বই দান করুন" বাটনে ক্লিক করে বইয়ের তথ্য দিন। আমরা আপনার কাছ থেকে বই সংগ্রহ করে নেব।',
+      requestNow: 'রিকোয়েস্ট করুন',
+      visitLibrary: 'সরাসরি লাইব্রেরিতে আসুন',
+      visitLibraryDesc: 'সরাসরি আমাদের লাইব্রেরিতে এসে বই দান করতে পারেন। আমরা আপনার বই গ্রহণ করব।',
+      libraryHours: 'সময়: সকাল ৯টা - সন্ধ্যা ৬টা',
+      libraryClosed: 'সাপ্তাহিক ছুটি: শুক্রবার',
+      callUs: 'ফোন করুন',
+      callUsDesc: 'আমাদের সাথে যোগাযোগ করুন এবং বই সংগ্রহের ব্যবস্থা করুন।',
+      phoneNumber: '+880 1XXX-XXXXXX'
+    },
+    guidelines: {
+      title: 'দান করার নিয়মাবলী',
+      rule1: 'বইটি পড়ার যোগ্য অবস্থায় থাকতে হবে (ছেঁড়া বা ক্ষতিগ্রস্ত নয়)',
+      rule2: 'শিক্ষামূলক, সাহিত্য, বিজ্ঞান বা অন্যান্য উপকারী বিষয়ের বই হতে হবে',
+      rule3: 'বইয়ের সম্পূর্ণ তথ্য (নাম, লেখক, প্রকাশনা বছর) প্রদান করুন',
+      rule4: 'অশ্লীল, রাজনৈতিক বিতর্কিত বা সাম্প্রদায়িক বই গ্রহণযোগ্য নয়'
+    },
+    history: {
+      title: 'আমার দানের ইতিহাস',
+      pages: 'পৃষ্ঠা'
+    },
+    modal: {
+      title: 'বই দান করুন',
+      subtitle: 'বইয়ের সম্পূর্ণ তথ্য দিন',
+      instructions: 'দয়া করে নিশ্চিত করুন:',
+      instruction1: 'বইটি পড়ার যোগ্য অবস্থায় আছে',
+      instruction2: 'সঠিক ও সম্পূর্ণ তথ্য প্রদান করছেন',
+      instruction3: 'বইটি শিক্ষামূলক বা উপকারী বিষয়ের',
+      bookTitle: 'বইয়ের নাম *',
+      bookTitlePlaceholder: 'যেমন: আমার দেখা নয়াচীন',
+      authorName: 'লেখকের নাম *',
+      authorPlaceholder: 'যেমন: বঙ্গবন্ধু শেখ মুজিবুর রহমান',
+      category: 'বিভাগ',
+      selectCategory: 'নির্বাচন করুন',
+      publishYear: 'প্রকাশনা বছর *',
+      pageCount: 'পৃষ্ঠা সংখ্যা *',
+      pageCountPlaceholder: 'যেমন: 250',
+      condition: 'বইয়ের অবস্থা',
+      conditionExcellent: 'চমৎকার',
+      conditionGood: 'ভালো',
+      conditionFair: 'গ্রহণযোগ্য',
+      uploadCover: 'কভার আপলোড করুন',
+      uploadImage: 'ছবি আপলোড',
+      removeImage: 'মুছুন',
+      uploadedImage: 'আপলোড করা ছবি:',
+      selectCover: 'অথবা নিচের থেকে একটি কভার নির্বাচন করুন:',
+      additionalDescription: 'অতিরিক্ত বিবরণ',
+      preview: 'প্রিভিউ',
+      cancel: 'বাতিল',
+      processing: 'প্রক্রিয়াকরণ...'
+    },
+    stats: {
+      totalDonations: 'মোট দান',
+      pending: 'অপেক্ষমাণ',
+      completed: 'সম্পন্ন'
+    }
   },
 
   // Admin specific
@@ -999,7 +1070,78 @@ export const en = {
     yearRequired: 'Please enter valid publication year',
     confirmTitle: 'Confirm Book Donation',
     confirmMessage: 'Are you sure you want to donate this book? After donation, it will be sent for admin approval.',
-    totalDonations: 'Total Donations'
+    totalDonations: 'Total Donations',
+    // Donate page specific
+    hero: {
+      title: 'Donate Books',
+      subtitle: 'Illuminate someone\'s life by donating a book. Your old book can be a new source of knowledge for someone.',
+      donateNow: 'Donate Now',
+      shareKnowledge: 'Share Knowledge',
+      shareKnowledgeDesc: 'Your books give others the opportunity to learn',
+      serveSociety: 'Serve Society',
+      serveSocietyDesc: 'Spread the light of education among everyone',
+      protectEnvironment: 'Protect Environment',
+      protectEnvironmentDesc: 'Save resources by reusing books'
+    },
+    howToDonate: {
+      title: 'How to Donate Books?',
+      onlineRequest: 'Request Online',
+      onlineRequestDesc: 'Click the "Donate Book" button and provide book information. We will collect the book from you.',
+      requestNow: 'Request Now',
+      visitLibrary: 'Visit Library Directly',
+      visitLibraryDesc: 'You can donate books by coming directly to our library. We will accept your books.',
+      libraryHours: 'Hours: 9 AM - 6 PM',
+      libraryClosed: 'Weekly Holiday: Friday',
+      callUs: 'Call Us',
+      callUsDesc: 'Contact us and arrange for book collection.',
+      phoneNumber: '+880 1XXX-XXXXXX'
+    },
+    guidelines: {
+      title: 'Donation Guidelines',
+      rule1: 'The book must be in readable condition (not torn or damaged)',
+      rule2: 'Must be educational, literature, science or other beneficial subjects',
+      rule3: 'Provide complete book information (name, author, publication year)',
+      rule4: 'Obscene, politically controversial or communal books are not acceptable'
+    },
+    history: {
+      title: 'My Donation History',
+      pages: 'pages'
+    },
+    modal: {
+      title: 'Donate Book',
+      subtitle: 'Provide complete book information',
+      instructions: 'Please ensure:',
+      instruction1: 'The book is in readable condition',
+      instruction2: 'You are providing correct and complete information',
+      instruction3: 'The book is educational or beneficial',
+      bookTitle: 'Book Title *',
+      bookTitlePlaceholder: 'Example: My China Visit',
+      authorName: 'Author Name *',
+      authorPlaceholder: 'Example: Bangabandhu Sheikh Mujibur Rahman',
+      category: 'Category',
+      selectCategory: 'Select',
+      publishYear: 'Publication Year *',
+      pageCount: 'Page Count *',
+      pageCountPlaceholder: 'Example: 250',
+      condition: 'Book Condition',
+      conditionExcellent: 'Excellent',
+      conditionGood: 'Good',
+      conditionFair: 'Acceptable',
+      uploadCover: 'Upload Cover',
+      uploadImage: 'Upload Image',
+      removeImage: 'Remove',
+      uploadedImage: 'Uploaded Image:',
+      selectCover: 'Or select a cover from below:',
+      additionalDescription: 'Additional Description',
+      preview: 'Preview',
+      cancel: 'Cancel',
+      processing: 'Processing...'
+    },
+    stats: {
+      totalDonations: 'Total Donations',
+      pending: 'Pending',
+      completed: 'Completed'
+    }
   },
 
   // Admin specific
