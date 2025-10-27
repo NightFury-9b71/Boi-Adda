@@ -17,6 +17,7 @@ class BookCreate(SQLModel):
     pages: int
     cover_image_url: Optional[str] = None
     category_id: Optional[int] = None
+    total_copies: int = 1
 
 
 class BookUpdate(SQLModel):
@@ -197,8 +198,8 @@ def create_book(
     session: Session = Depends(get_session)
 ):
     """
-    Create a new book entry in the library.
-    Admin only - no copies are created, use upload-books endpoint to add copies.
+    Create a new book entry in the library with the specified number of copies.
+    Admin only endpoint.
     """
     # Validate book data
     if book_data.published_year < 1000 or book_data.published_year > datetime.now().year:
@@ -236,6 +237,13 @@ def create_book(
             detail="Book with this title and author already exists"
         )
     
+    # Validate total_copies
+    if book_data.total_copies < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Total copies cannot be negative"
+        )
+    
     # Create new book
     book = Book(
         title=book_data.title,
@@ -247,6 +255,16 @@ def create_book(
     )
     
     session.add(book)
+    session.flush()  # Get the book ID
+    
+    # Create book copies
+    for _ in range(book_data.total_copies):
+        book_copy = BookCopy(
+            book_id=book.id,
+            status=bookStatus.AVAILABLE
+        )
+        session.add(book_copy)
+    
     session.commit()
     session.refresh(book)
     
@@ -260,8 +278,8 @@ def create_book(
         cover=book.cover_image_url,
         cover_public_id=None,
         category_id=book.category_id,
-        total_copies=0,
-        available_copies=0,
+        total_copies=len(book.copies),
+        available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
         times_borrowed=0,
         created_at=None
     )
