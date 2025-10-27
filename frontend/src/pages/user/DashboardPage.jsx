@@ -116,7 +116,7 @@ const DashboardPage = () => {
                 {statsLoading ? (
                   <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                 ) : (
-                  donationStats.approved?.toLocaleString() || '0'
+                  donationStats.completed?.toLocaleString() || '0'
                 )}
               </div>
             </div>

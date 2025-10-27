@@ -1,6 +1,10 @@
 import { Calendar, CheckCircle, XCircle, Clock, BookOpen, RotateCcw, Award } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const UserTimeline = ({ userId, userName, activities }) => {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const getActivityIcon = (type, status) => {
     switch (type) {
       case 'borrow':
@@ -50,32 +54,16 @@ const UserTimeline = ({ userId, userName, activities }) => {
   };
 
   const getActivityLabel = (type, status) => {
-    const labels = {
-      borrow: {
-        pending: 'ধারের অনুরোধ করা হয়েছে',
-        approved: 'ধারের অনুরোধ অনুমোদিত',
-        collected: 'বই সংগৃহীত',
-        return_requested: 'ফেরত দেওয়ার অনুরোধ',
-        completed: 'বই ফেরত দেওয়া হয়েছে',
-        rejected: 'ধারের অনুরোধ প্রত্যাখ্যাত'
-      },
-      donation: {
-        pending: 'দানের অনুরোধ করা হয়েছে',
-        approved: 'দানের অনুরোধ অনুমোদিত',
-        completed: 'দান সম্পন্ন',
-        rejected: 'দানের অনুরোধ প্রত্যাখ্যাত'
-      }
-    };
-    return labels[type]?.[status] || 'অজানা অবস্থা';
+    return t(`history.timeline.${type}.${status}`) || t('common.unknown');
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'তারিখ নেই';
+    if (!dateString) return t('common.unknown');
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'তারিখ নেই';
+      if (isNaN(date.getTime())) return t('common.unknown');
 
-      const locale = 'bn-BD';
+      const locale = language === 'bn' ? 'bn-BD' : 'en-US';
       return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
@@ -86,7 +74,7 @@ const UserTimeline = ({ userId, userName, activities }) => {
       });
     } catch (error) {
       console.error('Date formatting error:', error);
-      return 'তারিখ নেই';
+      return t('common.unknown');
     }
   };
 
@@ -102,8 +90,8 @@ const UserTimeline = ({ userId, userName, activities }) => {
           {userName?.charAt(0) || 'U'}
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{userName || 'অজানা ব্যবহারকারী'}</h3>
-          <p className="text-sm text-gray-600">ইউজার ID: #{userId}</p>
+          <h3 className="text-lg font-semibold text-gray-900">{userName || t('common.unknown')}</h3>
+          <p className="text-sm text-gray-600">{t('admin.userManagement.userId')}: #{userId}</p>
         </div>
       </div>
 
@@ -142,7 +130,7 @@ const UserTimeline = ({ userId, userName, activities }) => {
         ) : (
           <div className="text-center py-8">
             <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">কোন কার্যক্রম পাওয়া যায়নি</p>
+            <p className="text-gray-500">{t('table.noData')}</p>
           </div>
         )}
       </div>

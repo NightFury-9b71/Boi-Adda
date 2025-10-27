@@ -1,33 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '../../utils/toast';
 import { getSafeCategoryName } from '../../utils/dataHelpers';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Book, 
   Search, 
-  Filter, 
   Plus, 
   Edit3, 
   Trash2, 
   RefreshCw,
   Eye,
-  Calendar,
-  User,
-  Hash,
   Tag,
   BookOpen,
-  Library,
-  Star,
-  Clock,
-  CheckCircle,
-  XCircle,
   AlertCircle,
-  Upload,
   Image as ImageIcon,
-  FileText,
   Users,
-  BarChart3,
-  Camera
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
@@ -38,6 +26,7 @@ import { storageService } from '../../services/storage';
 const AdminBookManagement = () => {
   const queryClient = useQueryClient();
   const { confirmDelete, confirmUpdate, confirmSubmit } = useConfirmation();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -62,10 +51,32 @@ const AdminBookManagement = () => {
 
   // Add book mutation
   const addBookMutation = useMutation({
-    mutationFn: apiServices.books.addBook,
-    onSuccess: () => {
-      toast.success('নতুন বই সফলভাবে যোগ করা হয়েছে!');
+    mutationFn: (variables) => apiServices.books.addBook(variables),
+    onSuccess: (createdBook, variables) => {
+      // Always invalidate queries immediately after book creation
       queryClient.invalidateQueries(['admin', 'books']);
+      
+      // If there's a selected file from the form, upload it
+      if (variables.selectedFile) {
+        // Handle cover upload for new books
+        storageService.uploadBookCover(variables.selectedFile, createdBook.id)
+          .then((uploadResult) => {
+            return apiServices.books.updateBook(createdBook.id, {
+              cover_image_url: uploadResult.url
+            });
+          })
+          .then(() => {
+            toast.success('বই এবং কভার ছবি সফলভাবে যোগ করা হয়েছে!');
+            // No need to invalidate again since we already did it
+          })
+          .catch((error) => {
+            console.error('Cover upload error:', error);
+            toast.error('বই যোগ করা হয়েছে কিন্তু কভার আপলোড ব্যর্থ হয়েছে');
+            // No need to invalidate again since we already did it
+          });
+      } else {
+        toast.success('নতুন বই সফলভাবে যোগ করা হয়েছে!');
+      }
       setShowAddModal(false);
     },
     onError: (error) => {
@@ -75,10 +86,31 @@ const AdminBookManagement = () => {
 
   // Update book mutation
   const updateBookMutation = useMutation({
-    mutationFn: ({ id, bookData }) => apiServices.books.updateBook(id, bookData),
-    onSuccess: () => {
-      toast.success('বইয়ের তথ্য সফলভাবে আপডেট করা হয়েছে!');
+    mutationFn: (variables) => apiServices.books.updateBook(variables.id, variables.bookData),
+    onSuccess: (updatedBook, variables) => {
+      // Always invalidate queries immediately after book update
       queryClient.invalidateQueries(['admin', 'books']);
+      
+      // If there's a selected file from the form, upload it
+      if (variables.selectedFile) {
+        storageService.uploadBookCover(variables.selectedFile, variables.id)
+          .then((uploadResult) => {
+            return apiServices.books.updateBook(variables.id, {
+              cover_image_url: uploadResult.url
+            });
+          })
+          .then(() => {
+            toast.success('বই এবং কভার ছবি সফলভাবে আপডেট হয়েছে!');
+            // No need to invalidate again since we already did it
+          })
+          .catch((error) => {
+            console.error('Cover upload error:', error);
+            toast.error('বই আপডেট হয়েছে কিন্তু কভার আপলোড ব্যর্থ হয়েছে');
+            // No need to invalidate again since we already did it
+          });
+      } else {
+        toast.success('বইয়ের তথ্য সফলভাবে আপডেট করা হয়েছে!');
+      }
       setShowEditModal(false);
       setSelectedBook(null);
     },
@@ -163,12 +195,12 @@ const AdminBookManagement = () => {
   };
 
   // Calculate statistics
-  const stats = {
+  const stats = useMemo(() => ({
     total: books.length,
     available: books.reduce((sum, book) => sum + (book.total_copies || 0), 0),
     borrowed: books.reduce((sum, book) => sum + (book.times_borrowed || 0), 0),
     categories: categories.length,
-  };
+  }), [books, categories]);
 
   if (booksLoading || categoriesLoading) {
     return (
@@ -186,8 +218,8 @@ const AdminBookManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">বই ব্যবস্থাপনা</h1>
-          <p className="text-gray-600 mt-2">সকল বই পরিচালনা ও ব্যবস্থাপনা করুন</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('admin.bookManagement')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin.bookManagement')}</p>
         </div>
         <div className="flex space-x-3">
           <button
@@ -201,14 +233,14 @@ const AdminBookManagement = () => {
             className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            রিফ্রেশ
+            {t('common.refresh')}
           </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
-            নতুন বই
+            {t('admin.addBook')}
           </button>
         </div>
       </div>
@@ -218,7 +250,7 @@ const AdminBookManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">মোট বই</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.totalBooks')}</p>
               <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -230,7 +262,7 @@ const AdminBookManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">উপলব্ধ কপি</p>
+              <p className="text-sm font-medium text-gray-600">{t('books.availableCopies')}</p>
               <p className="text-3xl font-bold text-green-900">{stats.available}</p>
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -242,7 +274,7 @@ const AdminBookManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">ধার নেওয়া</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.totalBorrows')}</p>
               <p className="text-3xl font-bold text-orange-900">{stats.borrowed}</p>
             </div>
             <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -254,7 +286,7 @@ const AdminBookManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">বিভাগ</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.dashboard.bookCategories')}</p>
               <p className="text-3xl font-bold text-purple-900">{stats.categories}</p>
             </div>
             <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -273,7 +305,7 @@ const AdminBookManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="বইয়ের নাম, লেখক বা ID দিয়ে খুঁজুন..."
+                placeholder={t('books.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -288,8 +320,8 @@ const AdminBookManagement = () => {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              <option value="all">সকল বিভাগ</option>
-              <option value="uncategorized">বিভাগহীন</option>
+              <option value="all">{t('books.allCategories')}</option>
+              <option value="uncategorized">{t('common.unknown')}</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id.toString()}>
                   {category.name}
@@ -305,7 +337,7 @@ const AdminBookManagement = () => {
         {filteredBooks.length === 0 ? (
           <div className="text-center py-12">
             <Book className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">কোন বই পাওয়া যায়নি</p>
+            <p className="text-gray-500">{t('books.noBooks')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
@@ -393,9 +425,12 @@ const AdminBookManagement = () => {
           isEdit={false}
           book={null}
           categories={categories}
+          books={books}
           onClose={() => setShowAddModal(false)}
-          onSubmit={(bookData) => addBookMutation.mutate(bookData)}
+          onSubmit={(bookData, selectedFile) => addBookMutation.mutate({ ...bookData, selectedFile })}
           isLoading={addBookMutation.isPending}
+          queryClient={queryClient}
+          t={t}
         />
       )}
 
@@ -404,12 +439,15 @@ const AdminBookManagement = () => {
           isEdit={true}
           book={selectedBook}
           categories={categories}
+          books={books}
           onClose={() => {
             setShowEditModal(false);
             setSelectedBook(null);
           }}
-          onSubmit={(bookData) => updateBookMutation.mutate({ id: selectedBook.id, bookData })}
+          onSubmit={(bookData, selectedFile) => updateBookMutation.mutate({ id: selectedBook.id, bookData, selectedFile })}
           isLoading={updateBookMutation.isPending}
+          queryClient={queryClient}
+          t={t}
         />
       )}
 
@@ -421,6 +459,7 @@ const AdminBookManagement = () => {
             setShowBookDetails(false);
             setSelectedBook(null);
           }}
+          t={t}
         />
       )}
     </div>
@@ -428,7 +467,7 @@ const AdminBookManagement = () => {
 };
 
 // Book Modal Component (Add/Edit)
-const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) => {
+const BookModal = ({ isEdit, book, categories, books, onClose, onSubmit, isLoading, queryClient, t }) => {
   const { confirmSubmit } = useConfirmation();
   const [formData, setFormData] = useState({
     title: book?.title || '',
@@ -443,7 +482,6 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
 
   const [useCustomImage, setUseCustomImage] = useState(!!book?.cover_public_id);
   const [selectedFile, setSelectedFile] = useState(null); // For deferred upload
-  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state for form submission
 
   const availableCovers = [
     'cover-1.jpg', 'cover-2.jpg', 'cover-3.jpg', 'cover-4.jpg', 'cover-5.jpg',
@@ -474,65 +512,20 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
     
     if (!confirmed) return;
 
-    setIsSubmitting(true);
+    let submitData = {
+      ...formData,
+      category_id: formData.category_id ? parseInt(formData.category_id) : null,
+      published_year: parseInt(formData.published_year),
+      pages: parseInt(formData.pages),
+      total_copies: parseInt(formData.total_copies) || 1
+    };
 
-    try {
-      let submitData = {
-        ...formData,
-        category_id: formData.category_id ? parseInt(formData.category_id) : null,
-        published_year: parseInt(formData.published_year),
-        pages: parseInt(formData.pages),
-        total_copies: parseInt(formData.total_copies) || 1
-      };
-
-      let createdBook = null;
-
-      if (isEdit) {
-        // For editing, update the book
-        toast.loading('বইয়ের তথ্য আপডেট হচ্ছে...', { id: 'book-update' });
-        createdBook = await apiServices.books.updateBook(book.id, submitData);
-        
-        // If there's a selected file, upload it
-        if (selectedFile) {
-          toast.loading('কভার ছবি আপলোড হচ্ছে...', { id: 'book-update' });
-          const uploadResult = await storageService.uploadBookCover(selectedFile, book.id);
-          // Update the book with the new cover URL
-          await apiServices.books.updateBook(book.id, {
-            ...submitData,
-            cover_image_url: uploadResult.url
-          });
-          toast.success('বই এবং কভার ছবি সফলভাবে আপডেট হয়েছে!', { id: 'book-update' });
-        } else {
-          toast.success('বইয়ের তথ্য সফলভাবে আপডেট করা হয়েছে!', { id: 'book-update' });
-        }
-      } else {
-        // For new books, create the book first
-        toast.loading('বই তৈরি হচ্ছে...', { id: 'book-create' });
-        createdBook = await apiServices.books.addBook(submitData);
-        
-        // If there's a selected file, upload the cover
-        if (selectedFile) {
-          toast.loading('কভার ছবি আপলোড হচ্ছে...', { id: 'book-create' });
-          const uploadResult = await storageService.uploadBookCover(selectedFile, createdBook.id);
-          // Update the book with the new cover URL
-          await apiServices.books.updateBook(createdBook.id, {
-            cover_image_url: uploadResult.url
-          });
-          toast.success('বই এবং কভার ছবি সফলভাবে যোগ করা হয়েছে!', { id: 'book-create' });
-        } else {
-          toast.success('নতুন বই সফলভাবে যোগ করা হয়েছে!', { id: 'book-create' });
-        }
-      }
-
-      onSubmit(submitData);
-    } catch (error) {
-      console.error('Submit error:', error);
-      const errorMessage = error?.response?.data?.detail || error.message;
-      toast.error(`অপারেশন ব্যর্থ হয়েছে: ${errorMessage}`, { 
-        id: isEdit ? 'book-update' : 'book-create' 
-      });
-    } finally {
-      setIsSubmitting(false);
+    if (isEdit) {
+      // For editing, update the book
+      onSubmit(submitData, selectedFile);
+    } else {
+      // For new books, create the book
+      onSubmit(submitData, selectedFile);
     }
   };
 
@@ -550,7 +543,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900">
-              {isEdit ? 'বই সম্পাদনা' : 'নতুন বই যোগ'}
+              {isEdit ? t('admin.editBook') : t('admin.addBook')}
             </h2>
             <button
               onClick={onClose}
@@ -567,11 +560,11 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             <div className="flex items-start space-x-3">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900 mb-1">বই যোগ করার নির্দেশনা</h4>
+                <h4 className="font-medium text-blue-900 mb-1">{t('donation.modal.title')}</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• বইটির সঠিক ও সম্পূর্ণ তথ্য প্রদান করুন</li>
-                  <li>• স্পষ্ট ও উন্নত মানের কভার ছবি ব্যবহার করুন</li>
-                  <li>• সঠিক বিভাগ নির্বাচন করুন</li>
+                  <li>• {t('donation.modal.instruction1')}</li>
+                  <li>• {t('donation.modal.instruction2')}</li>
+                  <li>• {t('donation.modal.instruction3')}</li>
                 </ul>
               </div>
             </div>
@@ -581,7 +574,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                বইয়ের নাম *
+                {t('donation.bookTitle')}
               </label>
               <input
                 type="text"
@@ -589,15 +582,15 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 value={formData.title}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="বইয়ের সম্পূর্ণ নাম লিখুন..."
+                placeholder={t('donation.bookTitlePlaceholder')}
                 required
-                disabled={isSubmitting}
+                disabled={isLoading}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                লেখক *
+                {t('donation.authorName')}
               </label>
               <input
                 type="text"
@@ -605,9 +598,9 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 value={formData.author}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="লেখকের নাম লিখুন..."
+                placeholder={t('donation.authorPlaceholder')}
                 required
-                disabled={isSubmitting}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -615,16 +608,16 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                বিভাগ
+                {t('books.category')}
               </label>
               <select
                 name="category_id"
                 value={formData.category_id}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                disabled={isSubmitting}
+                disabled={isLoading}
               >
-                <option value="">বিভাগ নির্বাচন করুন</option>
+                <option value="">{t('donation.selectCategory')}</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -635,7 +628,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                প্রকাশনা বছর *
+                {t('donation.publishYear')} *
               </label>
               <input
                 type="number"
@@ -646,13 +639,13 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 max={new Date().getFullYear()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 required
-                disabled={isSubmitting}
+                disabled={isLoading}
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                পৃষ্ঠা সংখ্যা *
+                {t('donation.pageCount')} *
               </label>
               <input
                 type="number"
@@ -661,15 +654,15 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 onChange={handleInputChange}
                 min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="পৃষ্ঠা"
+                placeholder={t('donation.pageCountPlaceholder')}
                 required
-                disabled={isSubmitting}
+                disabled={isLoading}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                কপি সংখ্যা *
+                {t('books.totalCopies')} *
               </label>
               <input
                 type="number"
@@ -680,7 +673,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="কপি"
                 required
-                disabled={isSubmitting}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -688,7 +681,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
           {/* Cover Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              কভার নির্বাচন করুন
+              {t('donation.uploadCover')}
             </label>
             
             {/* Cloudinary Image Upload */}
@@ -696,7 +689,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
               folder="book-covers"
               maxSize={5 * 1024 * 1024} // 5MB
               allowedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/webp']}
-              placeholder="বইয়ের কভারের ছবি আপলোড করুন"
+              placeholder={t('donation.uploadImage')}
               showPreview={true}
               transformations={{
                 width: 300,
@@ -706,7 +699,7 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
               }}
               value={formData.cover_public_id}
               deferred={true}
-              disabled={isSubmitting}
+              disabled={isLoading}
               onFileSelect={(result) => {
                 console.log('📁 AdminBookManagement: File selected:', result.file.name);
                 setSelectedFile(result.file);
@@ -718,46 +711,11 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 setUseCustomImage(true);
               }}
             />
-
-            {/* Default Cover Options */}
-            {!formData.cover_public_id && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">অথবা নিচের থেকে একটি কভার নির্বাচন করুন:</p>
-                <div className="grid grid-cols-5 gap-3 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                  {availableCovers.map((cover) => (
-                    <div
-                      key={cover}
-                      onClick={() => !isSubmitting && setFormData(prev => ({ 
-                        ...prev, 
-                        cover,
-                        cover_public_id: null 
-                      }))}
-                      className={`cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
-                        isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                      } ${
-                        formData.cover === cover && !formData.cover_public_id
-                          ? 'border-green-500 ring-2 ring-green-200' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <img
-                        src={`/book-covers/${cover}`}
-                        alt={`Cover ${cover}`}
-                        className="w-full h-16 object-cover"
-                        onError={(e) => {
-                          e.target.src = '/vite.svg';
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Preview */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-3">প্রিভিউ</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('donation.modal.preview')}</h4>
             <div className="flex items-start space-x-4">
               <div className="w-16 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                 {selectedFile ? (
@@ -794,11 +752,11 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
                 </p>
                 <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
                   <span>{formData.published_year}</span>
-                  <span>{formData.pages} পৃষ্ঠা</span>
-                  <span>{formData.total_copies} কপি</span>
+                  <span>{formData.pages} {t('bookDetails.pages')}</span>
+                  <span>{formData.total_copies} {t('books.copies')}</span>
                   {selectedFile && (
                     <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                      নতুন ছবি নির্বাচিত
+                      {t('donation.modal.uploadedImage')}
                     </span>
                   )}
                   {formData.cover_public_id && !selectedFile && (
@@ -817,15 +775,15 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
               onClick={onClose}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              বাতিল
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isLoading}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
               <Book className="h-4 w-4" />
-              <span>{isSubmitting ? 'প্রক্রিয়াকরণ...' : (isEdit ? 'আপডেট' : 'যোগ করুন')}</span>
+              <span>{isLoading ? t('common.processing') : (isEdit ? t('common.save') : t('common.submit'))}</span>
             </button>
           </div>
         </form>
@@ -837,11 +795,11 @@ const BookModal = ({ isEdit, book, categories, onClose, onSubmit, isLoading }) =
 
 
 // Book Details Modal
-const BookDetailsModal = ({ book, categories, onClose }) => {
+const BookDetailsModal = ({ book, categories, onClose, t }) => {
   const getCategoryName = (categoryId) => {
-    if (!categoryId) return 'বিভাগহীন';
+    if (!categoryId) return t('common.unknown');
     const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : 'অজানা বিভাগ';
+    return category ? category.name : t('common.unknown');
   };
 
   const formatDate = (dateString) => {
@@ -854,8 +812,8 @@ const BookDetailsModal = ({ book, categories, onClose }) => {
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">বইয়ের বিবরণ</h2>
-              <p className="text-gray-600">সম্পূর্ণ তথ্য দেখুন</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t('bookDetails.details')}</h2>
+              <p className="text-gray-600">{t('common.details')}</p>
             </div>
             <button
               onClick={onClose}
@@ -886,45 +844,45 @@ const BookDetailsModal = ({ book, categories, onClose }) => {
             <div className="flex-1 space-y-4">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{book.title}</h3>
-                <p className="text-lg text-gray-600">লেখক: {book.author}</p>
+                <p className="text-lg text-gray-600">{t('books.author')}: {book.author}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-600">বিভাগ</p>
+                  <p className="text-sm text-gray-600">{t('books.category')}</p>
                   <p className="font-medium">{getCategoryName(book.category_id)}</p>
                 </div>
 
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-600">প্রকাশনার বছর</p>
+                  <p className="text-sm text-gray-600">{t('bookDetails.published')}</p>
                   <p className="font-medium">{book.published_year}</p>
                 </div>
 
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-600">পৃষ্ঠা সংখ্যা</p>
-                  <p className="font-medium">{book.pages || 'তথ্য নেই'}</p>
+                  <p className="text-sm text-gray-600">{t('bookDetails.pages')}</p>
+                  <p className="font-medium">{book.pages || t('common.unknown')}</p>
                 </div>
 
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-600">বই ID</p>
+                  <p className="text-sm text-gray-600">{t('bookDetails.id')}</p>
                   <p className="font-medium">#{book.id}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-green-50 p-3 rounded-lg">
-                  <p className="text-sm text-green-600">উপলব্ধ কপি</p>
+                  <p className="text-sm text-green-600">{t('bookDetails.availableCopies')}</p>
                   <p className="text-2xl font-bold text-green-700">{book.total_copies || 0}</p>
                 </div>
 
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm text-blue-600">মোট ধার</p>
+                  <p className="text-sm text-blue-600">{t('bookDetails.totalBorrows')}</p>
                   <p className="text-2xl font-bold text-blue-700">{book.times_borrowed || 0}</p>
                 </div>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-600">যোগ করা হয়েছে</p>
+                <p className="text-sm text-gray-600">{t('bookDetails.added')}</p>
                 <p className="font-medium">{formatDate(book.created_at)}</p>
               </div>
             </div>

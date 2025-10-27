@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from datetime import datetime, timedelta
 from auth import require_admin, get_current_user
 from typing import Optional
+import os
 
 router = APIRouter()
 
@@ -1323,3 +1324,51 @@ def issue_book_directly(
         "is_overdue": issue_book.is_overdue,
         "message": f"Book issued directly. Due date: {issue_book.due_date.strftime('%Y-%m-%d')}"
     }
+
+
+# ===== ADMIN MANAGEMENT =====
+
+class UpdateAdminCodeRequest(SQLModel):
+    new_code: str
+
+
+@router.put("/admin-creation-code")
+def update_admin_creation_code(
+    request: UpdateAdminCodeRequest,
+    current_user: dict = Depends(require_admin)
+):
+    """Update the admin creation code in the .env file. Only accessible by admin."""
+    try:
+        # Path to .env file
+        env_file_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+        
+        # Read current .env file
+        with open(env_file_path, 'r') as f:
+            lines = f.readlines()
+        
+        # Update or add ADMIN_CREATION_CODE
+        updated = False
+        for i, line in enumerate(lines):
+            if line.startswith("ADMIN_CREATION_CODE="):
+                lines[i] = f"ADMIN_CREATION_CODE={request.new_code}\n"
+                updated = True
+                break
+        
+        if not updated:
+            # Add the line if it doesn't exist
+            lines.append(f"ADMIN_CREATION_CODE={request.new_code}\n")
+        
+        # Write back to .env file
+        with open(env_file_path, 'w') as f:
+            f.writelines(lines)
+        
+        return {
+            "message": "Admin creation code updated successfully. The change will take effect after server restart.",
+            "new_code": request.new_code
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update admin creation code: {str(e)}"
+        )

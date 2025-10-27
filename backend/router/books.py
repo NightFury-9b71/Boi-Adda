@@ -1,5 +1,5 @@
 from db import get_session
-from models import Book, BookCopy, bookStatus
+from models import Book, BookCopy, Category, bookStatus
 from sqlmodel import select, Session, SQLModel, or_, func
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from datetime import datetime
@@ -16,6 +16,7 @@ class BookCreate(SQLModel):
     published_year: int
     pages: int
     cover_image_url: Optional[str] = None
+    category_id: Optional[int] = None
 
 
 class BookUpdate(SQLModel):
@@ -24,6 +25,8 @@ class BookUpdate(SQLModel):
     published_year: Optional[int] = None
     pages: Optional[int] = None
     cover_image_url: Optional[str] = None
+    category_id: Optional[int] = None
+    total_copies: Optional[int] = None
 
 
 class BookResponse(SQLModel):
@@ -210,6 +213,15 @@ def create_book(
             detail="Pages must be greater than 0"
         )
     
+    # Validate category if provided
+    if book_data.category_id is not None:
+        category = session.get(Category, book_data.category_id)
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid category"
+            )
+    
     # Check if book already exists
     existing_book = session.exec(
         select(Book).where(
@@ -230,7 +242,8 @@ def create_book(
         author=book_data.author,
         published_year=book_data.published_year,
         pages=book_data.pages,
-        cover_image_url=book_data.cover_image_url
+        cover_image_url=book_data.cover_image_url,
+        category_id=book_data.category_id
     )
     
     session.add(book)
@@ -299,6 +312,50 @@ def update_book(
     
     if book_data.cover_image_url is not None:
         book.cover_image_url = book_data.cover_image_url
+    
+    if book_data.category_id is not None:
+        category = session.get(Category, book_data.category_id)
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid category"
+            )
+        book.category_id = book_data.category_id
+    
+    # Handle total_copies update
+    if book_data.total_copies is not None:
+        if book_data.total_copies < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Total copies cannot be negative"
+            )
+        
+        current_copies = len(book.copies)
+        desired_copies = book_data.total_copies
+        
+        if desired_copies > current_copies:
+            # Add more copies
+            copies_to_add = desired_copies - current_copies
+            for _ in range(copies_to_add):
+                new_copy = BookCopy(
+                    book_id=book.id,
+                    status=bookStatus.AVAILABLE
+                )
+                session.add(new_copy)
+        elif desired_copies < current_copies:
+            # Remove excess copies (only if they are available)
+            copies_to_remove = current_copies - desired_copies
+            available_copies = [c for c in book.copies if c.status == bookStatus.AVAILABLE]
+            
+            if len(available_copies) < copies_to_remove:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot reduce copies. Only {len(available_copies)} available copies found, but trying to remove {copies_to_remove}."
+                )
+            
+            # Remove the first N available copies
+            for copy in available_copies[:copies_to_remove]:
+                session.delete(copy)
     
     session.add(book)
     session.commit()

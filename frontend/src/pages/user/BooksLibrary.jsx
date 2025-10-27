@@ -206,8 +206,9 @@ const BooksLibrary = () => {
       await apiServices.borrows.createBorrow(borrowData);
       toast.success(t('books.borrowRequestSent', { title: book.title }));
       
-      // Refresh the user's borrows to update the UI
+      // Refresh the user's borrows and stats to update the UI
       queryClient.invalidateQueries(['userBorrows', user.id]);
+      queryClient.invalidateQueries(['userStats']);
       queryClient.invalidateQueries(['books']);
     } catch (error) {
       console.error('Borrow request error:', error);

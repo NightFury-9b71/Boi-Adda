@@ -32,7 +32,13 @@ export const bn = {
     unknown: 'অজানা',
     unknownBook: 'অজানা বই',
     unknownAuthor: 'অজানা লেখক',
-    of: 'এর'
+    unknownDonor: 'অজানা দাতা',
+    of: 'এর',
+    details: 'বিবরণ',
+    author: 'লেখক',
+    copies: 'কপি',
+    optional: 'ঐচ্ছিক',
+    processing: 'প্রক্রিয়াকরণ...'
   },
 
   // App Name
@@ -65,6 +71,14 @@ export const bn = {
     member: 'সদস্য'
   },
 
+  // Book status
+  bookStatus: {
+    available: 'উপলব্ধ',
+    borrowed: 'ধার দেওয়া',
+    reserved: 'সংরক্ষিত',
+    damaged: 'ক্ষতিগ্রস্ত'
+  },
+
   // Status
   status: {
     pending: 'অপেক্ষমাণ',
@@ -78,12 +92,11 @@ export const bn = {
     inactive: 'নিষ্ক্রিয়'
   },
 
-  // Time periods
-  time: {
-    thisWeek: 'এই সপ্তাহ',
-    thisMonth: 'এই মাস',
-    thisYear: 'এই বছর',
-    allTime: 'সব সময়'
+  // Chart labels
+  chart: {
+    borrows: 'ধার',
+    donations: 'দান',
+    users: 'ব্যবহারকারী'
   },
 
   // Landing Page
@@ -219,6 +232,8 @@ export const bn = {
     popular: 'জনপ্রিয়',
     title_sort: 'নাম অনুযায়ী',
     author_sort: 'লেখক অনুযায়ী',
+    byTitle: 'নাম অনুযায়ী',
+    byAuthor: 'লেখক অনুযায়ী',
     viewMode: 'দেখার ধরন',
     grid: 'গ্রিড',
     list: 'তালিকা',
@@ -253,7 +268,18 @@ export const bn = {
     noAvailableCopies: 'কোন কপি এখন উপলব্ধ নেই',
     borrowRequestSent: 'ধার অনুরোধ পাঠানো হয়েছে',
     borrowRequestError: 'ধার অনুরোধে ত্রুটি',
-    view: 'দেখুন'
+    view: 'দেখুন',
+    // Search specific
+    searchTitle: 'বই অনুসন্ধান',
+    searchResultsFor: '"{{query}}" এর জন্য অনুসন্ধান ফলাফল',
+    searchPlaceholder: 'বই খুঁজুন...',
+    searchInstruction: 'কোন বই খুঁজতে উপরের অনুসন্ধান বাক্স ব্যবহার করুন',
+    searchError: 'অনুসন্ধানে ত্রুটি হয়েছে। পুনরায় চেষ্টা করুন।',
+    noResultsFor: '"{{query}}" এর জন্য কোন বই পাওয়া যায়নি',
+    searchSuggestion: 'অন্য কিছু খুঁজে দেখুন বা বানান পরীক্ষা করুন',
+    booksFound: '{{count}} টি বই পাওয়া গেছে',
+    available: 'উপলব্ধ',
+    unavailable: 'অনুপলব্ধ'
   },
 
   // Profile
@@ -368,7 +394,24 @@ export const bn = {
     borrowApprovedMessage: 'অনুরোধ অনুমোদিত! দয়া করে লাইব্রেরিতে এসে বইটি নিয়ে যান',
     donationApprovedMessage: 'দান অনুরোধ অনুমোদিত! দয়া করে লাইব্রেরিতে এসে বইটি জমা দিন',
     activeMessage: 'বইটি আপনার কাছে রয়েছে। নির্ধারিত সময়ে ফেরত দিন',
-    rejectedMessage: 'অনুরোধ প্রত্যাখ্যাত হয়েছে'
+    rejectedMessage: 'অনুরোধ প্রত্যাখ্যাত হয়েছে',
+    // Timeline activity labels
+    timeline: {
+      borrow: {
+        pending: 'ধারের অনুরোধ করা হয়েছে',
+        approved: 'ধারের অনুরোধ অনুমোদিত',
+        collected: 'বই সংগৃহীত',
+        return_requested: 'ফেরত দেওয়ার অনুরোধ',
+        completed: 'বই ফেরত দেওয়া হয়েছে',
+        rejected: 'ধারের অনুরোধ প্রত্যাখ্যাত'
+      },
+      donation: {
+        pending: 'দানের অনুরোধ করা হয়েছে',
+        approved: 'দানের অনুরোধ অনুমোদিত',
+        completed: 'দান সম্পন্ন',
+        rejected: 'দানের অনুরোধ প্রত্যাখ্যাত'
+      }
+    }
   },
 
   // Donation
@@ -507,6 +550,103 @@ export const bn = {
     activeUsers: 'সক্রিয় ব্যবহারকারী',
     newRegistrations: 'নতুন নিবন্ধন',
     systemSettings: 'সিস্টেম সেটিংস',
+    rejectedReason: 'প্রশাসনিক কারণে প্রত্যাখ্যাত',
+    approvedNote: 'অনুমোদিত হয়েছে',
+    handoverNote: 'বই ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে',
+    returnNote: 'বই ফেরত দেওয়া হয়েছে',
+    donationCompletedNote: 'দান সম্পন্ন হয়েছে এবং বই লাইব্রেরিতে যোগ করা হয়েছে',
+    rejectButton: 'প্রত্যাখ্যান করুন',
+    handoverButton: 'বই হস্তান্তর করুন',
+    returnButton: 'বই ফেরত গ্রহণ করুন',
+    rejecting: 'প্রত্যাখ্যান হচ্ছে...',
+    bookPlaceholder: 'বই',
+    bookIdLabel: 'বই ID:',
+    processing: 'প্রক্রিয়াকরণ...',
+    // Statistics specific
+    statistics: {
+      loading: 'লোড হচ্ছে...',
+      title: 'পরিসংখ্যান',
+      subtitle: 'লাইব্রেরির সম্পূর্ণ ডেটা ড্যাশবোর্ড ও ট্রেন্ড বিশ্লেষণ',
+      timeRanges: {
+        thisWeek: 'এই সপ্তাহ',
+        thisMonth: 'এই মাস',
+        thisYear: 'এই বছর',
+        allTime: 'সব সময়'
+      },
+      report: 'রিপোর্ট',
+      tabs: {
+        overview: 'ওভারভিউ',
+        users: 'ব্যবহারকারী',
+        books: 'বই',
+        borrows: 'ধার',
+        donations: 'দান'
+      },
+      overview: {
+        totalUsers: 'মোট ব্যবহারকারী',
+        totalBooks: 'মোট বই',
+        activeBorrows: 'চলমান ধার',
+        pendingDonations: 'অপেক্ষমাণ দান',
+        damagedBooks: 'ক্ষতিগ্রস্ত বই',
+        activeMembers: 'সক্রিয় সদস্য',
+        monthlyTrends: 'মাসিক ট্রেন্ড',
+        weeklyUserActivity: 'সাপ্তাহিক ব্যবহারকারী কার্যক্রম',
+        bookCategoryDistribution: 'বই বিভাগ অনুযায়ী বিতরণ',
+        borrowStatusDistribution: 'ধার অবস্থার বিতরণ',
+        performanceMetrics: 'পারফরম্যান্স মেট্রিক্স',
+        borrowSuccessRate: 'ধার সফলতার হার',
+        averageCopiesPerBook: 'প্রতি বইয়ের গড় কপি',
+        bookAvailabilityRate: 'বই উপলব্ধতার হার',
+        donationSuccessRate: 'দান সফলতার হার'
+      },
+      users: {
+        totalUsers: 'মোট ব্যবহারকারী',
+        activeUsers: 'সক্রিয় ব্যবহারকারী',
+        inactiveUsers: 'নিষ্ক্রিয় ব্যবহারকারী',
+        admins: 'অ্যাডমিন',
+        roleDistribution: 'ভূমিকা অনুযায়ী বিতরণ',
+        activityStatus: 'সক্রিয়তার অবস্থা'
+      },
+      books: {
+        totalTitles: 'মোট বইয়ের শিরোনাম',
+        totalCopies: 'মোট কপি',
+        availableCopies: 'উপলব্ধ কপি',
+        borrowedCopies: 'ধার দেওয়া কপি',
+        categoryDistribution: 'বিভাগ অনুযায়ী বিতরণ',
+        copyStatusDistribution: 'কপি অবস্থার বিতরণ',
+        bookMetrics: 'বই মেট্রিক্স',
+        averageCopiesPerBook: 'গড় কপি প্রতি বই',
+        availabilityRate: 'উপলব্ধতার হার',
+        borrowRate: 'ধার দেওয়ার হার'
+      },
+      borrows: {
+        totalBorrows: 'মোট ধার',
+        pending: 'অপেক্ষমাণ',
+        approved: 'অনুমোদিত',
+        active: 'চলমান',
+        returned: 'ফেরত',
+        statusDistribution: 'ধার অবস্থার বিতরণ',
+        borrowStatistics: 'ধার পরিসংখ্যান',
+        workflowMetrics: 'ওয়ার্কফ্লো মেট্রিক্স',
+        successRate: 'সফলতার হার',
+        rejectionRate: 'প্রত্যাখ্যানের হার',
+        pendingTasks: 'অপেক্ষমাণ কর্ম'
+      },
+      donations: {
+        totalDonations: 'মোট দান',
+        pending: 'অপেক্ষমাণ',
+        completed: 'সম্পন্ন',
+        rejected: 'প্রত্যাখ্যাত',
+        statusDistribution: 'দান অবস্থার বিতরণ',
+        donationStatistics: 'দান পরিসংখ্যান',
+        impactMetrics: 'প্রভাব মেট্রিক্স',
+        uniqueDonors: 'অনন্য দাতা',
+        booksReceived: 'গৃহীত বই',
+        recentContributions: 'সাম্প্রতিক অবদান',
+        unknownDonor: 'অজ্ঞাত দাতা',
+        donatedBook: 'দান করা বই',
+        successRate: 'সফলতার হার'
+      }
+    },
     // Dashboard specific
     dashboard: {
       users: 'ব্যবহারকারী',
@@ -622,7 +762,8 @@ export const bn = {
     page: 'পৃষ্ঠা',
     of: 'এর',
     previous: 'পূর্ববর্তী',
-    next: 'পরবর্তী'
+    next: 'পরবর্তী',
+    all: 'সব'
   },
 
   // Messages and Notifications
@@ -653,6 +794,77 @@ export const bn = {
     english: 'English',
     bangla: 'বাংলা',
     tooltip: 'ভাষা পরিবর্তন করুন'
+  },
+
+  // Coming Soon
+  comingSoon: {
+    title: 'শীঘ্রই আসছে',
+    description: 'এই বৈশিষ্ট্যটি বর্তমানে উন্নয়নাধীন এবং শীঘ্রই উপলব্ধ হবে।',
+    badge: 'শীঘ্রই আসছে',
+    progressTitle: 'ডেভেলপমেন্ট প্রগ্রেস',
+    progressStatus: 'চলমান',
+    footerMessage: 'আমরা আপনার জন্য এই বৈশিষ্ট্যটি নিয়ে আসতে কঠোর পরিশ্রম করছি। অপেক্ষায় থাকুন!'
+  },
+
+  // Book Details
+  bookDetails: {
+    back: 'ফিরে যান',
+    author: 'লেখক',
+    category: 'ক্যাটাগরি',
+    published: 'প্রকাশ',
+    pages: 'পৃষ্ঠা',
+    borrowed: 'ধার',
+    bookStatistics: 'বইটির পরিসংখ্যান',
+    availableCopies: 'উপলব্ধ কপি',
+    totalBorrows: 'মোট ধার',
+    added: 'যোগ করা হয়েছে',
+    aboutBook: 'বই সম্পর্কে',
+    aboutCategory: 'ক্যাটাগরি সম্পর্কে',
+    readerReviews: 'পাঠক মতামত',
+    comingSoon: 'এই ফিচারটি শীঘ্রই আসছে...',
+    reviewsComingSoon: 'পাঠকরা শীঘ্রই এই বইটি সম্পর্কে মতামত দিতে পারবেন',
+    borrowBook: 'বই ধার নিন',
+    borrow: 'ধার নিন',
+    available: 'উপলব্ধ',
+    outOfStock: 'স্টকে নেই',
+    quickActions: 'দ্রুত কার্যক্রম',
+    share: 'শেয়ার করুন',
+    bookmark: 'বুকমার্ক করুন',
+    viewMoreBooks: 'আরো বই দেখুন',
+    bookInformation: 'বইয়ের তথ্য',
+    id: 'আইডি',
+    updated: 'আপডেট',
+    // Borrow status messages
+    borrowStatus: {
+      pending: 'অনুরোধ করা হয়েছে',
+      pendingDesc: 'আপনার ধার অনুরোধ বিবেচনাধীন আছে',
+      approved: 'অনুমোদিত - নিতে আসুন',
+      approvedDesc: 'আপনার অনুরোধ অনুমোদিত হয়েছে। দয়া করে লাইব্রেরিতে এসে বইটি নিয়ে যান',
+      collected: 'আপনার কাছে আছে',
+      collectedDesc: 'এই বইটি বর্তমানে আপনার কাছে রয়েছে',
+      returnRequested: 'ফেরত অনুরোধ জমা হয়েছে',
+      returnRequestedDesc: 'আপনার বই ফেরত অনুরোধ অ্যাডমিনের অনুমোদনের জন্য অপেক্ষমাণ'
+    },
+    // Error messages
+    loginToBorrow: 'বই ধার নিতে লগইন করুন',
+    alreadyRequested: 'আপনি ইতিমধ্যে এই বইয়ের জন্য অনুরোধ করেছেন',
+    noCopiesAvailable: 'এই বইয়ের কোন কপি পাওয়া যাচ্ছে না',
+    sendingRequest: 'অনুরোধ পাঠানো হচ্ছে...',
+    unknownError: 'অজানা ত্রুটি',
+    borrowRequestError: 'ধার অনুরোধ পাঠাতে সমস্যা হয়েছে',
+    linkCopied: 'লিংক কপি করা হয়েছে!',
+    shareError: 'শেয়ার করতে সমস্যা হয়েছে',
+    bookNotFound: 'বই পাওয়া যায়নি',
+    bookNotFoundDesc: 'দুঃখিত, এই বইটি খুঁজে পাওয়া যায়নি। এটি মুছে ফেলা হতে পারে বা বিদ্যমান নাও থাকতে পারে।',
+    backToLibrary: 'বই লাইব্রেরিতে ফিরে যান',
+    // Confirmation messages
+    borrowConfirmTitle: 'বই ধার নিন',
+    borrowConfirmMessage: 'আপনি কি নিশ্চিত যে "{{title}}" বইটি ধার নিতে চান? একবার অনুরোধ পাঠানোর পর এটি বাতিল করা যাবে না।',
+    borrowConfirmYes: 'ধার নিন',
+    borrowConfirmCancel: 'বাতিল',
+    borrowSuccess: 'ধার অনুরোধ পাঠানো হয়েছে! অ্যাডমিনের অনুমোদনের জন্য অপেক্ষা করুন।',
+    // About book description
+    aboutBookDesc: '"{{title}}" বইটি {{author}} এর লেখা একটি {{category}}। এই বইটি {{year}} সালে প্রকাশিত হয়েছে এবং এতে মোট {{pages}} পৃষ্ঠা রয়েছে।{{borrowedInfo}}'
   }
 };
 
@@ -690,7 +902,13 @@ export const en = {
     unknown: 'Unknown',
     unknownBook: 'Unknown Book',
     unknownAuthor: 'Unknown Author',
-    of: 'of'
+    unknownDonor: 'Unknown Donor',
+    of: 'of',
+    details: 'Details',
+    author: 'Author',
+    copies: 'copies',
+    optional: 'Optional',
+    processing: 'Processing...'
   },
 
   // App Name
@@ -723,6 +941,14 @@ export const en = {
     member: 'Member'
   },
 
+  // Book status
+  bookStatus: {
+    available: 'Available',
+    borrowed: 'Borrowed',
+    reserved: 'Reserved',
+    damaged: 'Damaged'
+  },
+
   // Status
   status: {
     pending: 'Pending',
@@ -734,6 +960,13 @@ export const en = {
     rejected: 'Rejected',
     active: 'Active',
     inactive: 'Inactive'
+  },
+
+  // Chart labels
+  chart: {
+    borrows: 'Borrows',
+    donations: 'Donations',
+    users: 'Users'
   },
 
   // Time periods
@@ -876,6 +1109,8 @@ export const en = {
     popular: 'Popular',
     title_sort: 'By Title',
     author_sort: 'By Author',
+    byTitle: 'By Title',
+    byAuthor: 'By Author',
     viewMode: 'View Mode',
     grid: 'Grid',
     list: 'List',
@@ -910,7 +1145,18 @@ export const en = {
     noAvailableCopies: 'No copies available right now',
     borrowRequestSent: 'Borrow request sent',
     borrowRequestError: 'Borrow request error',
-    view: 'View'
+    view: 'View',
+    // Search specific
+    searchTitle: 'Book Search',
+    searchResultsFor: 'Search results for "{{query}}"',
+    searchPlaceholder: 'Search books...',
+    searchInstruction: 'Use the search box above to find books',
+    searchError: 'Search error occurred. Please try again.',
+    noResultsFor: 'No books found for "{{query}}"',
+    searchSuggestion: 'Try searching for something else or check spelling',
+    booksFound: '{{count}} books found',
+    available: 'Available',
+    unavailable: 'Unavailable'
   },
 
   // Profile
@@ -1025,7 +1271,24 @@ export const en = {
     borrowApprovedMessage: 'Request approved! Please come to the library to collect the book',
     donationApprovedMessage: 'Donation request approved! Please come to the library to submit the book',
     activeMessage: 'The book is with you. Please return it on time',
-    rejectedMessage: 'Request has been rejected'
+    rejectedMessage: 'Request has been rejected',
+    // Timeline activity labels
+    timeline: {
+      borrow: {
+        pending: 'Borrow request submitted',
+        approved: 'Borrow request approved',
+        collected: 'Book collected',
+        return_requested: 'Return request submitted',
+        completed: 'Book returned',
+        rejected: 'Borrow request rejected'
+      },
+      donation: {
+        pending: 'Donation request submitted',
+        approved: 'Donation request approved',
+        completed: 'Donation completed',
+        rejected: 'Donation request rejected'
+      }
+    }
   },
 
   // Donation
@@ -1164,6 +1427,139 @@ export const en = {
     activeUsers: 'Active Users',
     newRegistrations: 'New Registrations',
     systemSettings: 'System Settings',
+    rejectedReason: 'Rejected for administrative reasons',
+    approvedNote: 'Approved',
+    handoverNote: 'Book handed over to user',
+    returnNote: 'Book returned',
+    donationCompletedNote: 'Donation completed and book added to library',
+    rejectButton: 'Reject',
+    handoverButton: 'Handover Book',
+    returnButton: 'Return Book',
+    rejecting: 'Rejecting...',
+    bookPlaceholder: 'Book',
+    bookIdLabel: 'Book ID:',
+    processing: 'Processing...',
+    // Book Issue specific
+    bookIssue: {
+      title: 'Book Issue',
+      subtitle: 'Issue books for members',
+      stats: {
+        activeMembers: 'Active Members',
+        availableBooks: 'Available Books',
+        totalCopies: 'Total Copies'
+      },
+      selectBook: 'Select Book',
+      searchBookPlaceholder: 'Search by book title...',
+      availableCopies: 'Available Copies',
+      loadingBooks: 'Loading books...',
+      available: 'Available',
+      noBooksFound: 'No books found',
+      noAvailableBooks: 'No available books',
+      selectMember: 'Select Member',
+      searchMemberPlaceholder: 'Search by member name or email...',
+      loadingMembers: 'Loading members...',
+      noMembersFound: 'No members found',
+      noActiveMembers: 'No active members',
+      issueDetails: 'Issue Details',
+      selectedBook: 'Selected Book',
+      selectedMember: 'Selected Member',
+      issueDate: 'Issue Date',
+      returnDate: 'Return Date',
+      notes: 'Notes',
+      optional: 'Optional',
+      notesPlaceholder: 'Additional notes...',
+      issueBook: 'Issue Book',
+      processing: 'Processing...',
+      noAvailableCopies: 'No copies available',
+      success: 'Book issued successfully',
+      error: 'Failed to issue book',
+      selectBookAndMember: 'Please select both book and member'
+    },
+    // Statistics specific
+    statistics: {
+      loading: 'Loading...',
+      title: 'Statistics',
+      subtitle: 'Complete data dashboard and trend analysis of the library',
+      timeRanges: {
+        thisWeek: 'This Week',
+        thisMonth: 'This Month',
+        thisYear: 'This Year',
+        allTime: 'All Time'
+      },
+      report: 'Report',
+      tabs: {
+        overview: 'Overview',
+        users: 'Users',
+        books: 'Books',
+        borrows: 'Borrows',
+        donations: 'Donations'
+      },
+      overview: {
+        totalUsers: 'Total Users',
+        totalBooks: 'Total Books',
+        activeBorrows: 'Active Borrows',
+        pendingDonations: 'Pending Donations',
+        damagedBooks: 'Damaged Books',
+        activeMembers: 'Active Members',
+        monthlyTrends: 'Monthly Trends',
+        weeklyUserActivity: 'Weekly User Activity',
+        bookCategoryDistribution: 'Book Category Distribution',
+        borrowStatusDistribution: 'Borrow Status Distribution',
+        performanceMetrics: 'Performance Metrics',
+        borrowSuccessRate: 'Borrow Success Rate',
+        averageCopiesPerBook: 'Average Copies Per Book',
+        bookAvailabilityRate: 'Book Availability Rate',
+        donationSuccessRate: 'Donation Success Rate'
+      },
+      users: {
+        totalUsers: 'Total Users',
+        activeUsers: 'Active Users',
+        inactiveUsers: 'Inactive Users',
+        admins: 'Admins',
+        roleDistribution: 'Role Distribution',
+        activityStatus: 'Activity Status'
+      },
+      books: {
+        totalTitles: 'Total Book Titles',
+        totalCopies: 'Total Copies',
+        availableCopies: 'Available Copies',
+        borrowedCopies: 'Borrowed Copies',
+        categoryDistribution: 'Category Distribution',
+        copyStatusDistribution: 'Copy Status Distribution',
+        bookMetrics: 'Book Metrics',
+        averageCopiesPerBook: 'Average Copies Per Book',
+        availabilityRate: 'Availability Rate',
+        borrowRate: 'Borrow Rate'
+      },
+      borrows: {
+        totalBorrows: 'Total Borrows',
+        pending: 'Pending',
+        approved: 'Approved',
+        active: 'Active',
+        returned: 'Returned',
+        statusDistribution: 'Borrow Status Distribution',
+        borrowStatistics: 'Borrow Statistics',
+        workflowMetrics: 'Workflow Metrics',
+        successRate: 'Success Rate',
+        rejectionRate: 'Rejection Rate',
+        pendingTasks: 'Pending Tasks'
+      },
+      donations: {
+        totalDonations: 'Total Donations',
+        pending: 'Pending',
+        completed: 'Completed',
+        rejected: 'Rejected',
+        statusDistribution: 'Donation Status Distribution',
+        donationStatistics: 'Donation Statistics',
+        impactMetrics: 'Impact Metrics',
+        uniqueDonors: 'Unique Donors',
+        booksReceived: 'Books Received',
+        recentContributions: 'Recent Contributions',
+        unknownDonor: 'Unknown Donor',
+        donatedBook: 'Donated Book',
+        successRate: 'Success Rate'
+      }
+    },
     // Dashboard specific
     dashboard: {
       users: 'Users',
@@ -1279,7 +1675,8 @@ export const en = {
     page: 'Page',
     of: 'of',
     previous: 'Previous',
-    next: 'Next'
+    next: 'Next',
+    all: 'All'
   },
 
   // Messages and Notifications
@@ -1310,5 +1707,66 @@ export const en = {
     english: 'English',
     bangla: 'বাংলা',
     tooltip: 'Change Language'
+  },
+
+  // Book Details
+  bookDetails: {
+    back: 'Back',
+    author: 'Author',
+    category: 'Category',
+    published: 'Published',
+    pages: 'Pages',
+    borrowed: 'Borrowed',
+    bookStatistics: 'Book Statistics',
+    availableCopies: 'Available Copies',
+    totalBorrows: 'Total Borrows',
+    added: 'Added',
+    aboutBook: 'About Book',
+    aboutCategory: 'About Category',
+    readerReviews: 'Reader Reviews',
+    comingSoon: 'This feature is coming soon...',
+    reviewsComingSoon: 'Readers will soon be able to leave reviews for this book',
+    borrowBook: 'Borrow Book',
+    borrow: 'Borrow',
+    available: 'Available',
+    outOfStock: 'Out of Stock',
+    quickActions: 'Quick Actions',
+    share: 'Share',
+    bookmark: 'Bookmark',
+    viewMoreBooks: 'View More Books',
+    bookInformation: 'Book Information',
+    id: 'ID',
+    updated: 'Updated',
+    // Borrow status messages
+    borrowStatus: {
+      pending: 'Requested',
+      pendingDesc: 'Your borrow request is under consideration',
+      approved: 'Approved - Pick up',
+      approvedDesc: 'Your request has been approved. Please come to the library to collect the book',
+      collected: 'With You',
+      collectedDesc: 'This book is currently with you',
+      returnRequested: 'Return Request Submitted',
+      returnRequestedDesc: 'Your book return request is pending admin approval'
+    },
+    // Error messages
+    loginToBorrow: 'Login to borrow books',
+    alreadyRequested: 'You have already requested this book',
+    noCopiesAvailable: 'No copies of this book are available',
+    sendingRequest: 'Sending request...',
+    unknownError: 'Unknown error',
+    borrowRequestError: 'Failed to send borrow request',
+    linkCopied: 'Link copied!',
+    shareError: 'Failed to share',
+    bookNotFound: 'Book Not Found',
+    bookNotFoundDesc: 'Sorry, this book could not be found. It may have been deleted or may not exist.',
+    backToLibrary: 'Back to Library',
+    // Confirmation messages
+    borrowConfirmTitle: 'Borrow Book',
+    borrowConfirmMessage: 'Are you sure you want to borrow "{{title}}"? Once the request is sent, it cannot be cancelled.',
+    borrowConfirmYes: 'Borrow',
+    borrowConfirmCancel: 'Cancel',
+    borrowSuccess: 'Borrow request sent! Wait for admin approval.',
+    // About book description
+    aboutBookDesc: '"{{title}}" is a {{category}} written by {{author}}. This book was published in {{year}} and has {{pages}} pages.{{borrowedInfo}}'
   }
 };

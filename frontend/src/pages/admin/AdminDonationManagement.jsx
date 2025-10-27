@@ -28,100 +28,169 @@ import {
 import { apiServices } from '../../api';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
 import UserTimeline from '../../components/UserTimeline';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // Helper function to transform API responses into timeline activities
-const transformUserActivities = (borrows, donations) => {
+const transformUserActivities = (borrows, donations, t, bookFilter = null) => {
   const activities = [];
 
-  // Transform borrows into activities
+  // Transform borrows into activities - show ALL historical steps
   borrows.forEach(borrow => {
-    // Pending borrow request
-    activities.push({
-      id: borrow.id,
-      type: 'borrow',
-      status: 'pending',
-      timestamp: borrow.created_at,
-      bookTitle: borrow.book_title,
-      bookAuthor: borrow.book_author
-    });
+    // If bookFilter is provided, only include activities for that specific book
+    if (bookFilter && borrow.book_id !== bookFilter.bookId) {
+      return;
+    }
 
-    // Approved borrow (if reviewed)
-    if (borrow.reviewed_at && borrow.status !== 'pending') {
-      activities.push({
-        id: borrow.id,
+    const borrowActivities = [];
+
+    // Always show pending step (when request was created)
+    if (borrow.created_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-pending`,
         type: 'borrow',
-        status: borrow.status === 'rejected' ? 'rejected' : 'approved',
-        timestamp: borrow.reviewed_at,
+        status: 'pending',
+        timestamp: borrow.created_at,
         bookTitle: borrow.book_title,
         bookAuthor: borrow.book_author,
-        notes: borrow.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+        notes: ''
       });
     }
 
-    // Collected borrow (if collected)
-    if (borrow.collected_at && borrow.status === 'collected') {
-      activities.push({
-        id: borrow.id,
+    // Show approved step (when request was reviewed and approved)
+    if (borrow.status !== 'pending' && borrow.status !== 'rejected' && borrow.reviewed_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-approved`,
+        type: 'borrow',
+        status: 'approved',
+        timestamp: borrow.reviewed_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: t('admin.approvedNote')
+      });
+    }
+
+    // Show collected step (when book was handed over)
+    if ((borrow.status === 'collected' || borrow.status === 'return_requested' || borrow.status === 'completed') && borrow.collected_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-collected`,
         type: 'borrow',
         status: 'collected',
         timestamp: borrow.collected_at,
         bookTitle: borrow.book_title,
         bookAuthor: borrow.book_author,
-        notes: 'বই ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে'
+        notes: t('admin.handoverNote')
       });
     }
 
-    // Completed borrow (if completed)
-    if (borrow.updated_at && borrow.status === 'completed') {
-      activities.push({
-        id: borrow.id,
+    // Show return requested step (when user requested return)
+    if ((borrow.status === 'return_requested' || borrow.status === 'completed') && (borrow.return_requested_at || (borrow.status === 'return_requested' && borrow.updated_at))) {
+      borrowActivities.push({
+        id: `${borrow.id}-return_requested`,
+        type: 'borrow',
+        status: 'return_requested',
+        timestamp: borrow.return_requested_at || borrow.updated_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: ''
+      });
+    }
+
+    // Show completed step (when book was returned)
+    if (borrow.status === 'completed' && borrow.updated_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-completed`,
         type: 'borrow',
         status: 'completed',
         timestamp: borrow.updated_at,
         bookTitle: borrow.book_title,
         bookAuthor: borrow.book_author,
-        notes: 'বই ফেরত দেওয়া হয়েছে'
+        notes: t('admin.returnNote')
       });
     }
+
+    // Show rejected step (if rejected)
+    if (borrow.status === 'rejected' && borrow.reviewed_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-rejected`,
+        type: 'borrow',
+        status: 'rejected',
+        timestamp: borrow.reviewed_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: t('admin.rejectedReason')
+      });
+    }
+
+    activities.push(...borrowActivities);
   });
 
-  // Transform donations into activities
+  // Transform donations into activities - show ALL historical steps
   donations.forEach(donation => {
-    // Pending donation request
-    activities.push({
-      id: donation.id,
-      type: 'donation',
-      status: 'pending',
-      timestamp: donation.created_at,
-      bookTitle: donation.donation_title,
-      bookAuthor: donation.donation_author
-    });
+    // If bookFilter is provided, only include activities for that specific book
+    if (bookFilter) {
+      const matchesBook = donation.book_id === bookFilter.bookId ||
+                         (donation.donation_title === bookFilter.title && 
+                          donation.donation_author === bookFilter.author);
+      if (!matchesBook) {
+        return;
+      }
+    }
 
-    // Approved donation (if reviewed)
-    if (donation.reviewed_at && donation.status !== 'pending') {
-      activities.push({
-        id: donation.id,
+    const donationActivities = [];
+
+    // Always show pending step (when request was created)
+    if (donation.created_at) {
+      donationActivities.push({
+        id: `${donation.id}-pending`,
         type: 'donation',
-        status: donation.status === 'rejected' ? 'rejected' : 'approved',
+        status: 'pending',
+        timestamp: donation.created_at,
+        bookTitle: donation.donation_title,
+        bookAuthor: donation.donation_author,
+        notes: ''
+      });
+    }
+
+    // Show approved step (when request was reviewed and approved)
+    if (donation.status !== 'pending' && donation.status !== 'rejected' && donation.reviewed_at) {
+      donationActivities.push({
+        id: `${donation.id}-approved`,
+        type: 'donation',
+        status: 'approved',
         timestamp: donation.reviewed_at,
         bookTitle: donation.donation_title,
         bookAuthor: donation.donation_author,
-        notes: donation.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+        notes: t('admin.approvedNote')
       });
     }
 
-    // Completed donation (if completed)
-    if (donation.completed_at && donation.status === 'completed') {
-      activities.push({
-        id: donation.id,
+    // Show completed step (when donation was completed)
+    if (donation.status === 'completed' && donation.completed_at) {
+      donationActivities.push({
+        id: `${donation.id}-completed`,
         type: 'donation',
         status: 'completed',
         timestamp: donation.completed_at,
         bookTitle: donation.donation_title,
         bookAuthor: donation.donation_author,
-        notes: 'দান সম্পন্ন হয়েছে এবং বই লাইব্রেরিতে যোগ করা হয়েছে'
+        notes: t('admin.donationCompletedNote')
       });
     }
+
+    // Show rejected step (if rejected)
+    if (donation.status === 'rejected' && donation.reviewed_at) {
+      donationActivities.push({
+        id: `${donation.id}-rejected`,
+        type: 'donation',
+        status: 'rejected',
+        timestamp: donation.reviewed_at,
+        bookTitle: donation.donation_title,
+        bookAuthor: donation.donation_author,
+        notes: t('admin.rejectedReason')
+      });
+    }
+
+    activities.push(...donationActivities);
   });
 
   // Sort activities by timestamp (newest first)
@@ -131,6 +200,7 @@ const transformUserActivities = (borrows, donations) => {
 const AdminDonationManagement = () => {
   const queryClient = useQueryClient();
   const { confirmUpdate, confirmSubmit } = useConfirmation();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedDonation, setSelectedDonation] = useState(null);
@@ -162,11 +232,11 @@ const AdminDonationManagement = () => {
   const approveDonationMutation = useMutation({
     mutationFn: apiServices.admin.approveDonation,
     onSuccess: () => {
-      toast.success('দানের অনুরোধ অনুমোদিত হয়েছে! ব্যবহারকারীকে বই নিয়ে আসার জন্য বলুন।');
+      toast.success(t('messages.bookBorrowed'));
       queryClient.invalidateQueries(['admin', 'donations']);
     },
     onError: (error) => {
-      toast.error('অনুমোদন করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
     }
   });
 
@@ -174,11 +244,11 @@ const AdminDonationManagement = () => {
   const completeDonationMutation = useMutation({
     mutationFn: (donationId) => apiServices.admin.completeDonation(donationId),
     onSuccess: () => {
-      toast.success('দান সফলভাবে সম্পন্ন হয়েছে! বই লাইব্রেরিতে যোগ করা হয়েছে।');
+      toast.success(t('messages.bookDonated'));
       queryClient.invalidateQueries(['admin', 'donations']);
     },
     onError: (error) => {
-      toast.error('সম্পন্ন করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
     }
   });
 
@@ -186,11 +256,11 @@ const AdminDonationManagement = () => {
   const rejectDonationMutation = useMutation({
     mutationFn: ({ donationId, reason }) => apiServices.admin.rejectDonation(donationId, reason),
     onSuccess: () => {
-      toast.success('দানের অনুরোধ প্রত্যাখ্যান করা হয়েছে।');
+      toast.success(t('common.success'));
       queryClient.invalidateQueries(['admin', 'donations']);
     },
     onError: (error) => {
-      toast.error('প্রত্যাখ্যান করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
     }
   });
 
@@ -229,13 +299,7 @@ const AdminDonationManagement = () => {
   };
 
   const getStatusName = (status) => {
-    switch (status) {
-      case 'pending': return 'অপেক্ষমাণ';
-      case 'approved': return 'অনুমোদিত';
-      case 'completed': return 'সম্পন্ন';
-      case 'rejected': return 'প্রত্যাখ্যাত';
-      default: return 'অজানা';
-    }
+    return t(`status.${status}`) || t('common.unknown');
   };
 
   const formatDate = (dateString) => {
@@ -244,8 +308,8 @@ const AdminDonationManagement = () => {
 
   const handleApprove = async (donationId) => {
     const confirmed = await confirmUpdate(
-      'দান অনুমোদন', 
-      'আপনি কি নিশ্চিত যে এই দানটি অনুমোদন করতে চান?'
+      t('admin.approveDonation'), 
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -255,8 +319,8 @@ const AdminDonationManagement = () => {
 
   const handleComplete = async (donationId) => {
     const confirmed = await confirmSubmit(
-      'দান সম্পূর্ণ', 
-      'আপনি কি নিশ্চিত যে এই দানটি সম্পূর্ণ হয়েছে?'
+      t('admin.donationManagement'), 
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -264,10 +328,10 @@ const AdminDonationManagement = () => {
     }
   };
 
-  const handleReject = async (donationId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
+  const handleReject = async (donationId, reason = t('messages.operationFailed')) => {
     const confirmed = await confirmUpdate(
-      'দান প্রত্যাখ্যান', 
-      'আপনি কি নিশ্চিত যে এই দানটি প্রত্যাখ্যান করতে চান?'
+      t('admin.rejectDonation'), 
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -289,7 +353,7 @@ const AdminDonationManagement = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">দানের তথ্য লোড হচ্ছে...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -300,15 +364,15 @@ const AdminDonationManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">দান ব্যবস্থাপনা</h1>
-          <p className="text-gray-600 mt-2">সকল দানের অনুরোধ পর্যালোচনা ও অনুমোদন করুন</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('nav.admin.donations')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin.donationManagement')}</p>
         </div>
         <button
           onClick={() => queryClient.invalidateQueries(['admin', 'donations'])}
           className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          রিফ্রেশ
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -317,7 +381,7 @@ const AdminDonationManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">মোট দান</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.dashboard.donations')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -329,7 +393,7 @@ const AdminDonationManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">অপেক্ষমাণ</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.pending')}</p>
               <p className="text-2xl font-bold text-yellow-900">{stats.pending}</p>
             </div>
             <div className="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -341,7 +405,7 @@ const AdminDonationManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">অনুমোদিত</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.approved')}</p>
               <p className="text-2xl font-bold text-blue-900">{stats.approved}</p>
             </div>
             <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -353,7 +417,7 @@ const AdminDonationManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সম্পন্ন</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.completed')}</p>
               <p className="text-2xl font-bold text-green-900">{stats.completed}</p>
             </div>
             <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -365,7 +429,7 @@ const AdminDonationManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">প্রত্যাখ্যাত</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.rejected')}</p>
               <p className="text-2xl font-bold text-red-900">{stats.rejected}</p>
             </div>
             <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -384,7 +448,7 @@ const AdminDonationManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="দাতা, বই বা ID দিয়ে খুঁজুন..."
+                placeholder={t('admin.userManagement.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -399,11 +463,11 @@ const AdminDonationManagement = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              <option value="all">সকল অবস্থা</option>
-              <option value="pending">অপেক্ষমাণ</option>
-              <option value="approved">অনুমোদিত</option>
-              <option value="completed">সম্পন্ন</option>
-              <option value="rejected">প্রত্যাখ্যাত</option>
+              <option value="all">{t('table.all')}</option>
+              <option value="pending">{t('status.pending')}</option>
+              <option value="approved">{t('status.approved')}</option>
+              <option value="completed">{t('status.completed')}</option>
+              <option value="rejected">{t('status.rejected')}</option>
             </select>
           </div>
         </div>
@@ -416,22 +480,22 @@ const AdminDonationManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  দান ID
+                  {t('history.donation')} ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  দাতা
+                  {t('admin.userManagement.user')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  বই
+                  {t('books.title')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  অবস্থা
+                  {t('table.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  তারিখ
+                  {t('table.date')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  কার্যক্রম
+                  {t('table.actions')}
                 </th>
               </tr>
             </thead>
@@ -450,10 +514,10 @@ const AdminDonationManagement = () => {
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {donation.member_name || 'অজানা দাতা'}
+                            {donation.member_name || t('common.unknown')}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {donation.member_email || 'ইমেইল নেই'}
+                            {donation.member_email || t('admin.userManagement.phoneNotAvailable')}
                           </div>
                         </div>
                       </div>
@@ -465,10 +529,10 @@ const AdminDonationManagement = () => {
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {donation.donation_title || 'অজানা বই'}
+                            {donation.donation_title || t('common.unknownBook')}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {donation.donation_author || 'অজানা লেখক'}
+                            {donation.donation_author || t('common.unknownAuthor')}
                           </div>
                         </div>
                       </div>
@@ -491,7 +555,7 @@ const AdminDonationManagement = () => {
                             setShowDonationDetails(true);
                           }}
                           className="text-gray-400 hover:text-gray-600"
-                          title="বিস্তারিত দেখুন"
+                          title={t('common.view')}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -503,7 +567,7 @@ const AdminDonationManagement = () => {
                               onClick={() => handleApprove(donation.id)}
                               disabled={approveDonationMutation.isPending}
                               className="text-green-600 hover:text-green-700 disabled:opacity-50"
-                              title="অনুমোদন করুন"
+                              title={t('admin.approveDonation')}
                             >
                               <CheckCircle className="h-4 w-4" />
                             </button>
@@ -511,7 +575,7 @@ const AdminDonationManagement = () => {
                               onClick={() => handleReject(donation.id)}
                               disabled={rejectDonationMutation.isPending}
                               className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                              title="প্রত্যাখ্যান করুন"
+                              title={t('admin.rejectDonation')}
                             >
                               <XCircle className="h-4 w-4" />
                             </button>
@@ -524,7 +588,7 @@ const AdminDonationManagement = () => {
                               onClick={() => handleComplete(donation.id)}
                               disabled={completeDonationMutation.isPending}
                               className="text-blue-600 hover:text-blue-700 disabled:opacity-50"
-                              title="দান সম্পন্ন করুন"
+                              title={t('admin.donationManagement')}
                             >
                               <Package className="h-4 w-4" />
                             </button>
@@ -532,7 +596,7 @@ const AdminDonationManagement = () => {
                               onClick={() => handleReject(donation.id)}
                               disabled={rejectDonationMutation.isPending}
                               className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                              title="প্রত্যাখ্যান করুন"
+                              title={t('admin.rejectDonation')}
                             >
                               <XCircle className="h-4 w-4" />
                             </button>
@@ -550,7 +614,7 @@ const AdminDonationManagement = () => {
         {filteredDonations.length === 0 && (
           <div className="text-center py-12">
             <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">কোন দানের রেকর্ড পাওয়া যায়নি</p>
+            <p className="text-gray-500">{t('table.noData')}</p>
           </div>
         )}
       </div>
@@ -576,6 +640,7 @@ const AdminDonationManagement = () => {
 
 // Donation Details Modal Component
 const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReject, userBorrows, userDonations }) => {
+  const { t } = useTranslation();
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -587,13 +652,7 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
   };
 
   const getStatusName = (status) => {
-    switch (status) {
-      case 'pending': return 'অপেক্ষমাণ';
-      case 'approved': return 'অনুমোদিত';
-      case 'completed': return 'সম্পন্ন';
-      case 'rejected': return 'প্রত্যাখ্যাত';
-      default: return 'অজানা';
-    }
+    return t(`status.${status}`) || t('common.unknown');
   };
 
   const formatDate = (dateString) => {
@@ -606,8 +665,8 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">দান বিবরণ #{donation.id}</h2>
-              <p className="text-gray-600">দানের সম্পূর্ণ তথ্য দেখুন ও প্রয়োজনীয় ব্যবস্থা নিন</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t('history.donation')} {t('common.details')} #{donation.id}</h2>
+              <p className="text-gray-600">{t('admin.donationManagement')}</p>
             </div>
             <button
               onClick={onClose}
@@ -621,7 +680,7 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
         <div className="p-6 space-y-6">
           {/* Status */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">বর্তমান অবস্থা</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('table.status')}</h3>
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(donation.status)}`}>
               {getStatusName(donation.status)}
             </span>
@@ -629,15 +688,15 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
 
           {/* Donor Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">দাতা</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.userManagement.user')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center">
                 <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
-                  {donation.member_name?.charAt(0) || 'দ'}
+                  {donation.member_name?.charAt(0) || 'U'}
                 </div>
                 <div className="ml-4">
-                  <div className="text-lg font-medium text-gray-900">{donation.member_name || 'অজানা দাতা'}</div>
-                  <div className="text-sm text-gray-500">{donation.member_email || 'ইমেইল নেই'}</div>
+                  <div className="text-lg font-medium text-gray-900">{donation.member_name || t('common.unknown')}</div>
+                  <div className="text-sm text-gray-500">{donation.member_email || t('admin.userManagement.phoneNotAvailable')}</div>
                   <div className="text-sm text-gray-500">ID: #{donation.member_id}</div>
                 </div>
               </div>
@@ -646,7 +705,7 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
 
           {/* Book Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">বইয়ের তথ্য</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('books.title')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
                 <div className="h-24 w-16 bg-purple-200 rounded shadow-sm flex items-center justify-center">
@@ -654,16 +713,16 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
                 </div>
                 <div className="ml-4 flex-1">
                   <div className="text-lg font-medium text-gray-900">
-                    {donation.donation_title || 'অজানা বই'}
+                    {donation.donation_title || t('common.unknownBook')}
                   </div>
                   <div className="text-sm text-gray-600">
-                    লেখক: {donation.donation_author || 'অজানা লেখক'}
+                    {t('books.author')}: {donation.donation_author || t('common.unknownAuthor')}
                   </div>
                   <div className="text-sm text-gray-500">
-                    প্রকাশ: {donation.donation_year || 'অজানা'}
+                    {t('books.year')}: {donation.donation_year || t('common.unknown')}
                   </div>
                   <div className="text-sm text-gray-500">
-                    পৃষ্ঠা: {donation.donation_pages || 'অজানা'}
+                    {t('books.pages')}: {donation.donation_pages || t('common.unknown')}
                   </div>
                 </div>
               </div>
@@ -672,19 +731,23 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
 
           {/* Timeline */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">ব্যবহারকারীর সময়রেখা</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.recentActivity')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <UserTimeline
                 userId={donation.member_id}
                 userName={donation.member_name}
-                activities={transformUserActivities(userBorrows, userDonations)}
+                activities={transformUserActivities(userBorrows, userDonations, t, {
+                  bookId: donation.book_id,
+                  title: donation.donation_title,
+                  author: donation.donation_author
+                })}
               />
             </div>
           </div>
 
           {/* Actions */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">কার্যক্রম</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('table.actions')}</h3>
             <div className="flex flex-wrap gap-3">
               {donation.status === 'pending' && (
                 <>
@@ -696,7 +759,7 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
                     className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    অনুমোদন করুন
+                    {t('admin.approveDonation')}
                   </button>
                   <button
                     onClick={() => {
@@ -706,7 +769,7 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
                     className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
-                    প্রত্যাখ্যান করুন
+                    {t('admin.rejectDonation')}
                   </button>
                 </>
               )}
@@ -721,7 +784,7 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
                     className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Package className="h-4 w-4 mr-2" />
-                    দান সম্পন্ন করুন
+                    {t('admin.donationManagement')}
                   </button>
                   <button
                     onClick={() => {
@@ -731,13 +794,13 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
                     className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
-                    প্রত্যাখ্যান করুন
+                    {t('admin.rejectDonation')}
                   </button>
                 </>
               )}
 
               {(donation.status === 'completed' || donation.status === 'rejected') && (
-                <p className="text-gray-500 italic">এই দানের জন্য আর কোন কার্যক্রম প্রয়োজন নেই।</p>
+                <p className="text-gray-500 italic">{t('messages.operationFailed')}</p>
               )}
             </div>
           </div>

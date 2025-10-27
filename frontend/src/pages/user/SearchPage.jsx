@@ -37,10 +37,10 @@ const SearchPage = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">বই অনুসন্ধান</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('books.searchTitle')}</h1>
             {query && (
               <p className="text-gray-600 mt-1">
-                "{query}" এর জন্য অনুসন্ধান ফলাফল
+                {t('books.searchResultsFor', { query })}
               </p>
             )}
           </div>
@@ -50,7 +50,7 @@ const SearchPage = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="বই খুঁজুন..."
+              placeholder={t('books.searchPlaceholder')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -66,7 +66,7 @@ const SearchPage = () => {
             <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
               <Search className="h-6 w-6 text-gray-400" />
             </div>
-            <p className="text-gray-500">কোন বই খুঁজতে উপরের অনুসন্ধান বাক্স ব্যবহার করুন</p>
+            <p className="text-gray-500">{t('books.searchInstruction')}</p>
           </div>
         ) : isLoading ? (
           <div className="p-6">
@@ -88,23 +88,23 @@ const SearchPage = () => {
             <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
               <Search className="h-6 w-6 text-red-400" />
             </div>
-            <p className="text-red-500">অনুসন্ধানে ত্রুটি হয়েছে। পুনরায় চেষ্টা করুন।</p>
+            <p className="text-red-500">{t('books.searchError')}</p>
           </div>
         ) : searchResults.length === 0 ? (
           <div className="text-center py-12">
             <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
               <BookOpen className="h-6 w-6 text-gray-400" />
             </div>
-            <p className="text-gray-500">"{query}" এর জন্য কোন বই পাওয়া যায়নি</p>
+            <p className="text-gray-500">{t('books.noResultsFor', { query })}</p>
             <p className="text-sm text-gray-400 mt-1">
-              অন্য কিছু খুঁজে দেখুন বা বানান পরীক্ষা করুন
+              {t('books.searchSuggestion')}
             </p>
           </div>
         ) : (
           <div className="p-6">
             <div className="mb-4">
               <p className="text-sm text-gray-600">
-                {searchResults.length} টি বই পাওয়া গেছে
+                {t('books.booksFound', { count: searchResults.length })}
               </p>
             </div>
             
@@ -146,11 +146,11 @@ const SearchPage = () => {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {book.total_copies > 0 ? 'উপলব্ধ' : 'অনুপলব্ধ'}
+                      {book.total_copies > 0 ? t('books.available') : t('books.unavailable')}
                     </span>
                     {book.total_copies > 0 && (
                       <span className="text-xs text-gray-500">
-                        {book.total_copies} কপি
+                        {book.total_copies} {t('books.copies')}
                       </span>
                     )}
                   </div>

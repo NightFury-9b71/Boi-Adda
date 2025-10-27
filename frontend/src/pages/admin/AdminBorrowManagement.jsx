@@ -21,100 +21,169 @@ import { apiServices } from '../../api';
 import OptimizedImage from '../../components/OptimizedImage';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
 import UserTimeline from '../../components/UserTimeline';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // Helper function to transform API responses into timeline activities
-const transformUserActivities = (borrows, donations) => {
+const transformUserActivities = (borrows, donations, t, bookFilter = null) => {
   const activities = [];
 
-  // Transform borrows into activities
+  // Transform borrows into activities - show ALL historical steps
   borrows.forEach(borrow => {
-    // Pending borrow request
-    activities.push({
-      id: borrow.id,
-      type: 'borrow',
-      status: 'pending',
-      timestamp: borrow.created_at,
-      bookTitle: borrow.book_title,
-      bookAuthor: borrow.book_author
-    });
+    // If bookFilter is provided, only include activities for that specific book
+    if (bookFilter && borrow.book_id !== bookFilter.bookId) {
+      return;
+    }
 
-    // Approved borrow (if reviewed)
-    if (borrow.reviewed_at && borrow.status !== 'pending') {
-      activities.push({
-        id: borrow.id,
+    const borrowActivities = [];
+
+    // Always show pending step (when request was created)
+    if (borrow.created_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-pending`,
         type: 'borrow',
-        status: borrow.status === 'rejected' ? 'rejected' : 'approved',
-        timestamp: borrow.reviewed_at,
+        status: 'pending',
+        timestamp: borrow.created_at,
         bookTitle: borrow.book_title,
         bookAuthor: borrow.book_author,
-        notes: borrow.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+        notes: t('admin.approvedNote')
       });
     }
 
-    // Collected borrow (if collected)
-    if (borrow.collected_at && borrow.status === 'collected') {
-      activities.push({
-        id: borrow.id,
+    // Show approved step (when request was reviewed and approved)
+    if (borrow.status !== 'pending' && borrow.status !== 'rejected' && borrow.reviewed_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-approved`,
+        type: 'borrow',
+        status: 'approved',
+        timestamp: borrow.reviewed_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: t('admin.approvedNote')
+      });
+    }
+
+    // Show collected step (when book was handed over)
+    if ((borrow.status === 'collected' || borrow.status === 'return_requested' || borrow.status === 'completed') && borrow.collected_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-collected`,
         type: 'borrow',
         status: 'collected',
         timestamp: borrow.collected_at,
         bookTitle: borrow.book_title,
         bookAuthor: borrow.book_author,
-        notes: 'বই ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে'
+        notes: t('admin.handoverNote')
       });
     }
 
-    // Completed borrow (if completed)
-    if (borrow.updated_at && borrow.status === 'completed') {
-      activities.push({
-        id: borrow.id,
+    // Show return requested step (when user requested return)
+    if ((borrow.status === 'return_requested' || borrow.status === 'completed') && (borrow.return_requested_at || (borrow.status === 'return_requested' && borrow.updated_at))) {
+      borrowActivities.push({
+        id: `${borrow.id}-return_requested`,
+        type: 'borrow',
+        status: 'return_requested',
+        timestamp: borrow.return_requested_at || borrow.updated_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: ''
+      });
+    }
+
+    // Show completed step (when book was returned)
+    if (borrow.status === 'completed' && borrow.updated_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-completed`,
         type: 'borrow',
         status: 'completed',
         timestamp: borrow.updated_at,
         bookTitle: borrow.book_title,
         bookAuthor: borrow.book_author,
-        notes: 'বই ফেরত দেওয়া হয়েছে'
+        notes: t('admin.returnNote')
       });
     }
+
+    // Show rejected step (if rejected)
+    if (borrow.status === 'rejected' && borrow.reviewed_at) {
+      borrowActivities.push({
+        id: `${borrow.id}-rejected`,
+        type: 'borrow',
+        status: 'rejected',
+        timestamp: borrow.reviewed_at,
+        bookTitle: borrow.book_title,
+        bookAuthor: borrow.book_author,
+        notes: t('admin.rejectedReason')
+      });
+    }
+
+    activities.push(...borrowActivities);
   });
 
-  // Transform donations into activities
+  // Transform donations into activities - show ALL historical steps
   donations.forEach(donation => {
-    // Pending donation request
-    activities.push({
-      id: donation.id,
-      type: 'donation',
-      status: 'pending',
-      timestamp: donation.created_at,
-      bookTitle: donation.donation_title,
-      bookAuthor: donation.donation_author
-    });
+    // If bookFilter is provided, only include activities for that specific book
+    if (bookFilter) {
+      const matchesBook = donation.book_id === bookFilter.bookId ||
+                         (donation.donation_title === bookFilter.title && 
+                          donation.donation_author === bookFilter.author);
+      if (!matchesBook) {
+        return;
+      }
+    }
 
-    // Approved donation (if reviewed)
-    if (donation.reviewed_at && donation.status !== 'pending') {
-      activities.push({
-        id: donation.id,
+    const donationActivities = [];
+
+    // Always show pending step (when request was created)
+    if (donation.created_at) {
+      donationActivities.push({
+        id: `${donation.id}-pending`,
         type: 'donation',
-        status: donation.status === 'rejected' ? 'rejected' : 'approved',
+        status: 'pending',
+        timestamp: donation.created_at,
+        bookTitle: donation.donation_title,
+        bookAuthor: donation.donation_author,
+        notes: ''
+      });
+    }
+
+    // Show approved step (when request was reviewed and approved)
+    if (donation.status !== 'pending' && donation.status !== 'rejected' && donation.reviewed_at) {
+      donationActivities.push({
+        id: `${donation.id}-approved`,
+        type: 'donation',
+        status: 'approved',
         timestamp: donation.reviewed_at,
         bookTitle: donation.donation_title,
         bookAuthor: donation.donation_author,
-        notes: donation.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+        notes: t('admin.approvedNote')
       });
     }
 
-    // Completed donation (if completed)
-    if (donation.completed_at && donation.status === 'completed') {
-      activities.push({
-        id: donation.id,
+    // Show completed step (when donation was completed)
+    if (donation.status === 'completed' && donation.completed_at) {
+      donationActivities.push({
+        id: `${donation.id}-completed`,
         type: 'donation',
         status: 'completed',
         timestamp: donation.completed_at,
         bookTitle: donation.donation_title,
         bookAuthor: donation.donation_author,
-        notes: 'দান সম্পন্ন হয়েছে এবং বই লাইব্রেরিতে যোগ করা হয়েছে'
+        notes: t('admin.donationCompletedNote')
       });
     }
+
+    // Show rejected step (if rejected)
+    if (donation.status === 'rejected' && donation.reviewed_at) {
+      donationActivities.push({
+        id: `${donation.id}-rejected`,
+        type: 'donation',
+        status: 'rejected',
+        timestamp: donation.reviewed_at,
+        bookTitle: donation.donation_title,
+        bookAuthor: donation.donation_author,
+        notes: t('admin.rejectedReason')
+      });
+    }
+
+    activities.push(...donationActivities);
   });
 
   // Sort activities by timestamp (newest first)
@@ -124,6 +193,7 @@ const transformUserActivities = (borrows, donations) => {
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();
   const { confirmUpdate, confirmSubmit } = useConfirmation();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedBorrow, setSelectedBorrow] = useState(null);
@@ -159,12 +229,12 @@ const AdminBorrowManagement = () => {
   const approveBorrowMutation = useMutation({
     mutationFn: apiServices.admin.approveBorrow,
     onSuccess: () => {
-      toast.success('ধারের অনুরোধ অনুমোদিত হয়েছে! ব্যবহারকারীকে বইটি নিতে আসার জন্য বলুন।');
+      toast.success(t('messages.bookBorrowed'));
       queryClient.invalidateQueries(['admin', 'borrows']);
       setApprovingBorrowId(null);
     },
     onError: (error) => {
-      toast.error('অনুমোদন করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
       setApprovingBorrowId(null);
     }
   });
@@ -173,12 +243,12 @@ const AdminBorrowManagement = () => {
   const handoverBookMutation = useMutation({
     mutationFn: (borrowId) => apiServices.admin.handoverBook(borrowId),
     onSuccess: () => {
-      toast.success('বই সফলভাবে হস্তান্তর করা হয়েছে!');
+      toast.success(t('messages.bookBorrowed'));
       queryClient.invalidateQueries(['admin', 'borrows']);
       setHandoverBorrowId(null);
     },
     onError: (error) => {
-      toast.error('হস্তান্তর করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
       setHandoverBorrowId(null);
     }
   });
@@ -187,12 +257,12 @@ const AdminBorrowManagement = () => {
   const rejectBorrowMutation = useMutation({
     mutationFn: ({ borrowId, reason }) => apiServices.admin.rejectBorrow(borrowId, reason),
     onSuccess: () => {
-      toast.success('ধারের অনুরোধ প্রত্যাখ্যান করা হয়েছে।');
+      toast.success(t('common.success'));
       queryClient.invalidateQueries(['admin', 'borrows']);
       setRejectingBorrowId(null);
     },
     onError: (error) => {
-      toast.error('প্রত্যাখ্যান করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
       setRejectingBorrowId(null);
     }
   });
@@ -201,12 +271,12 @@ const AdminBorrowManagement = () => {
   const returnBookMutation = useMutation({
     mutationFn: (borrowId) => apiServices.admin.returnBook(borrowId),
     onSuccess: () => {
-      toast.success('বই সফলভাবে ফেরত নেওয়া হয়েছে!');
+      toast.success(t('messages.bookReturned'));
       queryClient.invalidateQueries(['admin', 'borrows']);
       setReturningBorrowId(null);
     },
     onError: (error) => {
-      toast.error('ফেরত নিতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
       setReturningBorrowId(null);
     }
   });
@@ -214,8 +284,8 @@ const AdminBorrowManagement = () => {
   // Filter and sort borrows based on search and status (latest first)
   const filteredBorrows = borrows
     .filter(borrow => {
-      const borrowerName = borrow.member_name || 'অজানা';
-      const bookTitle = borrow.book_title || 'অজানা বই';
+      const borrowerName = borrow.member_name || t('common.unknown');
+      const bookTitle = borrow.book_title || t('common.unknownBook');
       const userId = borrow.member_id || '';
       
       const matchesSearch = borrowerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -254,15 +324,7 @@ const AdminBorrowManagement = () => {
   };
 
   const getStatusName = (status) => {
-    switch (status) {
-      case 'pending': return 'অপেক্ষমাণ';
-      case 'approved': return 'অনুমোদিত';
-      case 'collected': return 'সংগৃহীত';
-      case 'return_requested': return 'ফেরত অনুরোধ';
-      case 'completed': return 'সম্পন্ন';
-      case 'rejected': return 'প্রত্যাখ্যাত';
-      default: return 'অজানা';
-    }
+    return t(`status.${status}`) || t('common.unknown');
   };
 
   const formatDate = (dateString) => {
@@ -291,27 +353,27 @@ const AdminBorrowManagement = () => {
   const getDateLabel = (status) => {
     switch (status) {
       case 'pending':
-        return 'অনুরোধ';
+        return t('history.requestDate');
       case 'approved':
-        return 'অনুমোদন';
+        return t('history.approvalDate');
       case 'collected':
-        return 'সংগৃহীত';
+        return t('history.handoverDate');
       case 'return_requested':
-        return 'ফেরত অনুরোধ';
+        return t('history.returnDate');
       case 'completed':
-        return 'সম্পন্ন';
+        return t('history.completedDate');
       case 'rejected':
-        return 'প্রত্যাখ্যান';
+        return t('history.rejectedDate');
       default:
-        return 'তারিখ';
+        return t('table.date');
     }
   };
 
   // Confirmation handlers - show modal before action
   const handleApprove = async (borrowId) => {
     const confirmed = await confirmUpdate(
-      'ধারের অনুরোধ অনুমোদন',
-      'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি অনুমোদন করতে চান?'
+      t('admin.borrowManagement'),
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -322,8 +384,8 @@ const AdminBorrowManagement = () => {
 
   const handleHandover = async (borrowId) => {
     const confirmed = await confirmSubmit(
-      'বই হস্তান্তর',
-      'আপনি কি নিশ্চিত যে বইটি ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে?'
+      t('admin.issueBook'),
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -332,10 +394,10 @@ const AdminBorrowManagement = () => {
     }
   };
 
-  const handleReject = async (borrowId, reason = "প্রশাসনিক কারণে প্রত্যাখ্যাত") => {
+  const handleReject = async (borrowId, reason = t('messages.operationFailed')) => {
     const confirmed = await confirmUpdate(
-      'ধারের অনুরোধ প্রত্যাখ্যান',
-      'আপনি কি নিশ্চিত যে এই ধারের অনুরোধটি প্রত্যাখ্যান করতে চান?'
+      t('admin.rejectDonation'),
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -346,8 +408,8 @@ const AdminBorrowManagement = () => {
 
   const handleReturn = async (borrowId) => {
     const confirmed = await confirmSubmit(
-      'বই ফেরত গ্রহণ',
-      'আপনি কি নিশ্চিত যে বইটি ফেরত নেওয়া হয়েছে?'
+      t('admin.returnBook'),
+      t('messages.confirmDelete')
     );
     
     if (confirmed) {
@@ -372,7 +434,7 @@ const AdminBorrowManagement = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">ধারের তথ্য লোড হচ্ছে...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -383,15 +445,15 @@ const AdminBorrowManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">ধার ব্যবস্থাপনা</h1>
-          <p className="text-gray-600 mt-2">সকল ধারের অনুরোধ পর্যালোচনা ও অনুমোদন করুন</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('nav.admin.borrows')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin.borrowManagement')}</p>
         </div>
         <button
           onClick={() => queryClient.invalidateQueries(['admin', 'borrows'])}
           className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          রিফ্রেশ
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -400,7 +462,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">মোট ধার</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.dashboard.borrows')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -412,7 +474,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">অপেক্ষমাণ</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.pending')}</p>
               <p className="text-2xl font-bold text-yellow-900">{stats.pending}</p>
             </div>
             <div className="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -424,7 +486,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">অনুমোদিত</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.approved')}</p>
               <p className="text-2xl font-bold text-blue-900">{stats.approved}</p>
             </div>
             <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -436,7 +498,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সংগৃহীত</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.collected')}</p>
               <p className="text-2xl font-bold text-green-900">{stats.collected}</p>
             </div>
             <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -448,7 +510,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">ফেরত অনুরোধ</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.return_requested')}</p>
               <p className="text-2xl font-bold text-purple-900">{stats.return_requested}</p>
             </div>
             <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -460,7 +522,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সম্পন্ন</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.completed')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
             </div>
             <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -472,7 +534,7 @@ const AdminBorrowManagement = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">প্রত্যাখ্যাত</p>
+              <p className="text-sm font-medium text-gray-600">{t('status.rejected')}</p>
               <p className="text-2xl font-bold text-red-900">{stats.rejected}</p>
             </div>
             <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -491,7 +553,7 @@ const AdminBorrowManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="ব্যবহারকারী, বই, ধার ID বা ব্যবহারকারী ID দিয়ে খুঁজুন..."
+                placeholder={t('admin.userManagement.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -506,13 +568,13 @@ const AdminBorrowManagement = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              <option value="all">সকল অবস্থা</option>
-              <option value="pending">অপেক্ষমাণ</option>
-              <option value="approved">অনুমোদিত</option>
-              <option value="collected">সংগৃহীত</option>
-              <option value="return_requested">ফেরত অনুরোধ</option>
-              <option value="completed">সম্পন্ন</option>
-              <option value="rejected">প্রত্যাখ্যাত</option>
+              <option value="all">{t('table.all')}</option>
+              <option value="pending">{t('status.pending')}</option>
+              <option value="approved">{t('status.approved')}</option>
+              <option value="collected">{t('status.collected')}</option>
+              <option value="return_requested">{t('status.return_requested')}</option>
+              <option value="completed">{t('status.completed')}</option>
+              <option value="rejected">{t('status.rejected')}</option>
             </select>
           </div>
         </div>
@@ -525,25 +587,25 @@ const AdminBorrowManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ধার ID
+                  {t('history.borrow')} ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ব্যবহারকারী ID
+                  {t('admin.userManagement.user')} ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ব্যবহারকারী
+                  {t('admin.userManagement.user')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  বই
+                  {t('books.title')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  অবস্থা
+                  {t('table.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  তারিখ
+                  {t('table.date')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  কার্যক্রম
+                  {t('table.actions')}
                 </th>
               </tr>
             </thead>
@@ -564,12 +626,12 @@ const AdminBorrowManagement = () => {
                           {borrow.member_name?.charAt(0) || 'U'}
                         </div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {borrow.member_name || 'অজানা ব্যবহারকারী'}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {borrow.member_email || 'ইমেইল নেই'}
-                          </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {borrow.member_name || t('common.unknown')}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {borrow.member_email || t('admin.userManagement.phoneNotAvailable')}
+                        </div>
                         </div>
                       </div>
                     </td>
@@ -587,16 +649,16 @@ const AdminBorrowManagement = () => {
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                              বই
+                              {t('admin.bookPlaceholder')}
                             </div>
                           )}
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {borrow.book_title || 'অজানা বই'}
+                            {borrow.book_title || t('common.unknownBook')}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {borrow.book_author || 'অজানা লেখক'}
+                            {borrow.book_author || t('common.unknownAuthor')}
                           </div>
                         </div>
                       </div>
@@ -622,7 +684,7 @@ const AdminBorrowManagement = () => {
                             setShowBorrowDetails(true);
                           }}
                           className="text-gray-400 hover:text-gray-600"
-                          title="বিস্তারিত দেখুন"
+                          title={t('admin.userManagement.viewDetails')}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -634,7 +696,7 @@ const AdminBorrowManagement = () => {
                               onClick={() => handleApprove(borrow.id)}
                               disabled={approvingBorrowId === borrow.id}
                               className="text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                              title="অনুমোদন করুন"
+                              title={t('admin.approveDonation')}
                             >
                               {approvingBorrowId === borrow.id ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
@@ -646,7 +708,7 @@ const AdminBorrowManagement = () => {
                               onClick={() => handleReject(borrow.id)}
                               disabled={rejectingBorrowId === borrow.id}
                               className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                              title="প্রত্যাখ্যান করুন"
+                              title={t('admin.rejectButton')}
                             >
                               {rejectingBorrowId === borrow.id ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
@@ -663,7 +725,7 @@ const AdminBorrowManagement = () => {
                               onClick={() => handleHandover(borrow.id)}
                               disabled={handoverBorrowId === borrow.id}
                               className="text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                              title="বই হস্তান্তর করুন"
+                              title={t('admin.handoverButton')}
                             >
                               {handoverBorrowId === borrow.id ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -675,7 +737,7 @@ const AdminBorrowManagement = () => {
                               onClick={() => handleReject(borrow.id)}
                               disabled={rejectingBorrowId === borrow.id}
                               className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                              title="প্রত্যাখ্যান করুন"
+                              title={t('admin.rejectButton')}
                             >
                               {rejectingBorrowId === borrow.id ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
@@ -691,7 +753,7 @@ const AdminBorrowManagement = () => {
                             onClick={() => handleReturn(borrow.id)}
                             disabled={returningBorrowId === borrow.id}
                             className="text-purple-600 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                            title="বই ফেরত গ্রহণ করুন"
+                            title={t('admin.returnButton')}
                           >
                             {returningBorrowId === borrow.id ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
@@ -712,7 +774,7 @@ const AdminBorrowManagement = () => {
         {filteredBorrows.length === 0 && (
           <div className="text-center py-12">
             <BookMarked className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">কোন ধারের রেকর্ড পাওয়া যায়নি</p>
+            <p className="text-gray-500">{t('table.noData')}</p>
           </div>
         )}
       </div>
@@ -745,6 +807,7 @@ const AdminBorrowManagement = () => {
 
 // Borrow Details Modal Component
 const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, onReturn, loadingStates, userBorrows, userDonations }) => {
+  const { t } = useTranslation();
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -758,15 +821,7 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
   };
 
   const getStatusName = (status) => {
-    switch (status) {
-      case 'pending': return 'অপেক্ষমাণ';
-      case 'approved': return 'অনুমোদিত';
-      case 'collected': return 'সংগৃহীত';
-      case 'return_requested': return 'ফেরত অনুরোধ';
-      case 'completed': return 'সম্পন্ন';
-      case 'rejected': return 'প্রত্যাখ্যাত';
-      default: return 'অজানা';
-    }
+    return t(`status.${status}`) || t('common.unknown');
   };
 
   const formatDate = (dateString) => {
@@ -779,8 +834,8 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">ধার বিবরণ #{borrow.id}</h2>
-              <p className="text-gray-600">ধারের সম্পূর্ণ তথ্য দেখুন ও প্রয়োজনীয় ব্যবস্থা নিন</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t('history.borrow')} {t('common.details')} #{borrow.id}</h2>
+              <p className="text-gray-600">{t('admin.borrowManagement')}</p>
             </div>
             <button
               onClick={onClose}
@@ -794,7 +849,7 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
         <div className="p-6 space-y-6">
           {/* Status */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">বর্তমান অবস্থা</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('table.status')}</h3>
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(borrow.status)}`}>
               {getStatusName(borrow.status)}
             </span>
@@ -802,15 +857,15 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
 
           {/* User Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">ধারকারী</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('profile.personalInfo')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center">
                 <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-200 to-blue-400 flex items-center justify-center text-blue-700 font-semibold shadow-sm">
                   {borrow.member_name?.charAt(0) || 'U'}
                 </div>
                 <div className="ml-4">
-                  <div className="text-lg font-medium text-gray-900">{borrow.member_name || 'অজানা ব্যবহারকারী'}</div>
-                  <div className="text-sm text-gray-500">{borrow.member_email || 'ইমেইল নেই'}</div>
+                  <div className="text-lg font-medium text-gray-900">{borrow.member_name || t('common.unknown')}</div>
+                  <div className="text-sm text-gray-500">{borrow.member_email || t('admin.userManagement.phoneNotAvailable')}</div>
                   <div className="text-sm text-gray-500">ID: #{borrow.member_id}</div>
                 </div>
               </div>
@@ -819,7 +874,7 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
 
           {/* Book Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">বইয়ের তথ্য</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('books.title')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
                 <div className="h-24 w-16 bg-white rounded shadow-sm overflow-hidden">
@@ -834,19 +889,19 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                      বই
+                      {t('admin.bookPlaceholder')}
                     </div>
                   )}
                 </div>
                 <div className="ml-4 flex-1">
                   <div className="text-lg font-medium text-gray-900">
-                    {borrow.book_title || 'অজানা বই'}
+                    {borrow.book_title || t('common.unknownBook')}
                   </div>
                   <div className="text-sm text-gray-600">
-                    লেখক: {borrow.book_author || 'অজানা লেখক'}
+                    {t('books.author')}: {borrow.book_author || t('common.unknownAuthor')}
                   </div>
                   <div className="text-sm text-gray-500">
-                    বই ID: #{borrow.book_id}
+                    {t('admin.bookIdLabel')} #{borrow.book_id}
                   </div>
                 </div>
               </div>
@@ -855,19 +910,23 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
 
           {/* Timeline */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">ব্যবহারকারীর সময়রেখা</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.recentActivity')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <UserTimeline
                 userId={borrow.member_id}
                 userName={borrow.member_name}
-                activities={transformUserActivities(userBorrows, userDonations)}
+                activities={transformUserActivities(userBorrows, userDonations, t, {
+                  bookId: borrow.book_id,
+                  title: borrow.book_title,
+                  author: borrow.book_author
+                })}
               />
             </div>
           </div>
 
           {/* Actions */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">কার্যক্রম</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('table.actions')}</h3>
             <div className="flex flex-wrap gap-3">
               {borrow.status === 'pending' && (
                 <>
@@ -882,12 +941,12 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                     {loadingStates?.approving ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        অনুমোদন হচ্ছে...
+                        {t('admin.approveDonation')}
                       </>
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        অনুমোদন করুন
+                        {t('admin.approveDonation')}
                       </>
                     )}
                   </button>
@@ -902,12 +961,12 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                     {loadingStates?.rejecting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        প্রত্যাখ্যান হচ্ছে...
+                        {t('admin.rejecting')}
                       </>
                     ) : (
                       <>
                         <XCircle className="h-4 w-4 mr-2" />
-                        প্রত্যাখ্যান করুন
+                        {t('admin.rejectButton')}
                       </>
                     )}
                   </button>
@@ -927,12 +986,12 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                     {loadingStates?.handover ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        হস্তান্তর হচ্ছে...
+                        {t('admin.issueBook')}
                       </>
                     ) : (
                       <>
                         <HandMetal className="h-4 w-4 mr-2" />
-                        বই হস্তান্তর করুন
+                        {t('admin.issueBook')}
                       </>
                     )}
                   </button>
@@ -947,12 +1006,12 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                     {loadingStates?.rejecting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        প্রত্যাখ্যান হচ্ছে...
+                        {t('admin.rejecting')}
                       </>
                     ) : (
                       <>
                         <XCircle className="h-4 w-4 mr-2" />
-                        প্রত্যাখ্যান করুন
+                        {t('admin.rejectButton')}
                       </>
                     )}
                   </button>
@@ -971,19 +1030,19 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                   {loadingStates?.returning ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      ফেরত নেওয়া হচ্ছে...
+                      {t('admin.returnBook')}
                     </>
                   ) : (
                     <>
                       <RotateCcw className="h-4 w-4 mr-2" />
-                      বই ফেরত গ্রহণ করুন
+                      {t('admin.returnBook')}
                     </>
                   )}
                 </button>
               )}
 
               {(borrow.status === 'completed' || borrow.status === 'rejected') && (
-                <p className="text-gray-500 italic">এই ধারের জন্য আর কোন কার্যক্রম প্রয়োজন নেই।</p>
+                <p className="text-gray-500 italic">{t('messages.operationFailed')}</p>
               )}
             </div>
           </div>

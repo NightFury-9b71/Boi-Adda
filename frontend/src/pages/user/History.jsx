@@ -94,10 +94,10 @@ const History = () => {
       requestDate: borrow.created_at,
       approvedDate: borrow.reviewed_at,  // When admin reviewed/approved
       handoverDate: borrow.collected_at, // When book was collected
-      returnDate: borrow.returnDate || null, // TODO: Add return date field when available from API
-      dueDate: borrow.dueDate || null,  // Due date from IssueBook
-      isOverdue: borrow.isOverdue || false, // Overdue flag from API
-      overdueDays: borrow.overdueDays || 0, // Days overdue
+      returnDate: borrow.return_date || null, // TODO: Add return date field when available from API
+      dueDate: borrow.due_date || null,  // Due date from IssueBook
+      isOverdue: borrow.is_overdue || false, // Overdue flag from API
+      overdueDays: borrow.overdue_days || 0, // Days overdue
       updatedAt: borrow.created_at // Fallback
     };
   });
@@ -268,6 +268,16 @@ const History = () => {
     donations: { total: 0, completed: 0, pending: 0 }
   };
 
+  // Calculate actual stats from the history data being displayed
+  const actualStats = {
+    borrows: {
+      total: transformBorrowHistory.length
+    },
+    donations: {
+      total: transformDonationHistory.length
+    }
+  };
+
   // Show loading state
   if (borrowsLoading || donationsLoading || statsLoading) {
     return (
@@ -307,11 +317,11 @@ const History = () => {
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.borrows.total}</p>
+              <p className="text-2xl font-bold text-blue-600">{actualStats.borrows.total}</p>
               <p className="text-sm text-gray-600">{t('history.totalBorrows')}</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{stats.donations.total}</p>
+              <p className="text-2xl font-bold text-green-600">{actualStats.donations.total}</p>
               <p className="text-sm text-gray-600">{t('history.totalDonations')}</p>
             </div>
           </div>
@@ -320,11 +330,11 @@ const History = () => {
         {/* Stats Cards for Mobile */}
         <div className="grid grid-cols-2 gap-4 md:hidden mb-4">
           <div className="bg-blue-50 rounded-lg p-3 text-center">
-            <p className="text-xl font-bold text-blue-600">{stats.borrows.total}</p>
+            <p className="text-xl font-bold text-blue-600">{actualStats.borrows.total}</p>
             <p className="text-sm text-gray-600">{t('history.totalBorrows')}</p>
           </div>
           <div className="bg-green-50 rounded-lg p-3 text-center">
-            <p className="text-xl font-bold text-green-600">{stats.donations.total}</p>
+            <p className="text-xl font-bold text-green-600">{actualStats.donations.total}</p>
             <p className="text-sm text-gray-600">{t('history.totalDonations')}</p>
           </div>
         </div>

@@ -6,27 +6,10 @@ import {
   Book, 
   BookOpen, 
   Gift, 
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  CheckCircle,
   AlertCircle,
   ArrowRight,
   RefreshCw,
-  BarChart3,
-  PieChart,
-  Activity,
-  Award,
-  Target,
-  Zap,
-  Heart,
-  Star,
   Library,
-  UserCheck,
-  BookCopy,
-  History,
-  Settings
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiServices } from '../../api';;
@@ -261,7 +244,7 @@ const AdminDashboard = () => {
             >
               <div className="flex items-center">
                 <Users className="h-5 w-5 text-blue-600 mr-3" />
-                <span className="font-medium">ব্যবহারকারী ব্যবস্থাপনা</span>
+                <span className="font-medium">{t('admin.userManagement.title')}</span>
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
             </Link>
@@ -272,7 +255,7 @@ const AdminDashboard = () => {
             >
               <div className="flex items-center">
                 <Book className="h-5 w-5 text-green-600 mr-3" />
-                <span className="font-medium">বই ব্যবস্থাপনা</span>
+                <span className="font-medium">{t('admin.bookManagement')}</span>
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
             </Link>
@@ -283,7 +266,7 @@ const AdminDashboard = () => {
             >
               <div className="flex items-center">
                 <BookOpen className="h-5 w-5 text-orange-600 mr-3" />
-                <span className="font-medium">ধার ব্যবস্থাপনা</span>
+                <span className="font-medium">{t('admin.borrowManagement')}</span>
               </div>
               <div className="flex items-center">
                 {stats.borrows.pending > 0 && (
@@ -301,7 +284,7 @@ const AdminDashboard = () => {
             >
               <div className="flex items-center">
                 <Gift className="h-5 w-5 text-purple-600 mr-3" />
-                <span className="font-medium">দান ব্যবস্থাপনা</span>
+                <span className="font-medium">{t('admin.donationManagement')}</span>
               </div>
               <div className="flex items-center">
                 {stats.donations.pending > 0 && (
@@ -425,10 +408,10 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {borrow.member_name || 'অজানা ব্যবহারকারী'}
+                    {borrow.member_name || t('common.unknownUser')}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {borrow.book_title || 'অজানা বই'}
+                    {borrow.book_title || t('common.unknownBook')}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">
@@ -466,7 +449,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {donation.member_name || 'অজানা দাতা'}
+                    {donation.member_name || t('common.unknownDonor')}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
                     {donation.donation_title || 'অজানা বই'}

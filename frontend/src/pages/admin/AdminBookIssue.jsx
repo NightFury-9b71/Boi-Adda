@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '../../utils/toast';
 import { 
   Search, 
   User, 
@@ -16,9 +16,11 @@ import {
 } from 'lucide-react';
 
 import { apiServices } from '../../api';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const IssueBook = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [memberSearch, setMemberSearch] = useState('');
   const [selectedBook, setSelectedBook] = useState(null);
@@ -56,13 +58,13 @@ const IssueBook = () => {
   const createBorrowMutation = useMutation({
     mutationFn: (issueData) => apiServices.admin.createIssue(issueData),
     onSuccess: () => {
-      toast.success('বই সফলভাবে ইস্যু করা হয়েছে!');
+      toast.success(t('admin.bookIssue.success'));
       resetForm();
       queryClient.invalidateQueries(['admin', 'borrows']);
       queryClient.invalidateQueries(['book-copies']);
     },
     onError: (error) => {
-      toast.error('বই ইস্যু করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('admin.bookIssue.error') + (error?.response?.data?.detail || t('common.unknownError')));
     }
   });
 
@@ -109,7 +111,7 @@ const IssueBook = () => {
 
   const handleIssueBook = async () => {
     if (!selectedBook || !selectedMember || !selectedBookCopy) {
-      toast.error('অনুগ্রহ করে বই এবং সদস্য নির্বাচন করুন');
+      toast.error(t('admin.bookIssue.selectBookAndMember'));
       return;
     }
 
@@ -143,8 +145,8 @@ const IssueBook = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">বই ইস্যু</h1>
-          <p className="text-gray-600 mt-2">সদস্যদের জন্য বই ইস্যু করুন</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('admin.bookIssue.title')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin.bookIssue.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -154,7 +156,7 @@ const IssueBook = () => {
           className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          রিফ্রেশ
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -163,7 +165,7 @@ const IssueBook = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সক্রিয় সদস্য</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.bookIssue.stats.activeMembers')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalMembers}</p>
             </div>
             <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -175,7 +177,7 @@ const IssueBook = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">উপলব্ধ বই</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.bookIssue.stats.availableBooks')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalBooks}</p>
             </div>
             <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -187,7 +189,7 @@ const IssueBook = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">মোট কপি</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.bookIssue.stats.totalCopies')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.availableCopies}</p>
             </div>
             <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -204,14 +206,14 @@ const IssueBook = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
             <Book className="h-5 w-5 mr-2 text-green-600" />
-            বই নির্বাচন করুন
+            {t('admin.bookIssue.selectBook')}
           </h2>
           
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="বইয়ের নাম, লেখক, ISBN বা বই ID দিয়ে খুঁজুন..."
+              placeholder={t('admin.bookIssue.searchBookPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -240,9 +242,9 @@ const IssueBook = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900 mb-1">{selectedBook.title}</h3>
-                    <p className="text-sm text-gray-600">লেখক: {selectedBook.author}</p>
-                    <p className="text-sm text-gray-500">প্রকাশ: {selectedBook.published_year}</p>
-                    <p className="text-sm text-green-600 font-medium">উপলব্ধ কপি: {selectedBook.total_copies}</p>
+                    <p className="text-sm text-gray-600">{t('common.author')}: {selectedBook.author}</p>
+                    <p className="text-sm text-gray-500">{t('books.year')}: {selectedBook.published_year}</p>
+                    <p className="text-sm text-green-600 font-medium">{t('admin.bookIssue.availableCopies')}: {selectedBook.total_copies}</p>
                   </div>
                 </div>
                 <button
@@ -261,7 +263,7 @@ const IssueBook = () => {
               {booksLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-                  <p className="text-gray-600 mt-2">বই লোড হচ্ছে...</p>
+                  <p className="text-gray-600 mt-2">{t('admin.bookIssue.loadingBooks')}</p>
                 </div>
               ) : filteredBooks.length > 0 ? (
                 filteredBooks.map(book => (
@@ -289,8 +291,8 @@ const IssueBook = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 truncate">{book.title}</h3>
-                        <p className="text-sm text-gray-600">লেখক: {book.author}</p>
-                        <p className="text-xs text-green-600">উপলব্ধ: {book.total_copies} কপি</p>
+                        <p className="text-sm text-gray-600">{t('common.author')}: {book.author}</p>
+                        <p className="text-xs text-green-600">{t('admin.bookIssue.available')}: {book.total_copies} {t('common.copies')}</p>
                       </div>
                     </div>
                   </div>
@@ -299,7 +301,7 @@ const IssueBook = () => {
                 <div className="text-center py-8">
                   <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">
-                    {searchTerm ? 'কোন বই পাওয়া যায়নি' : 'উপলব্ধ বই নেই'}
+                    {searchTerm ? t('admin.bookIssue.noBooksFound') : t('admin.bookIssue.noAvailableBooks')}
                   </p>
                 </div>
               )}
@@ -311,14 +313,14 @@ const IssueBook = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
             <User className="h-5 w-5 mr-2 text-blue-600" />
-            সদস্য নির্বাচন করুন
+            {t('admin.bookIssue.selectMember')}
           </h2>
           
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="নাম, ইমেইল বা ID দিয়ে খুঁজুন..."
+              placeholder={t('admin.bookIssue.searchMemberPlaceholder')}
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -342,7 +344,7 @@ const IssueBook = () => {
                       />
                     ) : null}
                     <div className={`w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold ${selectedMember.profile_photo_url ? 'hidden' : 'flex'}`}>
-                      {selectedMember.name?.charAt(0) || 'ব'}
+                      {selectedMember.name?.charAt(0) || t('profile.defaultInitial')}
                     </div>
                   </div>
                   <div>
@@ -364,7 +366,7 @@ const IssueBook = () => {
               {membersLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-                  <p className="text-gray-600 mt-2">সদস্য লোড হচ্ছে...</p>
+                  <p className="text-gray-600 mt-2">{t('admin.bookIssue.loadingMembers')}</p>
                 </div>
               ) : filteredMembers.length > 0 ? (
                 filteredMembers.map(member => (
@@ -388,7 +390,7 @@ const IssueBook = () => {
                             />
                           ) : null}
                           <div className={`w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs ${member.profile_photo_url ? 'hidden' : 'flex'}`}>
-                            {member.name?.charAt(0) || 'ব'}
+                            {member.name?.charAt(0) || t('profile.defaultInitial')}
                           </div>
                         </div>
                         <div>
@@ -399,7 +401,7 @@ const IssueBook = () => {
                       <div className="text-right">
                         <p className="text-xs text-blue-600 font-medium">ID: #{member.id}</p>
                         <p className="text-xs text-gray-500">
-                          {member.is_verified ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+                          {member.is_verified ? t('status.active') : t('status.inactive')}
                         </p>
                       </div>
                     </div>
@@ -409,7 +411,7 @@ const IssueBook = () => {
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">
-                    {memberSearch ? 'কোন সদস্য পাওয়া যায়নি' : 'কোন সক্রিয় সদস্য নেই'}
+                    {memberSearch ? t('admin.bookIssue.noMembersFound') : t('admin.bookIssue.noActiveMembers')}
                   </p>
                 </div>
               )}
@@ -423,7 +425,7 @@ const IssueBook = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
             <Calendar className="h-5 w-5 mr-2 text-purple-600" />
-            ইস্যু বিবরণ
+            {t('admin.bookIssue.issueDetails')}
           </h2>
           
           {/* Selected Items Summary */}
@@ -434,7 +436,7 @@ const IssueBook = () => {
                   <Book className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">নির্বাচিত বই</p>
+                  <p className="text-sm text-gray-600">{t('admin.bookIssue.selectedBook')}</p>
                   <p className="font-medium text-gray-900">{selectedBook.title}</p>
                 </div>
               </div>
@@ -443,7 +445,7 @@ const IssueBook = () => {
                   <User className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">নির্বাচিত সদস্য</p>
+                  <p className="text-sm text-gray-600">{t('admin.bookIssue.selectedMember')}</p>
                   <p className="font-medium text-gray-900">{selectedMember.name}</p>
                 </div>
               </div>
@@ -452,7 +454,7 @@ const IssueBook = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ইস্যুর তারিখ</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.bookIssue.issueDate')}</label>
               <input
                 type="date"
                 value={issueDate}
@@ -461,7 +463,7 @@ const IssueBook = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ফেরতের তারিখ</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.bookIssue.returnDate')}</label>
               <input
                 type="date"
                 value={returnDate}
@@ -472,11 +474,11 @@ const IssueBook = () => {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">নোট (ঐচ্ছিক)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.bookIssue.notes')} ({t('common.optional')})</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="কোন বিশেষ নির্দেশনা বা মন্তব্য..."
+              placeholder={t('admin.bookIssue.notesPlaceholder')}
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
             />
@@ -487,7 +489,7 @@ const IssueBook = () => {
               onClick={resetForm}
               className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              রিসেট করুন
+              {t('common.reset')}
             </button>
             <button
               onClick={handleIssueBook}
@@ -501,12 +503,12 @@ const IssueBook = () => {
               {createBorrowMutation.isPending ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  প্রক্রিয়াধীন...
+                  {t('common.processing')}
                 </div>
               ) : (
                 <div className="flex items-center">
                   <HandMetal className="h-4 w-4 mr-2" />
-                  বই ইস্যু করুন
+                  {t('admin.bookIssue.issueBook')}
                 </div>
               )}
             </button>
@@ -517,7 +519,7 @@ const IssueBook = () => {
               <div className="flex items-center">
                 <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
                 <p className="text-yellow-700">
-                  এই বইয়ের কোন উপলব্ধ কপি পাওয়া যায়নি। অনুগ্রহ করে অন্য একটি বই নির্বাচন করুন।
+                  {t('admin.bookIssue.noAvailableCopies')}
                 </p>
               </div>
             </div>

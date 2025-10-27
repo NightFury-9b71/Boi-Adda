@@ -21,10 +21,7 @@ class UserProfileResponse(SQLModel):
 
 
 class UserStatsResponse(SQLModel):
-    total_borrows: int
-    active_borrows: int
-    total_donations: int
-    pending_requests: int
+    activity_summary: dict
 
 
 # GET /users/me - Get current user profile
@@ -110,49 +107,73 @@ def get_current_user_stats(
     # If user is admin, return zeros (admins don't borrow/donate)
     if user.role.name == "admin":
         return UserStatsResponse(
-            total_borrows=0,
-            active_borrows=0,
-            total_donations=0,
-            pending_requests=0
+            activity_summary={
+                "borrows": {
+                    "total": 0,
+                    "pending": 0,
+                    "approved": 0,
+                    "active": 0,
+                    "returned": 0,
+                    "rejected": 0
+                },
+                "donations": {
+                    "total": 0,
+                    "pending": 0,
+                    "approved": 0,
+                    "completed": 0,
+                    "rejected": 0
+                }
+            }
         )
     
-    # Get borrow statistics
-    total_borrows = len(session.exec(
+    # Get borrow statistics by status
+    borrow_requests = session.exec(
         select(BookRequest).where(
             BookRequest.member_id == user.id,
             BookRequest.request_type == requestType.BORROW
         )
-    ).all())
+    ).all()
     
-    # Get active borrows (issued and not returned)
-    active_borrows = len(session.exec(
-        select(IssueBook).where(
-            IssueBook.member_id == user.id,
-            IssueBook.return_date == None
-        )
-    ).all())
+    borrow_stats = {
+        "total": len(borrow_requests),
+        "pending": len([r for r in borrow_requests if r.status == requestStatus.PENDING]),
+        "approved": len([r for r in borrow_requests if r.status == requestStatus.APPROVED]),
+        "active": len(session.exec(
+            select(IssueBook).where(
+                IssueBook.member_id == user.id,
+                IssueBook.return_date == None
+            )
+        ).all()),
+        "returned": len(session.exec(
+            select(IssueBook).where(
+                IssueBook.member_id == user.id,
+                IssueBook.return_date != None
+            )
+        ).all()),
+        "rejected": len([r for r in borrow_requests if r.status == requestStatus.REJECTED])
+    }
     
-    # Get donation statistics
-    total_donations = len(session.exec(
+    # Get donation statistics by status
+    donation_requests = session.exec(
         select(BookRequest).where(
             BookRequest.member_id == user.id,
             BookRequest.request_type == requestType.DONATION
         )
-    ).all())
+    ).all()
     
-    # Get pending requests (both borrow and donation)
-    pending_requests = len(session.exec(
-        select(BookRequest).where(
-            BookRequest.member_id == user.id,
-            BookRequest.status.in_([requestStatus.PENDING, requestStatus.APPROVED])
-        )
-    ).all())
+    donation_stats = {
+        "total": len(donation_requests),
+        "pending": len([r for r in donation_requests if r.status == requestStatus.PENDING]),
+        "approved": len([r for r in donation_requests if r.status == requestStatus.APPROVED]),
+        "completed": len([r for r in donation_requests if r.status == requestStatus.COMPLETED]),
+        "rejected": len([r for r in donation_requests if r.status == requestStatus.REJECTED])
+    }
     
     return UserStatsResponse(
-        total_borrows=total_borrows,
-        active_borrows=active_borrows,
-        total_donations=total_donations,
-        pending_requests=pending_requests
+        activity_summary={
+            "borrows": borrow_stats,
+            "donations": donation_stats
+        }
     )
 
 

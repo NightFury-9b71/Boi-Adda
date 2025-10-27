@@ -92,8 +92,8 @@ const BookDetailsPage = () => {
     switch (status) {
       case 'pending':
         return {
-          text: 'অনুরোধ করা হয়েছে',
-          description: 'আপনার ধার অনুরোধ বিবেচনাধীন আছে',
+          text: t('bookDetails.borrowStatus.pending'),
+          description: t('bookDetails.borrowStatus.pendingDesc'),
           className: 'bg-yellow-50 border-yellow-200',
           textColor: 'text-yellow-800',
           iconColor: 'text-yellow-600',
@@ -101,8 +101,8 @@ const BookDetailsPage = () => {
         };
       case 'approved':
         return {
-          text: 'অনুমোদিত - নিতে আসুন',
-          description: 'আপনার অনুরোধ অনুমোদিত হয়েছে। দয়া করে লাইব্রেরিতে এসে বইটি নিয়ে যান',
+          text: t('bookDetails.borrowStatus.approved'),
+          description: t('bookDetails.borrowStatus.approvedDesc'),
           className: 'bg-blue-50 border-blue-200',
           textColor: 'text-blue-800',
           iconColor: 'text-blue-600',
@@ -110,8 +110,8 @@ const BookDetailsPage = () => {
         };
       case 'collected':
         return {
-          text: 'আপনার কাছে আছে',
-          description: 'এই বইটি বর্তমানে আপনার কাছে রয়েছে',
+          text: t('bookDetails.borrowStatus.collected'),
+          description: t('bookDetails.borrowStatus.collectedDesc'),
           className: 'bg-green-50 border-green-200',
           textColor: 'text-green-800',
           iconColor: 'text-green-600',
@@ -119,8 +119,8 @@ const BookDetailsPage = () => {
         };
       case 'return_requested':
         return {
-          text: 'ফেরত অনুরোধ জমা হয়েছে',
-          description: 'আপনার বই ফেরত অনুরোধ অ্যাডমিনের অনুমোদনের জন্য অপেক্ষমাণ',
+          text: t('bookDetails.borrowStatus.returnRequested'),
+          description: t('bookDetails.borrowStatus.returnRequestedDesc'),
           className: 'bg-purple-50 border-purple-200',
           textColor: 'text-purple-800',
           iconColor: 'text-purple-600',
@@ -134,29 +134,29 @@ const BookDetailsPage = () => {
   const handleBorrowRequest = async () => {
     try {
       if (!user) {
-        toast.error('বই ধার নিতে লগইন করুন');
+        toast.error(t('bookDetails.loginToBorrow'));
         navigate('/login');
         return;
       }
 
       // Check if user already has an active borrow for this book
       if (hasActiveBorrowForBook()) {
-        toast.error('আপনি ইতিমধ্যে এই বইয়ের জন্য অনুরোধ করেছেন');
+        toast.error(t('bookDetails.alreadyRequested'));
         return;
       }
 
       // Check if book has available copies
       if (!book.available_copies || book.available_copies === 0) {
-        toast.error('এই বইয়ের কোন কপি পাওয়া যাচ্ছে না');
+        toast.error(t('bookDetails.noCopiesAvailable'));
         return;
       }
 
       // Show confirmation modal
       const confirmed = await confirmSubmit(
-        `"${book.title}" বইটি ধার নিন`,
-        `আপনি কি নিশ্চিত যে "${book.title}" বইটি ধার নিতে চান? একবার অনুরোধ পাঠানোর পর এটি বাতিল করা যাবে না।`,
-        'ধার নিন',
-        'বাতিল'
+        t('bookDetails.borrowConfirmTitle'),
+        t('bookDetails.borrowConfirmMessage', { title: book.title }),
+        t('bookDetails.borrowConfirmYes'),
+        t('bookDetails.borrowConfirmCancel')
       );
 
       if (!confirmed) {
@@ -171,17 +171,18 @@ const BookDetailsPage = () => {
       };
 
       await apiServices.borrows.createBorrow(borrowData);
-      toast.success(`"${book.title}" বইয়ের জন্য ধার অনুরোধ পাঠানো হয়েছে! অ্যাডমিনের অনুমোদনের জন্য অপেক্ষা করুন।`);
+      toast.success(t('bookDetails.borrowSuccess'));
       
-      // Refresh the user's borrows to update the UI
+      // Refresh the user's borrows and stats to update the UI
       queryClient.invalidateQueries(['userBorrows', user.id]);
+      queryClient.invalidateQueries(['userStats']);
       queryClient.invalidateQueries(['books']);
       queryClient.invalidateQueries(['book', id]);
     } catch (error) {
       console.error('Borrow request error:', error);
       
       // Get detailed error message
-      let errorMessage = 'অজানা ত্রুটি';
+      let errorMessage = t('bookDetails.unknownError');
       
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
@@ -191,14 +192,24 @@ const BookDetailsPage = () => {
         errorMessage = error.message;
       }
       
-      toast.error(`ধার অনুরোধ পাঠাতে সমস্যা হয়েছে: ${errorMessage}`);
+      toast.error(`${t('bookDetails.borrowRequestError')}: ${errorMessage}`);
     } finally {
       setIsBorrowLoading(false);
     }
   };
 
   const formatDate = (dateString) => {
-    return getSafeDate(dateString, 'অজানা');
+    if (!dateString) return t('common.unknown');
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return t('common.unknown');
+      
+      // Use locale-appropriate date formatting
+      return date.toLocaleDateString();
+    } catch {
+      return t('common.unknown');
+    }
   };
 
   const handleShare = async () => {
@@ -212,11 +223,11 @@ const BookDetailsPage = () => {
       } else {
         // Fallback - copy to clipboard
         await navigator.clipboard.writeText(window.location.href);
-        toast.success('লিংক কপি করা হয়েছে!');
+        toast.success(t('bookDetails.linkCopied'));
       }
     } catch (error) {
       console.error('Share failed:', error);
-      toast.error('শেয়ার করতে সমস্যা হয়েছে');
+      toast.error(t('bookDetails.shareError'));
     }
   };
 
@@ -269,15 +280,15 @@ const BookDetailsPage = () => {
           <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">বই পাওয়া যায়নি</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('bookDetails.bookNotFound')}</h3>
           <p className="text-gray-600 mb-6">
-            দুঃখিত, এই বইটি খুঁজে পাওয়া যায়নি। এটি মুছে ফেলা হতে পারে বা বিদ্যমান নাও থাকতে পারে।
+            {t('bookDetails.bookNotFoundDesc')}
           </p>
           <button
             onClick={() => navigate('/books')}
             className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
-            বই লাইব্রেরিতে ফিরে যান
+            {t('bookDetails.backToLibrary')}
           </button>
         </div>
       </div>
@@ -296,7 +307,7 @@ const BookDetailsPage = () => {
         className="flex items-center text-green-600 hover:text-green-700 font-medium transition-colors"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
-        ফিরে যান
+        {t('bookDetails.back')}
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -333,11 +344,11 @@ const BookDetailsPage = () => {
                   <div className="absolute top-3 right-3">
                     {book.available_copies > 0 ? (
                       <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium shadow-sm">
-                        {book.available_copies} কপি আছে
+                        {book.available_copies} {t('bookDetails.availableCopies')}
                       </span>
                     ) : (
                       <span className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-medium shadow-sm">
-                        স্টকে নেই
+                        {t('bookDetails.outOfStock')}
                       </span>
                     )}
                   </div>
@@ -350,7 +361,7 @@ const BookDetailsPage = () => {
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{book.title}</h1>
                   <div className="flex items-center text-lg text-gray-600 mb-4">
                     <User className="h-5 w-5 mr-2" />
-                    <span>লেখক: {book.author}</span>
+                    <span>{t('bookDetails.author')}: {book.author}</span>
                   </div>
                 </div>
 
@@ -359,7 +370,7 @@ const BookDetailsPage = () => {
                   {category && (
                     <div className="flex items-center text-gray-600">
                       <Tag className="h-5 w-5 mr-2 text-blue-500" />
-                      <span className="font-medium">ক্যাটাগরি:</span>
+                      <span className="font-medium">{t('bookDetails.category')}:</span>
                       <span className="ml-2 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-sm">
                         {category.name}
                       </span>
@@ -368,38 +379,38 @@ const BookDetailsPage = () => {
                   
                   <div className="flex items-center text-gray-600">
                     <Calendar className="h-5 w-5 mr-2 text-purple-500" />
-                    <span className="font-medium">প্রকাশ:</span>
+                    <span className="font-medium">{t('bookDetails.published')}:</span>
                     <span className="ml-2">{book.published_year}</span>
                   </div>
                   
                   <div className="flex items-center text-gray-600">
                     <FileText className="h-5 w-5 mr-2 text-orange-500" />
-                    <span className="font-medium">পৃষ্ঠা:</span>
-                    <span className="ml-2">{book.pages} পৃষ্ঠা</span>
+                    <span className="font-medium">{t('bookDetails.pages')}:</span>
+                    <span className="ml-2">{book.pages} {t('bookDetails.pages')}</span>
                   </div>
                   
                   <div className="flex items-center text-gray-600">
                     <Users className="h-5 w-5 mr-2 text-green-500" />
-                    <span className="font-medium">ধার:</span>
-                    <span className="ml-2">{book.times_borrowed || 0} বার</span>
+                    <span className="font-medium">{t('bookDetails.borrowed')}:</span>
+                    <span className="ml-2">{book.times_borrowed || 0} {t('common.of')} {t('bookDetails.borrowed')}</span>
                   </div>
                 </div>
 
                 {/* Book Statistics */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">বইটির পরিসংখ্যান</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">{t('bookDetails.bookStatistics')}</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">{book.available_copies}</div>
-                      <div className="text-sm text-gray-600">উপলব্ধ কপি</div>
+                      <div className="text-sm text-gray-600">{t('bookDetails.availableCopies')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-blue-600">{book.times_borrowed || 0}</div>
-                      <div className="text-sm text-gray-600">মোট ধার</div>
+                      <div className="text-sm text-gray-600">{t('bookDetails.totalBorrows')}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-purple-600">{formatDate(book.created_at)}</div>
-                      <div className="text-sm text-gray-600">যোগ করা হয়েছে</div>
+                      <div className="text-sm text-gray-600">{t('bookDetails.added')}</div>
                     </div>
                   </div>
                 </div>
@@ -409,17 +420,22 @@ const BookDetailsPage = () => {
 
           {/* Book Description/Additional Info */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">বই সম্পর্কে</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('bookDetails.aboutBook')}</h2>
             <div className="prose prose-gray max-w-none">
               <p className="text-gray-700 leading-relaxed">
-                "{book.title}" বইটি {book.author} এর লেখা একটি {category?.name || 'বই'}। 
-                এই বইটি {book.published_year} সালে প্রকাশিত হয়েছে এবং এতে মোট {book.pages} পৃষ্ঠা রয়েছে।
-                {book.times_borrowed > 0 && ` এই বইটি এ পর্যন্ত ${book.times_borrowed} বার ধার দেওয়া হয়েছে।`}
+                {t('bookDetails.aboutBookDesc', {
+                  title: book.title,
+                  author: book.author,
+                  category: category?.name || t('common.unknownBook'),
+                  year: book.published_year,
+                  pages: book.pages,
+                  borrowedInfo: book.times_borrowed > 0 ? ` This book has been borrowed ${book.times_borrowed} times so far.` : ''
+                })}
               </p>
               
               {category?.description && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                  <p className="text-blue-800 font-medium">ক্যাটাগরি সম্পর্কে:</p>
+                  <p className="text-blue-800 font-medium">{t('bookDetails.aboutCategory')}:</p>
                   <p className="text-blue-700 mt-1">{category.description}</p>
                 </div>
               )}
@@ -428,11 +444,11 @@ const BookDetailsPage = () => {
 
           {/* Reading Progress & Reviews (Future Feature) */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">পাঠক মতামত</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('bookDetails.readerReviews')}</h2>
             <div className="text-center py-8">
               <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">এই ফিচারটি শীঘ্রই আসছে...</p>
-              <p className="text-sm text-gray-500 mt-2">পাঠকরা শীঘ্রই এই বইটি সম্পর্কে মতামত দিতে পারবেন</p>
+              <p className="text-gray-600">{t('bookDetails.comingSoon')}</p>
+              <p className="text-sm text-gray-500 mt-2">{t('bookDetails.reviewsComingSoon')}</p>
             </div>
           </div>
         </div>
@@ -441,7 +457,7 @@ const BookDetailsPage = () => {
         <div className="space-y-6">
           {/* Borrow Action */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">বই ধার নিন</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('bookDetails.borrowBook')}</h3>
             
             {book.available_copies > 0 ? (
               <div className="space-y-4">
@@ -472,12 +488,12 @@ const BookDetailsPage = () => {
                         {isBorrowLoading ? (
                           <>
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                            অনুরোধ পাঠানো হচ্ছে...
+                            {t('bookDetails.sendingRequest')}
                           </>
                         ) : (
                           <>
                             <BookOpen className="h-5 w-5 mr-2" />
-                            ধার নিন
+                            {t('bookDetails.borrow')}
                           </>
                         )}
                       </button>
@@ -488,7 +504,7 @@ const BookDetailsPage = () => {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <div className="flex items-center text-green-800 text-sm">
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    <span>{book.available_copies} কপি উপলব্ধ</span>
+                    <span>{book.available_copies} {t('bookDetails.availableCopies')}</span>
                   </div>
                 </div>
               </div>
@@ -496,10 +512,10 @@ const BookDetailsPage = () => {
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-center">
                   <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-                  <span className="text-red-800 font-medium">স্টকে নেই</span>
+                  <span className="text-red-800 font-medium">{t('bookDetails.outOfStock')}</span>
                 </div>
                 <p className="text-red-700 text-sm mt-1">
-                  এই বইটি বর্তমানে উপলব্ধ নেই
+                  {t('bookDetails.noCopiesAvailable')}
                 </p>
               </div>
             )}
@@ -507,22 +523,22 @@ const BookDetailsPage = () => {
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">দ্রুত কার্যক্রম</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('bookDetails.quickActions')}</h3>
             <div className="space-y-3">
               <button
                 onClick={handleShare}
                 className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <Share2 className="h-4 w-4 mr-2" />
-                শেয়ার করুন
+                {t('bookDetails.share')}
               </button>
               
               <button
-                onClick={() => toast.info('এই ফিচারটি শীঘ্রই আসছে')}
+                onClick={() => toast.info(t('bookDetails.comingSoon'))}
                 className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <Bookmark className="h-4 w-4 mr-2" />
-                বুকমার্ক করুন
+                {t('bookDetails.bookmark')}
               </button>
               
               <button
@@ -530,26 +546,22 @@ const BookDetailsPage = () => {
                 className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 <Eye className="h-4 w-4 mr-2" />
-                আরো বই দেখুন
+                {t('bookDetails.viewMoreBooks')}
               </button>
             </div>
           </div>
 
           {/* Book Information Summary */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">বইয়ের তথ্য</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('bookDetails.bookInformation')}</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">আইডি:</span>
+                <span className="text-gray-600">{t('bookDetails.id')}:</span>
                 <span className="font-medium">#{book.id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">যোগ হয়েছে:</span>
+                <span className="text-gray-600">{t('bookDetails.added')}:</span>
                 <span className="font-medium">{formatDate(book.created_at)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">আপডেট:</span>
-                <span className="font-medium">{formatDate(book.updated_at)}</span>
               </div>
             </div>
           </div>

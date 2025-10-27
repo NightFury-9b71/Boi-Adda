@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta
 from sqlmodel import Session, select
+import os
 from models import User, Role
 from db import get_session
 from storage import upload_profile_photo, delete_profile_photo
@@ -609,11 +610,12 @@ async def create_admin(
 ):
     """
     Create an admin user with a secret code.
-    This endpoint requires the secret code 'illusion' to create an admin.
+    This endpoint requires the secret code from environment variable to create an admin.
     The admin will be automatically verified.
     """
-    # Verify secret code
-    if request.secret_code != "illusion":
+    # Verify secret code from environment
+    admin_creation_code = os.getenv("ADMIN_CREATION_CODE", "illusion")  # fallback to default
+    if request.secret_code != admin_creation_code:
         raise HTTPException(status_code=403, detail="সিক্রেট কোড সঠিক নয়।")
     
     # Check if user already exists

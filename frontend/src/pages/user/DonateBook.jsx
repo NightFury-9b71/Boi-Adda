@@ -67,6 +67,7 @@ const DonateBook = () => {
     onSuccess: () => {
       toast.success(t('donation.submitSuccess'));
       queryClient.invalidateQueries(['userDonations']);
+      queryClient.invalidateQueries(['userStats']);
       queryClient.invalidateQueries(['books']);
       resetForm();
       setShowDonateModal(false);
@@ -458,10 +459,6 @@ const DonateBookModal = ({
   isLoading,
   t 
 }) => {
-  const availableCovers = [
-    'cover-1.jpg', 'cover-2.jpg', 'cover-3.jpg', 'cover-4.jpg', 'cover-5.jpg',
-    'cover-6.jpg', 'cover-7.jpg', 'cover-8.jpg', 'cover-9.jpg', 'cover-10.jpg'
-  ];
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -661,35 +658,6 @@ const DonateBookModal = ({
                   alt="Custom book cover"
                   className="w-24 h-32 object-cover rounded-lg shadow-md"
                 />
-              </div>
-            )}
-
-            {/* Default Cover Options */}
-            {!useCustomImage && (
-              <div>
-                <p className="text-sm text-gray-600 mb-3">{t('donation.modal.selectCover')}</p>
-                <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto border-2 border-gray-200 rounded-lg p-3 bg-gray-50">
-                  {availableCovers.map((cover) => (
-                    <div
-                      key={cover}
-                      onClick={() => setFormData(prev => ({ ...prev, cover }))}
-                      className={`cursor-pointer border-2 rounded-lg overflow-hidden transition-all transform hover:scale-105 ${
-                        formData.cover === cover
-                          ? 'border-green-500 ring-4 ring-green-200 shadow-lg' 
-                          : 'border-gray-300 hover:border-green-300'
-                      }`}
-                    >
-                      <img
-                        src={`/book-covers/${cover}`}
-                        alt={`Cover ${cover}`}
-                        className="w-full h-20 object-cover"
-                        onError={(e) => {
-                          e.target.src = '/vite.svg';
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
           </div>
