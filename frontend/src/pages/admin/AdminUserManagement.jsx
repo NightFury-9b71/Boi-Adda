@@ -56,14 +56,14 @@ const AdminUserManagement = () => {
   const updateUserRoleMutation = useMutation({
     mutationFn: ({ userId, role }) => apiServices.admin.updateUserRole(userId, role),
     onSuccess: () => {
-      toast.success('ব্যবহারকারীর ভূমিকা সফলভাবে আপডেট হয়েছে!');
+      toast.success(t('messages.profileUpdated'));
       queryClient.invalidateQueries(['admin', 'users']);
       setUpdatingRoleUserId(null);
     },
     onError: (error) => {
       console.error('Role update error:', error);
-      const errorMessage = error?.response?.data?.detail || error?.message || 'অজানা সমস্যা';
-      toast.error('ভূমিকা আপডেট করতে সমস্যা হয়েছে: ' + errorMessage);
+      const errorMessage = error?.response?.data?.detail || error?.message || t('messages.operationFailed');
+      toast.error(t('messages.operationFailed') + ': ' + errorMessage);
       setUpdatingRoleUserId(null);
     }
   });
@@ -72,15 +72,15 @@ const AdminUserManagement = () => {
   const updateUserStatusMutation = useMutation({
     mutationFn: ({ userId, isActive }) => apiServices.admin.updateUserStatus(userId, isActive),
     onSuccess: (data, variables) => {
-      const action = variables.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়';
-      toast.success(`ব্যবহারকারী সফলভাবে ${action} করা হয়েছে!`);
+      const action = variables.isActive ? t('admin.userManagement.active') : t('admin.userManagement.inactive');
+      toast.success(`${t('admin.userManagement.user')} ${action} ${t('messages.success')}!`);
       queryClient.invalidateQueries(['admin', 'users']);
       setUpdatingStatusUserId(null);
     },
     onError: (error) => {
       console.error('Status update error:', error);
-      const errorMessage = error?.response?.data?.detail || error?.message || 'অজানা সমস্যা';
-      toast.error('স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে: ' + errorMessage);
+      const errorMessage = error?.response?.data?.detail || error?.message || t('messages.operationFailed');
+      toast.error(t('messages.operationFailed') + ': ' + errorMessage);
       setUpdatingStatusUserId(null);
     }
   });
@@ -89,7 +89,7 @@ const AdminUserManagement = () => {
   const deleteUserMutation = useMutation({
     mutationFn: (userId) => apiServices.admin.deleteUser(userId),
     onSuccess: (data) => {
-      toast.success(data.message || 'ব্যবহারকারী সফলভাবে মুছে ফেলা হয়েছে!');
+      toast.success(data.message || t('messages.success'));
       queryClient.invalidateQueries(['admin', 'users']);
       setDeletingUserId(null);
     },
@@ -230,7 +230,7 @@ const AdminUserManagement = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">ব্যবহারকারীর তথ্য লোড হচ্ছে...</p>
+          <p className="text-gray-600">{t('admin.userManagement.loadingUsers')}</p>
         </div>
       </div>
     );
@@ -241,15 +241,15 @@ const AdminUserManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">ব্যবহারকারী ব্যবস্থাপনা</h1>
-          <p className="text-gray-600 mt-2">সকল ব্যবহারকারীর তথ্য দেখুন ও পরিচালনা করুন</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('admin.userManagement.title')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin.userManagement.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <Plus className="h-4 w-4 mr-2" />
-          নতুন ব্যবহারকারী
+          {t('admin.userManagement.addNewUser')}
         </button>
       </div>
 
@@ -258,7 +258,7 @@ const AdminUserManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">মোট ব্যবহারকারী</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.userManagement.totalUsers')}</p>
               <p className="text-3xl font-bold text-gray-900">{users.length}</p>
             </div>
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -270,7 +270,7 @@ const AdminUserManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সক্রিয় ব্যবহারকারী</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.userManagement.activeUsers')}</p>
               <p className="text-3xl font-bold text-green-900">
                 {users.filter(u => u.is_active).length}
               </p>
@@ -284,7 +284,7 @@ const AdminUserManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">প্রশাসক</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.userManagement.admins')}</p>
               <p className="text-3xl font-bold text-red-900">
                 {users.filter(u => u.role === 'admin').length}
               </p>
@@ -298,7 +298,7 @@ const AdminUserManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">গ্রন্থাগারিক</p>
+              <p className="text-sm font-medium text-gray-600">{t('admin.userManagement.librarians')}</p>
               <p className="text-3xl font-bold text-blue-900">
                 {users.filter(u => u.role === 'librarian').length}
               </p>
@@ -319,7 +319,7 @@ const AdminUserManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="নাম বা ইমেইল দিয়ে খুঁজুন..."
+                placeholder={t('admin.userManagement.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -334,10 +334,10 @@ const AdminUserManagement = () => {
               onChange={(e) => setRoleFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              <option value="all">সকল ভূমিকা</option>
-              <option value="admin">প্রশাসক</option>
-              <option value="librarian">গ্রন্থাগারিক</option>
-              <option value="member">সদস্য</option>
+              <option value="all">{t('admin.userManagement.allRoles')}</option>
+              <option value="admin">{t('admin.userManagement.admin')}</option>
+              <option value="librarian">{t('admin.userManagement.librarian')}</option>
+              <option value="member">{t('admin.userManagement.member')}</option>
             </select>
           </div>
 
@@ -348,9 +348,9 @@ const AdminUserManagement = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              <option value="all">সকল অবস্থা</option>
-              <option value="active">সক্রিয়</option>
-              <option value="inactive">নিষ্ক্রিয়</option>
+              <option value="all">{t('admin.userManagement.allStatuses')}</option>
+              <option value="active">{t('admin.userManagement.active')}</option>
+              <option value="inactive">{t('admin.userManagement.inactive')}</option>
             </select>
           </div>
         </div>
@@ -363,22 +363,22 @@ const AdminUserManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ব্যবহারকারী
+                  {t('admin.userManagement.user')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  যোগাযোগ
+                  {t('admin.userManagement.contact')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ভূমিকা
+                  {t('admin.userManagement.role')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  অবস্থা
+                  {t('admin.userManagement.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  যোগদান
+                  {t('admin.userManagement.joined')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  কার্যক্রম
+                  {t('admin.userManagement.actions')}
                 </th>
               </tr>
             </thead>
@@ -408,7 +408,7 @@ const AdminUserManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{user.email}</div>
                       <div className="text-sm text-gray-500">
-                        {user.phone || 'ফোন নেই'}
+                        {user.phone || t('admin.userManagement.phoneNotAvailable')}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -425,9 +425,9 @@ const AdminUserManagement = () => {
                             className={`text-xs font-semibold px-2 py-1 rounded-full border-0 ${getRoleColor(user.role)}`}
                             disabled={updatingRoleUserId === user.id}
                           >
-                            <option value="member">সদস্য</option>
-                            <option value="librarian">গ্রন্থাগারিক</option>
-                            <option value="admin">প্রশাসক</option>
+                            <option value="member">{t('admin.userManagement.member')}</option>
+                            <option value="librarian">{t('admin.userManagement.librarian')}</option>
+                            <option value="admin">{t('admin.userManagement.admin')}</option>
                           </select>
                         )}
                       </div>
@@ -442,12 +442,12 @@ const AdminUserManagement = () => {
                           {user.is_active ? (
                             <>
                               <UserCheck className="h-3 w-3 mr-1" />
-                              সক্রিয়
+                              {t('admin.userManagement.active')}
                             </>
                           ) : (
                             <>
                               <UserX className="h-3 w-3 mr-1" />
-                              নিষ্ক্রিয়
+                              {t('admin.userManagement.inactive')}
                             </>
                           )}
                         </span>
@@ -466,7 +466,7 @@ const AdminUserManagement = () => {
                               আপডেট হচ্ছে...
                             </>
                           ) : (
-                            user.is_active ? 'নিষ্ক্রিয়' : 'সক্রিয়'
+                            user.is_active ? t('admin.userManagement.deactivate') : t('admin.userManagement.activate')
                           )}
                         </button>
                       </div>
@@ -482,7 +482,7 @@ const AdminUserManagement = () => {
                             setShowUserDetails(true);
                           }}
                           className="text-green-600 hover:text-green-700 p-1 rounded transition-colors"
-                          title="বিস্তারিত দেখুন"
+                          title={t('admin.userManagement.viewDetails')}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -490,7 +490,7 @@ const AdminUserManagement = () => {
                           onClick={() => handleDeleteUser(user.id, user.name)}
                           disabled={deletingUserId === user.id}
                           className="text-red-600 hover:text-red-700 p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                          title="ব্যবহারকারী মুছুন"
+                          title={t('admin.userManagement.deleteUser')}
                         >
                           {deletingUserId === user.id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
@@ -510,7 +510,7 @@ const AdminUserManagement = () => {
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">কোন ব্যবহারকারী পাওয়া যায়নি</p>
+            <p className="text-gray-500">{t('admin.userManagement.noUsersFound')}</p>
           </div>
         )}
       </div>
@@ -553,7 +553,7 @@ const UserDetailsModal = ({ user, onClose }) => {
     retry: 1,
     onError: (error) => {
       console.error('User stats query error:', error);
-      toast.error('ব্যবহারকারীর পরিসংখ্যান লোড করতে সমস্যা হয়েছে');
+      toast.error(t('admin.userManagement.dataLoadError'));
     },
     onSuccess: (data) => {
       toast.info('User stats loaded successfully');
@@ -611,12 +611,12 @@ const UserDetailsModal = ({ user, onClose }) => {
         <div className="p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">মৌলিক তথ্য</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.userManagement.basicInfo')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <Mail className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-600">ইমেইল</p>
+                  <p className="text-sm text-gray-600">{t('admin.userManagement.email')}</p>
                   <p className="font-medium">{user.email}</p>
                 </div>
               </div>
@@ -624,7 +624,7 @@ const UserDetailsModal = ({ user, onClose }) => {
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <Phone className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-600">ফোন</p>
+                  <p className="text-sm text-gray-600">{t('admin.userManagement.phone')}</p>
                   <p className="font-medium">{user.phone || 'নেই'}</p>
                 </div>
               </div>
@@ -632,7 +632,7 @@ const UserDetailsModal = ({ user, onClose }) => {
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <MapPin className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-600">ঠিকানা</p>
+                  <p className="text-sm text-gray-600">{t('profile.address')}</p>
                   <p className="font-medium">{user.address || 'নেই'}</p>
                 </div>
               </div>
@@ -640,7 +640,7 @@ const UserDetailsModal = ({ user, onClose }) => {
               <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                 <Calendar className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-600">যোগদান</p>
+                  <p className="text-sm text-gray-600">{t('admin.userManagement.joinedDate')}</p>
                   <p className="font-medium">{formatDate(user.created_at)}</p>
                 </div>
               </div>
@@ -650,7 +650,7 @@ const UserDetailsModal = ({ user, onClose }) => {
                   <div className="flex items-start p-3 bg-gray-50 rounded-lg">
                     <Users className="h-5 w-5 text-gray-400 mr-3 mt-1" />
                     <div>
-                      <p className="text-sm text-gray-600">পরিচয়</p>
+                      <p className="text-sm text-gray-600">{t('admin.userManagement.bio')}</p>
                       <p className="font-medium">{user.bio}</p>
                     </div>
                   </div>
@@ -661,7 +661,7 @@ const UserDetailsModal = ({ user, onClose }) => {
 
           {/* Account Status */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">অ্যাকাউন্টের অবস্থা</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.userManagement.accountStatus')}</h3>
             <div className="flex items-center space-x-4">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                 user.is_active 
@@ -683,7 +683,7 @@ const UserDetailsModal = ({ user, onClose }) => {
 
           {/* Activity Summary */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">কার্যক্রম সারসংক্ষেপ</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.userManagement.activitySummary')}</h3>
             
             {statsError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -713,7 +713,7 @@ const UserDetailsModal = ({ user, onClose }) => {
                   <p className="text-2xl font-bold text-blue-600">
                     {userStats?.borrow_activity?.total || 0}
                   </p>
-                  <p className="text-sm text-gray-600">মোট ধার</p>
+                  <p className="text-sm text-gray-600">{t('admin.userManagement.totalBorrows')}</p>
                   {/* <p className="text-xs text-gray-500 mt-1">
                     (API: {statsError ? 'Error' : userStats ? `Borrows: ${JSON.stringify(userStats.borrow_activity)}` : 'No Data'})
                   </p> */}
@@ -724,7 +724,7 @@ const UserDetailsModal = ({ user, onClose }) => {
                   <p className="text-2xl font-bold text-green-600">
                     {userStats?.donation_activity?.total || 0}
                   </p>
-                  <p className="text-sm text-gray-600">মোট দান</p>
+                  <p className="text-sm text-gray-600">{t('admin.userManagement.totalDonations')}</p>
                   {/* <p className="text-xs text-gray-500 mt-1">
                     (API: {statsError ? 'Error' : userStats ? `Donations: ${JSON.stringify(userStats.donation_activity)}` : 'No Data'})
                   </p> */}
@@ -735,7 +735,7 @@ const UserDetailsModal = ({ user, onClose }) => {
                   <p className="text-2xl font-bold text-purple-600">
                     {userStats?.borrow_activity?.active || 0}
                   </p>
-                  <p className="text-sm text-gray-600">সক্রিয় ধার</p>
+                  <p className="text-sm text-gray-600">{t('admin.userManagement.activeBorrows')}</p>
                   {/* <p className="text-xs text-gray-500 mt-1">
                     (API: {statsError ? 'Error' : userStats ? `Active: ${userStats.borrow_activity?.active || 0}` : 'No Data'})
                   </p> */}
@@ -747,10 +747,10 @@ const UserDetailsModal = ({ user, onClose }) => {
             {!statsLoading && userStats && (
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <h4 className="font-medium text-gray-700 mb-2">ধারের বিবরণ</h4>
+                  <h4 className="font-medium text-gray-700 mb-2">{t('admin.userManagement.borrowDetails')}</h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">ফেরত দেওয়া:</span>
+                      <span className="text-gray-600">{t('admin.userManagement.returned')}:</span>
                       <span className="font-medium">{userStats?.borrow_activity?.returned || 0}</span>
                     </div>
                     <div className="flex justify-between">
@@ -761,15 +761,15 @@ const UserDetailsModal = ({ user, onClose }) => {
                 </div>
                 
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <h4 className="font-medium text-gray-700 mb-2">দানের বিবরণ</h4>
+                  <h4 className="font-medium text-gray-700 mb-2">{t('admin.userManagement.donationDetails')}</h4>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">সম্পন্ন:</span>
-                      <span className="font-medium">{userStats?.donation_activity?.completed || 0}</span>
+                      <span className="text-gray-600">{t('admin.userManagement.returned')}:</span>
+                      <span className="font-medium">{userStats?.borrow_activity?.returned || 0}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">অপেক্ষমাণ:</span>
-                      <span className="font-medium">{userStats?.donation_activity?.pending || 0}</span>
+                      <span className="text-gray-600">{t('admin.userManagement.pending')}:</span>
+                      <span className="font-medium">{userStats?.borrow_activity?.pending || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -796,11 +796,11 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
   const createUserMutation = useMutation({
     mutationFn: apiServices.admin.createUser || (() => Promise.reject(new Error('API not implemented'))),
     onSuccess: () => {
-      toast.success('নতুন ব্যবহারকারী সফলভাবে তৈরি হয়েছে!');
+      toast.success(t('messages.registrationSuccess'));
       onSuccess();
     },
     onError: (error) => {
-      toast.error('ব্যবহারকারী তৈরি করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.operationFailed')));
     }
   });
 
@@ -808,7 +808,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
-      toast.error('নাম, ইমেইল এবং পাসওয়ার্ড আবশ্যক');
+      toast.error(`${t('admin.userManagement.nameRequired')} ${t('admin.userManagement.emailRequired')} ${t('admin.userManagement.passwordRequired')}`);
       return;
     }
 
@@ -828,7 +828,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
       <div className="bg-white rounded-xl max-w-md w-full">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">নতুন ব্যবহারকারী তৈরি</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('admin.userManagement.createNewUser')}</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -841,7 +841,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              নাম *
+              {t('admin.userManagement.name')} *
             </label>
             <input
               type="text"
@@ -855,7 +855,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ইমেইল *
+              {t('admin.userManagement.email')} *
             </label>
             <input
               type="email"
@@ -869,21 +869,21 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              পাসওয়ার্ড *
+              {t('common.password')} *
             </label>
             <PasswordInput
               name="password"
               value={formData.password}
               onChange={handleInputChange}
               className="px-3 py-2"
-              placeholder="পাসওয়ার্ড"
+              placeholder={t('common.password')}
               autoComplete="new-password"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ফোন
+              {t('admin.userManagement.phone')}
             </label>
             <input
               type="tel"
@@ -896,7 +896,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ঠিকানা
+              {t('profile.address')}
             </label>
             <input
               type="text"
@@ -909,7 +909,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ভূমিকা
+              {t('admin.userManagement.role')}
             </label>
             <select
               name="role"
@@ -917,9 +917,9 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              <option value="member">সদস্য</option>
-              <option value="librarian">গ্রন্থাগারিক</option>
-              <option value="admin">প্রশাসক</option>
+              <option value="member">{t('admin.userManagement.member')}</option>
+              <option value="librarian">{t('admin.userManagement.librarian')}</option>
+              <option value="admin">{t('admin.userManagement.admin')}</option>
             </select>
           </div>
 
@@ -929,14 +929,14 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
               onClick={onClose}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              বাতিল
+              {t('admin.userManagement.cancel')}
             </button>
             <button
               type="submit"
               disabled={createUserMutation.isPending}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
             >
-              {createUserMutation.isPending ? 'তৈরি হচ্ছে...' : 'তৈরি করুন'}
+              {createUserMutation.isPending ? t('admin.userManagement.creating') : t('admin.userManagement.create')}
             </button>
           </div>
         </form>

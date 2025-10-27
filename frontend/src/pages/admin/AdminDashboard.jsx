@@ -183,10 +183,10 @@ const AdminDashboard = () => {
             <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
               <Users className="h-4 w-4 text-blue-600" />
             </div>
-            <span className="text-xs text-gray-500">ব্যবহারকারী</span>
+            <span className="text-xs text-gray-500">{t('admin.dashboard.users')}</span>
           </div>
           <p className="text-xl font-bold text-gray-900">{stats.users.total}</p>
-          <p className="text-xs text-gray-600">{stats.users.active} সদস্য</p>
+          <p className="text-xs text-gray-600">{stats.users.active} {t('admin.dashboard.members')}</p>
         </div>
 
         {/* Books */}
@@ -195,10 +195,10 @@ const AdminDashboard = () => {
             <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
               <Book className="h-4 w-4 text-green-600" />
             </div>
-            <span className="text-xs text-gray-500">বই</span>
+            <span className="text-xs text-gray-500">{t('admin.dashboard.books')}</span>
           </div>
           <p className="text-xl font-bold text-gray-900">{stats.books.total}</p>
-          <p className="text-xs text-gray-600">{stats.books.totalCopies} কপি</p>
+          <p className="text-xs text-gray-600">{stats.books.totalCopies} {t('admin.dashboard.copies')}</p>
         </div>
 
         {/* Active Borrows */}
@@ -207,10 +207,10 @@ const AdminDashboard = () => {
             <div className="h-8 w-8 bg-orange-100 rounded-lg flex items-center justify-center">
               <BookOpen className="h-4 w-4 text-orange-600" />
             </div>
-            <span className="text-xs text-gray-500">চলমান ধার</span>
+            <span className="text-xs text-gray-500">{t('admin.dashboard.currentBorrows')}</span>
           </div>
           <p className="text-xl font-bold text-gray-900">{stats.borrows.approved}</p>
-          <p className="text-xs text-gray-600">{stats.borrows.pending} অপেক্ষমাণ</p>
+          <p className="text-xs text-gray-600">{stats.borrows.pending} {t('admin.dashboard.pending')}</p>
         </div>
 
         {/* Donations */}
@@ -219,10 +219,10 @@ const AdminDashboard = () => {
             <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
               <Gift className="h-4 w-4 text-purple-600" />
             </div>
-            <span className="text-xs text-gray-500">দান</span>
+            <span className="text-xs text-gray-500">{t('admin.dashboard.donations')}</span>
           </div>
           <p className="text-xl font-bold text-gray-900">{stats.donations.total}</p>
-          <p className="text-xs text-gray-600">{stats.donations.pending} অপেক্ষমাণ</p>
+          <p className="text-xs text-gray-600">{stats.donations.pending} {t('admin.dashboard.pending')}</p>
         </div>
 
         {/* Overdue */}
@@ -231,10 +231,10 @@ const AdminDashboard = () => {
             <div className="h-8 w-8 bg-red-100 rounded-lg flex items-center justify-center">
               <AlertCircle className="h-4 w-4 text-red-600" />
             </div>
-            <span className="text-xs text-gray-500">অতিরিক্ত সময়</span>
+            <span className="text-xs text-gray-500">{t('admin.dashboard.overdue')}</span>
           </div>
           <p className="text-xl font-bold text-red-900">{stats.borrows.overdue}</p>
-          <p className="text-xs text-gray-600">মেয়াদ শেষ</p>
+          <p className="text-xs text-gray-600">{t('admin.dashboard.overdueItems')}</p>
         </div>
 
         {/* Categories */}
@@ -243,10 +243,10 @@ const AdminDashboard = () => {
             <div className="h-8 w-8 bg-indigo-100 rounded-lg flex items-center justify-center">
               <Library className="h-4 w-4 text-indigo-600" />
             </div>
-            <span className="text-xs text-gray-500">বিভাগ</span>
+            <span className="text-xs text-gray-500">{t('admin.dashboard.categories')}</span>
           </div>
           <p className="text-xl font-bold text-gray-900">{stats.books.categories}</p>
-          <p className="text-xs text-gray-600">বই বিভাগ</p>
+          <p className="text-xs text-gray-600">{t('admin.dashboard.bookCategories')}</p>
         </div>
       </div>
 
@@ -254,7 +254,7 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">দ্রুত অ্যাকশন</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.quickActions')}</h2>
           <div className="space-y-3">
             <Link
               to="/admin/users"
@@ -318,29 +318,29 @@ const AdminDashboard = () => {
 
         {/* Status Overview */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">স্ট্যাটাস ওভারভিউ</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.statusOverview')}</h2>
           <div className="space-y-4">
             {/* Borrow Status */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">ধার অবস্থা</span>
+                <span className="text-sm font-medium text-gray-600">{t('admin.dashboard.borrowStatus')}</span>
                 <span className="text-sm text-gray-500">{stats.borrows.total}</span>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-yellow-600">অপেক্ষমাণ</span>
+                  <span className="text-yellow-600">{t('admin.dashboard.pending')}</span>
                   <span className="font-medium">{stats.borrows.pending}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-600">অনুমোদিত</span>
+                  <span className="text-blue-600">{t('admin.dashboard.approved')}</span>
                   <span className="font-medium">{stats.borrows.approved}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-600">ফেরত</span>
+                  <span className="text-green-600">{t('admin.dashboard.returned')}</span>
                   <span className="font-medium">{stats.borrows.returned}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-red-600">মেয়াদোত্তীর্ণ</span>
+                  <span className="text-red-600">{t('admin.dashboard.overdueItems')}</span>
                   <span className="font-medium">{stats.borrows.overdue}</span>
                 </div>
               </div>
@@ -351,24 +351,24 @@ const AdminDashboard = () => {
             {/* Donation Status */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">দান অবস্থা</span>
+                <span className="text-sm font-medium text-gray-600">{t('admin.dashboard.donationStatus')}</span>
                 <span className="text-sm text-gray-500">{stats.donations.total}</span>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-yellow-600">অপেক্ষমাণ</span>
+                  <span className="text-yellow-600">{t('admin.dashboard.pending')}</span>
                   <span className="font-medium">{stats.donations.pending}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-blue-600">অনুমোদিত</span>
+                  <span className="text-blue-600">{t('admin.dashboard.approved')}</span>
                   <span className="font-medium">{stats.donations.approved}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-600">সম্পন্ন</span>
+                  <span className="text-green-600">{t('admin.dashboard.completed')}</span>
                   <span className="font-medium">{stats.donations.completed}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-red-600">প্রত্যাখ্যাত</span>
+                  <span className="text-red-600">{t('admin.dashboard.rejected')}</span>
                   <span className="font-medium">{stats.donations.rejected}</span>
                 </div>
               </div>
@@ -378,7 +378,7 @@ const AdminDashboard = () => {
 
         {/* Popular Books */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">জনপ্রিয় বই</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.dashboard.popularBooks')}</h2>
           <div className="space-y-3">
             {stats.books.popular.map((book, index) => (
               <div key={book.id} className="flex items-center space-x-3">
@@ -392,12 +392,12 @@ const AdminDashboard = () => {
                   <p className="text-xs text-gray-500 truncate">{book.author}</p>
                 </div>
                 <div className="flex-shrink-0">
-                  <span className="text-xs text-gray-500">{book.times_borrowed || 0} ধার</span>
+                  <span className="text-xs text-gray-500">{book.times_borrowed || 0} {t('admin.dashboard.borrows')}</span>
                 </div>
               </div>
             ))}
             {stats.books.popular.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">কোন বই পাওয়া যায়নি</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t('books.noBooks')}</p>
             )}
           </div>
         </div>
@@ -408,12 +408,12 @@ const AdminDashboard = () => {
         {/* Recent Borrows */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">সাম্প্রতিক ধার আবেদন</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('admin.dashboard.recentBorrowRequests')}</h2>
             <Link 
               to="/admin/borrows"
               className="text-sm text-green-600 hover:text-green-700 font-medium"
             >
-              সব দেখুন
+              {t('admin.dashboard.viewAll')}
             </Link>
           </div>
           <div className="space-y-3">
@@ -441,7 +441,7 @@ const AdminDashboard = () => {
               </div>
             ))}
             {recentBorrows.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">কোন সাম্প্রতিক ধার আবেদন নেই</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t('admin.dashboard.noRecentBorrows')}</p>
             )}
           </div>
         </div>
@@ -449,12 +449,12 @@ const AdminDashboard = () => {
         {/* Recent Donations */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">সাম্প্রতিক দান</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('admin.dashboard.recentDonations')}</h2>
             <Link 
               to="/admin/donations"
               className="text-sm text-green-600 hover:text-green-700 font-medium"
             >
-              সব দেখুন
+              {t('admin.dashboard.viewAll')}
             </Link>
           </div>
           <div className="space-y-3">
@@ -482,7 +482,7 @@ const AdminDashboard = () => {
               </div>
             ))}
             {recentDonations.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">কোন সাম্প্রতিক দান নেই</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t('admin.dashboard.noRecentDonations')}</p>
             )}
           </div>
         </div>
