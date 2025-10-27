@@ -31,6 +31,8 @@ class BorrowRequestResponse(SQLModel):
     status: requestStatus
     created_at: datetime
     reviewed_at: Optional[datetime] = None
+    collected_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class DonationRequestResponse(SQLModel):
@@ -45,6 +47,8 @@ class DonationRequestResponse(SQLModel):
     status: requestStatus
     created_at: datetime
     reviewed_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 # ===== DASHBOARD & STATS =====
@@ -424,7 +428,9 @@ def get_all_borrow_requests(
             book_cover_url=req.book.cover_image_url if req.book else None,
             status=req.status,
             created_at=req.created_at,
-            reviewed_at=req.reviewed_at
+            reviewed_at=req.reviewed_at,
+            collected_at=req.collected_at,
+            updated_at=req.updated_at
         ))
     
     return result
@@ -460,7 +466,9 @@ def get_user_borrows(
             book_cover_url=req.book.cover_image_url if req.book else None,
             status=req.status,
             created_at=req.created_at,
-            reviewed_at=req.reviewed_at
+            reviewed_at=req.reviewed_at,
+            collected_at=req.collected_at,
+            updated_at=req.updated_at
         ))
     
     return result
@@ -499,6 +507,7 @@ def approve_borrow_request(
     # Update request status
     request_obj.status = requestStatus.APPROVED
     request_obj.reviewed_at = datetime.now()
+    request_obj.updated_at = datetime.now()
     request_obj.reviewed_by_id = admin.id
     
     # Reserve a book copy if not already reserved
@@ -579,6 +588,7 @@ def handover_book(
     # Update request status
     request_obj.status = requestStatus.COLLECTED
     request_obj.collected_at = datetime.now()
+    request_obj.updated_at = datetime.now()
     
     # Update book copy status
     book_copy = session.get(BookCopy, request_obj.reserved_copy_id)
@@ -632,6 +642,7 @@ def reject_borrow_request(
     # Update request status
     request_obj.status = requestStatus.REJECTED
     request_obj.reviewed_at = datetime.now()
+    request_obj.updated_at = datetime.now()
     request_obj.reviewed_by_id = admin.id
     
     # Free up reserved copy if exists
@@ -691,6 +702,7 @@ def return_book(
     borrow_request = session.get(BookRequest, borrow_id)
     if borrow_request:
         borrow_request.status = requestStatus.COMPLETED
+        borrow_request.updated_at = datetime.now()
         session.add(borrow_request)
     
     session.commit()
@@ -732,7 +744,9 @@ def get_all_donation_requests(
             donation_pages=req.donation_pages or 0,
             status=req.status,
             created_at=req.created_at,
-            reviewed_at=req.reviewed_at
+            reviewed_at=req.reviewed_at,
+            completed_at=req.completed_at,
+            updated_at=req.updated_at
         ))
     
     return result
@@ -768,7 +782,9 @@ def get_user_donations(
             donation_pages=req.donation_pages or 0,
             status=req.status,
             created_at=req.created_at,
-            reviewed_at=req.reviewed_at
+            reviewed_at=req.reviewed_at,
+            completed_at=req.completed_at,
+            updated_at=req.updated_at
         ))
     
     return result
@@ -807,6 +823,7 @@ def approve_donation_request(
     # Update request status
     request_obj.status = requestStatus.APPROVED
     request_obj.reviewed_at = datetime.now()
+    request_obj.updated_at = datetime.now()
     request_obj.reviewed_by_id = admin.id
     
     session.add(request_obj)
@@ -871,6 +888,8 @@ def complete_donation_request(
     
     # Update request status
     request_obj.status = requestStatus.COMPLETED
+    request_obj.completed_at = datetime.now()
+    request_obj.updated_at = datetime.now()
     request_obj.book_id = book.id
     
     session.add(request_obj)
@@ -919,6 +938,7 @@ def reject_donation_request(
     # Update request status
     request_obj.status = requestStatus.REJECTED
     request_obj.reviewed_at = datetime.now()
+    request_obj.updated_at = datetime.now()
     request_obj.reviewed_by_id = admin.id
     
     session.add(request_obj)

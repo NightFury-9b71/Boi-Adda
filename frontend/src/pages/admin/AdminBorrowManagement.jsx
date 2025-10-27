@@ -20,6 +20,7 @@ import {
 import { apiServices } from '../../api';
 import OptimizedImage from '../../components/OptimizedImage';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
+import UserTimeline from '../../components/UserTimeline';
 
 const AdminBorrowManagement = () => {
   const queryClient = useQueryClient();
@@ -28,6 +29,10 @@ const AdminBorrowManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedBorrow, setSelectedBorrow] = useState(null);
   const [showBorrowDetails, setShowBorrowDetails] = useState(false);
+  const [approvingBorrowId, setApprovingBorrowId] = useState(null);
+  const [rejectingBorrowId, setRejectingBorrowId] = useState(null);
+  const [handoverBorrowId, setHandoverBorrowId] = useState(null);
+  const [returningBorrowId, setReturningBorrowId] = useState(null);
 
   // Fetch all borrows
   const { data: borrows = [], isLoading } = useQuery({
@@ -42,9 +47,11 @@ const AdminBorrowManagement = () => {
     onSuccess: () => {
       toast.success('ধারের অনুরোধ অনুমোদিত হয়েছে! ব্যবহারকারীকে বইটি নিতে আসার জন্য বলুন।');
       queryClient.invalidateQueries(['admin', 'borrows']);
+      setApprovingBorrowId(null);
     },
     onError: (error) => {
       toast.error('অনুমোদন করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      setApprovingBorrowId(null);
     }
   });
 
@@ -54,9 +61,11 @@ const AdminBorrowManagement = () => {
     onSuccess: () => {
       toast.success('বই সফলভাবে হস্তান্তর করা হয়েছে!');
       queryClient.invalidateQueries(['admin', 'borrows']);
+      setHandoverBorrowId(null);
     },
     onError: (error) => {
       toast.error('হস্তান্তর করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      setHandoverBorrowId(null);
     }
   });
 
@@ -66,9 +75,11 @@ const AdminBorrowManagement = () => {
     onSuccess: () => {
       toast.success('ধারের অনুরোধ প্রত্যাখ্যান করা হয়েছে।');
       queryClient.invalidateQueries(['admin', 'borrows']);
+      setRejectingBorrowId(null);
     },
     onError: (error) => {
       toast.error('প্রত্যাখ্যান করতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      setRejectingBorrowId(null);
     }
   });
 
@@ -78,9 +89,11 @@ const AdminBorrowManagement = () => {
     onSuccess: () => {
       toast.success('বই সফলভাবে ফেরত নেওয়া হয়েছে!');
       queryClient.invalidateQueries(['admin', 'borrows']);
+      setReturningBorrowId(null);
     },
     onError: (error) => {
       toast.error('ফেরত নিতে সমস্যা হয়েছে: ' + (error?.response?.data?.detail || 'অজানা সমস্যা'));
+      setReturningBorrowId(null);
     }
   });
 
@@ -188,6 +201,7 @@ const AdminBorrowManagement = () => {
     );
     
     if (confirmed) {
+      setApprovingBorrowId(borrowId);
       approveBorrowMutation.mutate(borrowId);
     }
   };
@@ -199,6 +213,7 @@ const AdminBorrowManagement = () => {
     );
     
     if (confirmed) {
+      setHandoverBorrowId(borrowId);
       handoverBookMutation.mutate(borrowId);
     }
   };
@@ -210,6 +225,7 @@ const AdminBorrowManagement = () => {
     );
     
     if (confirmed) {
+      setRejectingBorrowId(borrowId);
       rejectBorrowMutation.mutate({ borrowId, reason });
     }
   };
@@ -221,6 +237,7 @@ const AdminBorrowManagement = () => {
     );
     
     if (confirmed) {
+      setReturningBorrowId(borrowId);
       returnBookMutation.mutate(borrowId);
     }
   };
@@ -501,19 +518,27 @@ const AdminBorrowManagement = () => {
                           <>
                             <button
                               onClick={() => handleApprove(borrow.id)}
-                              disabled={approveBorrowMutation.isPending}
-                              className="text-green-600 hover:text-green-700 disabled:opacity-50"
+                              disabled={approvingBorrowId === borrow.id}
+                              className="text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                               title="অনুমোদন করুন"
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              {approvingBorrowId === borrow.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
                             </button>
                             <button
                               onClick={() => handleReject(borrow.id)}
-                              disabled={rejectBorrowMutation.isPending}
-                              className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                              disabled={rejectingBorrowId === borrow.id}
+                              className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                               title="প্রত্যাখ্যান করুন"
                             >
-                              <XCircle className="h-4 w-4" />
+                              {rejectingBorrowId === borrow.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
                             </button>
                           </>
                         )}
@@ -522,19 +547,27 @@ const AdminBorrowManagement = () => {
                           <>
                             <button
                               onClick={() => handleHandover(borrow.id)}
-                              disabled={handoverBookMutation.isPending}
-                              className="text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                              disabled={handoverBorrowId === borrow.id}
+                              className="text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                               title="বই হস্তান্তর করুন"
                             >
-                              <HandMetal className="h-4 w-4" />
+                              {handoverBorrowId === borrow.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              ) : (
+                                <HandMetal className="h-4 w-4" />
+                              )}
                             </button>
                             <button
                               onClick={() => handleReject(borrow.id)}
-                              disabled={rejectBorrowMutation.isPending}
-                              className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                              disabled={rejectingBorrowId === borrow.id}
+                              className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                               title="প্রত্যাখ্যান করুন"
                             >
-                              <XCircle className="h-4 w-4" />
+                              {rejectingBorrowId === borrow.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
                             </button>
                           </>
                         )}
@@ -542,11 +575,15 @@ const AdminBorrowManagement = () => {
                         {(borrow.status === 'collected' || borrow.status === 'return_requested') && (
                           <button
                             onClick={() => handleReturn(borrow.id)}
-                            disabled={returnBookMutation.isPending}
-                            className="text-purple-600 hover:text-purple-700 disabled:opacity-50"
+                            disabled={returningBorrowId === borrow.id}
+                            className="text-purple-600 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                             title="বই ফেরত গ্রহণ করুন"
                           >
-                            <CheckCircle className="h-4 w-4" />
+                            {returningBorrowId === borrow.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                            ) : (
+                              <RotateCcw className="h-4 w-4" />
+                            )}
                           </button>
                         )}
                       </div>
@@ -578,6 +615,12 @@ const AdminBorrowManagement = () => {
           onHandover={() => handleHandover(selectedBorrow.id)}
           onReject={() => handleReject(selectedBorrow.id)}
           onReturn={() => handleReturn(selectedBorrow.id)}
+          loadingStates={{
+            approving: approvingBorrowId === selectedBorrow.id,
+            rejecting: rejectingBorrowId === selectedBorrow.id,
+            handover: handoverBorrowId === selectedBorrow.id,
+            returning: returningBorrowId === selectedBorrow.id,
+          }}
         />
       )}
     </div>
@@ -585,7 +628,7 @@ const AdminBorrowManagement = () => {
 };
 
 // Borrow Details Modal Component
-const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, onReturn }) => {
+const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, onReturn, loadingStates }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -696,25 +739,49 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
 
           {/* Timeline */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">সময়রেখা</h3>
-            <div className="space-y-3">
-              <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600 mr-3" />
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">অনুরোধ করা হয়েছে</p>
-                  <p className="text-sm text-gray-600">{formatDate(borrow.created_at)}</p>
-                </div>
-              </div>
-              
-              {borrow.status !== 'pending' && (
-                <div className="flex items-center p-3 bg-green-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-green-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-green-600 font-medium">স্ট্যাটাস আপডেট</p>
-                    <p className="text-sm text-gray-600">{formatDate(borrow.updated_at)}</p>
-                  </div>
-                </div>
-              )}
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">ব্যবহারকারীর সময়রেখা</h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <UserTimeline
+                userId={borrow.member_id}
+                userName={borrow.member_name}
+                activities={[
+                  {
+                    id: borrow.id,
+                    type: 'borrow',
+                    status: 'pending',
+                    timestamp: borrow.created_at,
+                    bookTitle: borrow.book_title,
+                    bookAuthor: borrow.book_author
+                  },
+                  borrow.reviewed_at && borrow.status !== 'pending' && {
+                    id: borrow.id,
+                    type: 'borrow',
+                    status: borrow.status === 'rejected' ? 'rejected' : 'approved',
+                    timestamp: borrow.reviewed_at,
+                    bookTitle: borrow.book_title,
+                    bookAuthor: borrow.book_author,
+                    notes: borrow.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+                  },
+                  borrow.collected_at && borrow.status === 'collected' && {
+                    id: borrow.id,
+                    type: 'borrow',
+                    status: 'collected',
+                    timestamp: borrow.collected_at,
+                    bookTitle: borrow.book_title,
+                    bookAuthor: borrow.book_author,
+                    notes: 'বই ব্যবহারকারীর কাছে হস্তান্তর করা হয়েছে'
+                  },
+                  borrow.updated_at && borrow.status === 'completed' && {
+                    id: borrow.id,
+                    type: 'borrow',
+                    status: 'completed',
+                    timestamp: borrow.updated_at,
+                    bookTitle: borrow.book_title,
+                    bookAuthor: borrow.book_author,
+                    notes: 'বই ফেরত দেওয়া হয়েছে'
+                  }
+                ].filter(Boolean)}
+              />
             </div>
           </div>
 
@@ -729,20 +796,40 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                       onApprove();
                       onClose();
                     }}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    disabled={loadingStates?.approving}
+                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    অনুমোদন করুন
+                    {loadingStates?.approving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        অনুমোদন হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        অনুমোদন করুন
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => {
                       onReject();
                       onClose();
                     }}
-                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    disabled={loadingStates?.rejecting}
+                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    প্রত্যাখ্যান করুন
+                    {loadingStates?.rejecting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        প্রত্যাখ্যান হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        প্রত্যাখ্যান করুন
+                      </>
+                    )}
                   </button>
                 </>
               )}
@@ -754,20 +841,40 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                       onHandover();
                       onClose();
                     }}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={loadingStates?.handover}
+                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <HandMetal className="h-4 w-4 mr-2" />
-                    বই হস্তান্তর করুন
+                    {loadingStates?.handover ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        হস্তান্তর হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <HandMetal className="h-4 w-4 mr-2" />
+                        বই হস্তান্তর করুন
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => {
                       onReject();
                       onClose();
                     }}
-                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    disabled={loadingStates?.rejecting}
+                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    প্রত্যাখ্যান করুন
+                    {loadingStates?.rejecting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        প্রত্যাখ্যান হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        প্রত্যাখ্যান করুন
+                      </>
+                    )}
                   </button>
                 </>
               )}
@@ -778,10 +885,20 @@ const BorrowDetailsModal = ({ borrow, onClose, onApprove, onHandover, onReject, 
                     onReturn();
                     onClose();
                   }}
-                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  disabled={loadingStates?.returning}
+                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  বই ফেরত গ্রহণ করুন
+                  {loadingStates?.returning ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      ফেরত নেওয়া হচ্ছে...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      বই ফেরত গ্রহণ করুন
+                    </>
+                  )}
                 </button>
               )}
 

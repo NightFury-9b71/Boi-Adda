@@ -128,6 +128,8 @@ class BookRequest(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     reviewed_at: datetime | None = None
     collected_at: datetime | None = None
+    completed_at: datetime | None = None
+    updated_at: datetime | None = None
     
     # For donation requests
     donation_title: str | None = None

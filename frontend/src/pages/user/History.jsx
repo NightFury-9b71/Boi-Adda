@@ -94,7 +94,7 @@ const History = () => {
       requestDate: borrow.created_at,
       approvedDate: borrow.reviewed_at,  // When admin reviewed/approved
       handoverDate: borrow.collected_at, // When book was collected
-      returnDate: null, // TODO: Add return date field when available from API
+      returnDate: borrow.return_date || null, // TODO: Add return date field when available from API
       dueDate: borrow.due_date || null,  // Due date from IssueBook
       isOverdue: borrow.is_overdue || false, // Overdue flag from API
       overdueDays: borrow.overdue_days || 0, // Days overdue

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useConfirmation } from '../../contexts/ConfirmationContext';
+import UserTimeline from '../../components/UserTimeline';
 
 const AdminDonationManagement = () => {
   const queryClient = useQueryClient();
@@ -555,25 +556,40 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
 
           {/* Timeline */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">সময়রেখা</h3>
-            <div className="space-y-3">
-              <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600 mr-3" />
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">দানের অনুরোধ করা হয়েছে</p>
-                  <p className="text-sm text-gray-600">{formatDate(donation.created_at)}</p>
-                </div>
-              </div>
-              
-              {donation.status !== 'pending' && (
-                <div className="flex items-center p-3 bg-green-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-green-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-green-600 font-medium">স্ট্যাটাস আপডেট</p>
-                    <p className="text-sm text-gray-600">{formatDate(donation.updated_at)}</p>
-                  </div>
-                </div>
-              )}
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">ব্যবহারকারীর সময়রেখা</h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <UserTimeline
+                userId={donation.member_id}
+                userName={donation.member_name}
+                activities={[
+                  {
+                    id: donation.id,
+                    type: 'donation',
+                    status: 'pending',
+                    timestamp: donation.created_at,
+                    bookTitle: donation.donation_title,
+                    bookAuthor: donation.donation_author
+                  },
+                  donation.reviewed_at && donation.status !== 'pending' && {
+                    id: donation.id,
+                    type: 'donation',
+                    status: donation.status === 'rejected' ? 'rejected' : 'approved',
+                    timestamp: donation.reviewed_at,
+                    bookTitle: donation.donation_title,
+                    bookAuthor: donation.donation_author,
+                    notes: donation.status === 'rejected' ? 'প্রশাসনিক কারণে প্রত্যাখ্যাত' : 'অনুমোদিত হয়েছে'
+                  },
+                  donation.completed_at && donation.status === 'completed' && {
+                    id: donation.id,
+                    type: 'donation',
+                    status: 'completed',
+                    timestamp: donation.completed_at,
+                    bookTitle: donation.donation_title,
+                    bookAuthor: donation.donation_author,
+                    notes: 'দান সম্পন্ন হয়েছে এবং বই লাইব্রেরিতে যোগ করা হয়েছে'
+                  }
+                ].filter(Boolean)}
+              />
             </div>
           </div>
 
