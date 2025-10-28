@@ -40,6 +40,10 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     email: str = Field(unique=True, index=True)
+    phone: str | None = None
+    address: str | None = None
+    date_of_birth: datetime | None = None
+    bio: str | None = None
     password_hash: str  # Hashed password for authentication
     is_verified: bool = Field(default=False)  # Email verification status
     is_active: bool = Field(default=True)  # User active/inactive status

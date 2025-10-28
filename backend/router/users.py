@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from auth import get_current_user
 from typing import Optional
 from datetime import datetime
+from pydantic import BaseModel
 from storage import upload_profile_photo
 
 router = APIRouter()
@@ -15,9 +16,21 @@ class UserProfileResponse(SQLModel):
     id: int
     name: str
     email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    date_of_birth: Optional[datetime] = None
+    bio: Optional[str] = None
     role: str
     profile_photo_url: Optional[str] = None
     created_at: Optional[datetime] = None
+
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    bio: Optional[str] = None
 
 
 class UserStatsResponse(SQLModel):
@@ -45,6 +58,10 @@ def get_current_user_profile(
         id=user.id,
         name=user.name,
         email=user.email,
+        phone=user.phone,
+        address=user.address,
+        date_of_birth=user.date_of_birth,
+        bio=user.bio,
         role=user.role.name,
         profile_photo_url=user.profile_photo_url,
         created_at=user.created_at
@@ -54,7 +71,7 @@ def get_current_user_profile(
 # PUT /users/me - Update current user profile
 @router.put("/me", response_model=UserProfileResponse)
 def update_current_user_profile(
-    name: Optional[str] = None,
+    update_data: UserProfileUpdate,
     current_user: dict = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -69,9 +86,27 @@ def update_current_user_profile(
             detail="ব্যবহারকারীর প্রোফাইল খুঁজে পাওয়া যায়নি।"
         )
     
-    # Update fields
-    if name:
-        user.name = name
+    # Update fields if provided
+    if update_data.name is not None:
+        user.name = update_data.name
+    if update_data.phone is not None:
+        user.phone = update_data.phone
+    if update_data.address is not None:
+        user.address = update_data.address
+    if update_data.date_of_birth is not None and update_data.date_of_birth.strip():
+        try:
+            date_str = update_data.date_of_birth.strip()
+            user.date_of_birth = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format for date_of_birth"
+            )
+    elif update_data.date_of_birth is not None and not update_data.date_of_birth.strip():
+        # Empty string means clear the date
+        user.date_of_birth = None
+    if update_data.bio is not None:
+        user.bio = update_data.bio
     
     session.add(user)
     session.commit()
@@ -81,6 +116,10 @@ def update_current_user_profile(
         id=user.id,
         name=user.name,
         email=user.email,
+        phone=user.phone,
+        address=user.address,
+        date_of_birth=user.date_of_birth,
+        bio=user.bio,
         role=user.role.name,
         profile_photo_url=user.profile_photo_url,
         created_at=user.created_at
@@ -196,6 +235,10 @@ def get_user_profile_by_id(
         id=user.id,
         name=user.name,
         email=user.email,
+        phone=user.phone,
+        address=user.address,
+        date_of_birth=user.date_of_birth,
+        bio=user.bio,
         role=user.role.name,
         profile_photo_url=user.profile_photo_url,
         created_at=user.created_at

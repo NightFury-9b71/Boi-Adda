@@ -35,7 +35,8 @@ apiClient.interceptors.response.use(
     }
     
     // Handle user data responses
-    if (response.config.url?.includes(API_ENDPOINTS.AUTH.ME) && response.data) {
+    if ((response.config.url?.includes(API_ENDPOINTS.AUTH.ME) || 
+         response.config.url?.includes('/users/me')) && response.data) {
       localStorage.setItem('user_data', JSON.stringify(response.data));
     }
     

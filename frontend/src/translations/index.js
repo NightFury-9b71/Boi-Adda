@@ -341,7 +341,8 @@ export const bn = {
     emailInvalid: 'সঠিক ইমেইল ঠিকানা প্রদান করুন',
     confirmTitle: 'প্রোফাইল আপডেট',
     confirmMessage: 'আপনি কি নিশ্চিত যে আপনার প্রোফাইলের তথ্য আপডেট করতে চান?',
-    dateFormatError: 'তারিখ ফরম্যাট সমস্যা'
+    dateFormatError: 'তারিখ ফরম্যাট সমস্যা',
+    emailChangeNote: 'ইমেইল পরিবর্তন করতে অ্যাডমিনের সাথে যোগাযোগ করুন'
   },
 
   // History
@@ -1218,7 +1219,8 @@ export const en = {
     emailInvalid: 'Please provide a valid email address',
     confirmTitle: 'Update Profile',
     confirmMessage: 'Are you sure you want to update your profile information?',
-    dateFormatError: 'Date format error'
+    dateFormatError: 'Date format error',
+    emailChangeNote: 'Contact admin to change email'
   },
 
   // History

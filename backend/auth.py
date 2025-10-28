@@ -54,6 +54,10 @@ class UserResponse(BaseModel):
     id: int
     email: str
     name: Optional[str]
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    bio: Optional[str] = None
     role: str
     profile_photo_url: Optional[str] = None
     created_at: Optional[str] = None
@@ -297,6 +301,10 @@ async def sign_in(
                 "id": user.id,
                 "email": user.email,
                 "name": user.name,
+                "phone": user.phone,
+                "address": user.address,
+                "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+                "bio": user.bio,
                 "role": role.name,
                 "is_verified": user.is_verified
             },
@@ -353,6 +361,10 @@ async def refresh_token(request: RefreshTokenRequest, session: Session = Depends
                 "id": user.id,
                 "email": user.email,
                 "name": user.name,
+                "phone": user.phone,
+                "address": user.address,
+                "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+                "bio": user.bio,
                 "role": role.name,
                 "is_verified": user.is_verified
             },
@@ -377,6 +389,10 @@ async def get_me(current_user: User = Depends(get_current_user), session: Sessio
         id=current_user.id,
         email=current_user.email,
         name=current_user.name,
+        phone=current_user.phone,
+        address=current_user.address,
+        date_of_birth=current_user.date_of_birth.isoformat() if current_user.date_of_birth else None,
+        bio=current_user.bio,
         role=role.name,
         profile_photo_url=current_user.profile_photo_url,
         created_at=current_user.created_at.isoformat() if current_user.created_at else None,
@@ -614,7 +630,7 @@ async def create_admin(
     The admin will be automatically verified.
     """
     # Verify secret code from environment
-    admin_creation_code = os.getenv("ADMIN_CREATION_CODE", "illusion")  # fallback to default
+    admin_creation_code = os.getenv("ADMIN_CREATION_CODE", "boi-adda-admin")  # fallback to default
     if request.secret_code != admin_creation_code:
         raise HTTPException(status_code=403, detail="সিক্রেট কোড সঠিক নয়।")
     

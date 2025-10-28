@@ -45,7 +45,6 @@ const ProfilePage = () => {
   // Form data state with proper initialization
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
     address: '',
     date_of_birth: '',
@@ -55,13 +54,22 @@ const ProfilePage = () => {
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
+      // Format date_of_birth for HTML date input (YYYY-MM-DD)
+      let formattedDate = '';
+      if (user.date_of_birth) {
+        try {
+          const date = new Date(user.date_of_birth);
+          formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        } catch (error) {
+          console.warn('Error formatting date_of_birth:', error);
+        }
+      }
 
       setFormData({
         name: user.name || '',
-        email: user.email || '',
         phone: user.phone || '',
         address: user.address || '',
-        date_of_birth: user.date_of_birth || '',
+        date_of_birth: formattedDate,
         bio: user.bio || ''
       });
     }
@@ -85,10 +93,17 @@ const ProfilePage = () => {
   // Update profile mutation with better error handling
   const updateProfileMutation = useMutation({
     mutationFn: (data) => apiServices.users.updateProfile(data),
-    onSuccess: () => {
+    onSuccess: (updatedUserData) => {
       toast.success(t('profile.updateSuccess'));
       setIsEditing(false);
-      // Invalidate and refetch user data
+      
+      // Update the query cache with the new user data
+      queryClient.setQueryData(['currentUser'], updatedUserData);
+      
+      // Also update localStorage directly
+      localStorage.setItem('user_data', JSON.stringify(updatedUserData));
+      
+      // Invalidate and refetch to ensure consistency
       queryClient.invalidateQueries(['currentUser']);
       refetchUser();
     },
@@ -197,18 +212,6 @@ const ProfilePage = () => {
       toast.error(t('profile.nameRequired'));
       return;
     }
-    
-    if (!formData.email?.trim()) {
-      toast.error(t('profile.emailRequired'));
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error(t('profile.emailInvalid'));
-      return;
-    }
 
     // Confirm profile update
     const confirmed = await confirmUpdate(
@@ -229,12 +232,22 @@ const ProfilePage = () => {
   const handleCancel = () => {
     // Reset form data to current user data
     if (user) {
+      // Format date_of_birth for HTML date input (YYYY-MM-DD)
+      let formattedDate = '';
+      if (user.date_of_birth) {
+        try {
+          const date = new Date(user.date_of_birth);
+          formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        } catch (error) {
+          console.warn('Error formatting date_of_birth:', error);
+        }
+      }
+
       setFormData({
         name: user.name || '',
-        email: user.email || '',
         phone: user.phone || '',
         address: user.address || '',
-        date_of_birth: user.date_of_birth || '',
+        date_of_birth: formattedDate,
         bio: user.bio || ''
       });
     }
@@ -438,25 +451,14 @@ const ProfilePage = () => {
                   )}
                 </div>
 
-                {/* Email */}
+                {/* Email - Read only */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Mail className="h-4 w-4 inline mr-2" />
-                    {t('profile.email')} *
+                    {t('profile.email')}
                   </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder={t('profile.emailPlaceholder')}
-                      required
-                    />
-                  ) : (
-                    <p className="px-4 py-2 bg-gray-50 rounded-lg">{user?.email || t('profile.notSet')}</p>
-                  )}
+                  <p className="px-4 py-2 bg-gray-50 rounded-lg text-gray-600">{user?.email || t('profile.notSet')}</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('profile.emailChangeNote')}</p>
                 </div>
 
                 {/* Phone */}
