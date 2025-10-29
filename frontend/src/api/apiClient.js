@@ -12,17 +12,24 @@ if (import.meta.env.DEV) {
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Removed default Content-Type to allow automatic detection for FormData
 });
 
-// Request interceptor - Add token to requests
+// Request interceptor - Add token and set content-type
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Set Content-Type based on data type
+  if (config.data instanceof FormData) {
+    // Let browser set multipart/form-data with boundary
+    delete config.headers['Content-Type'];
+  } else if (!config.headers['Content-Type']) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+  
   return config;
 });
 

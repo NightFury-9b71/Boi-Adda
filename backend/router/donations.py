@@ -16,6 +16,9 @@ class DonationCreate(SQLModel):
     author: str
     published_year: int
     pages: int
+    category_id: int | None = None
+    condition: str | None = None
+    description: str | None = None
 
 
 class DonationResponse(SQLModel):
@@ -25,6 +28,9 @@ class DonationResponse(SQLModel):
     donation_year: int
     donation_pages: int
     donation_cover_url: Optional[str] = None
+    donation_category_id: int | None = None
+    donation_condition: str | None = None
+    donation_description: str | None = None
     status: requestStatus
     created_at: datetime
     reviewed_at: Optional[datetime] = None
@@ -41,7 +47,10 @@ async def create_donation_request(
     author: str = Form(...),
     published_year: int = Form(...),
     pages: int = Form(...),
-    cover_image: UploadFile = File(None),
+    category_id: Optional[int] = Form(None),
+    condition: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    cover_image: Optional[UploadFile] = File(None),
     current_user: dict = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -81,6 +90,9 @@ async def create_donation_request(
                 donation_author=author,
                 donation_year=published_year,
                 donation_pages=pages,
+                donation_category_id=category_id,
+                donation_condition=condition,
+                donation_description=description,
                 status=requestStatus.PENDING
             )
             session.add(temp_donation)
@@ -106,6 +118,9 @@ async def create_donation_request(
                 donation_author=author,
                 donation_year=published_year,
                 donation_pages=pages,
+                donation_category_id=category_id,
+                donation_condition=condition,
+                donation_description=description,
                 status=requestStatus.PENDING
             )
             session.add(donation_request)
@@ -120,6 +135,9 @@ async def create_donation_request(
             donation_author=author,
             donation_year=published_year,
             donation_pages=pages,
+            donation_category_id=category_id,
+            donation_condition=condition,
+            donation_description=description,
             status=requestStatus.PENDING
         )
         
@@ -134,6 +152,9 @@ async def create_donation_request(
         donation_year=donation_request.donation_year,
         donation_pages=donation_request.donation_pages,
         donation_cover_url=donation_request.donation_cover_url,
+        donation_category_id=donation_request.donation_category_id,
+        donation_condition=donation_request.donation_condition,
+        donation_description=donation_request.donation_description,
         status=donation_request.status,
         created_at=donation_request.created_at,
         reviewed_at=donation_request.reviewed_at
@@ -227,6 +248,9 @@ def get_my_donation_requests(
             donation_year=req.donation_year,
             donation_pages=req.donation_pages,
             donation_cover_url=req.donation_cover_url,
+            donation_category_id=req.donation_category_id,
+            donation_condition=req.donation_condition,
+            donation_description=req.donation_description,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at

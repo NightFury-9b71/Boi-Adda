@@ -109,6 +109,48 @@ def add_missing_columns():
         else:
             print("donation_cover_url column already exists.")
 
+        # Check and add donation_category_id
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'bookrequest' AND column_name = 'donation_category_id'
+        """))
+        if not result.fetchone():
+            conn.execute(text("""
+                ALTER TABLE bookrequest ADD COLUMN donation_category_id INTEGER NULL
+            """))
+            print("Added donation_category_id column to bookrequest table.")
+        else:
+            print("donation_category_id column already exists.")
+
+        # Check and add donation_condition
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'bookrequest' AND column_name = 'donation_condition'
+        """))
+        if not result.fetchone():
+            conn.execute(text("""
+                ALTER TABLE bookrequest ADD COLUMN donation_condition VARCHAR(255) NULL
+            """))
+            print("Added donation_condition column to bookrequest table.")
+        else:
+            print("donation_condition column already exists.")
+
+        # Check and add donation_description
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'bookrequest' AND column_name = 'donation_description'
+        """))
+        if not result.fetchone():
+            conn.execute(text("""
+                ALTER TABLE bookrequest ADD COLUMN donation_description TEXT NULL
+            """))
+            print("Added donation_description column to bookrequest table.")
+        else:
+            print("donation_description column already exists.")
+
         # Check and add created_at to book table (used for sorting)
         result = conn.execute(text("""
             SELECT column_name

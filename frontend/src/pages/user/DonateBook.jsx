@@ -190,6 +190,14 @@ const DonateBook = () => {
       donationData.append('published_year', formData.published_year.toString());
       donationData.append('pages', formData.pages.toString());
       
+      if (formData.category_id) {
+        donationData.append('category_id', formData.category_id);
+      }
+      
+      // Always send condition and description, even if empty
+      donationData.append('condition', formData.condition || '');
+      donationData.append('description', formData.description || '');
+      
       if (uploadedImage) {
         donationData.append('cover_image', uploadedImage);
       }

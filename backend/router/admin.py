@@ -45,6 +45,9 @@ class DonationRequestResponse(SQLModel):
     donation_author: str
     donation_year: int
     donation_pages: int
+    donation_category_id: int | None = None
+    donation_condition: str | None = None
+    donation_description: str | None = None
     status: requestStatus
     created_at: datetime
     reviewed_at: Optional[datetime] = None
@@ -743,6 +746,9 @@ def get_all_donation_requests(
             donation_author=req.donation_author or "Unknown Author",
             donation_year=req.donation_year or 0,
             donation_pages=req.donation_pages or 0,
+            donation_category_id=req.donation_category_id,
+            donation_condition=req.donation_condition,
+            donation_description=req.donation_description,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at,
@@ -781,6 +787,9 @@ def get_user_donations(
             donation_author=req.donation_author or "Unknown Author",
             donation_year=req.donation_year or 0,
             donation_pages=req.donation_pages or 0,
+            donation_category_id=req.donation_category_id,
+            donation_condition=req.donation_condition,
+            donation_description=req.donation_description,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at,
@@ -874,7 +883,8 @@ def complete_donation_request(
             title=request_obj.donation_title,
             author=request_obj.donation_author,
             published_year=request_obj.donation_year,
-            pages=request_obj.donation_pages
+            pages=request_obj.donation_pages,
+            category_id=request_obj.donation_category_id
         )
         session.add(book)
         session.flush()

@@ -142,6 +142,9 @@ class BookRequest(SQLModel, table=True):
     donation_year: int | None = None
     donation_pages: int | None = None
     donation_cover_url: str | None = None  # Cover image URL for donation requests
+    donation_category_id: int | None = None  # Category for donation requests
+    donation_condition: str | None = None  # Condition: excellent, good, fair
+    donation_description: str | None = None  # Additional description
     
     # Relationships
     member_id: int = Field(foreign_key="user.id")
