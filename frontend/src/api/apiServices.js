@@ -160,23 +160,15 @@ const apiServices = {
     uploadProfileImage: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await apiClient.post('/users/me/upload-profile-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await apiClient.post('/users/me/upload-profile-image', formData);
       return response.data;
     },
     uploadCoverImage: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await apiClient.post('/users/me/upload-cover-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await apiClient.post('/users/me/upload-cover-image', formData);
       return response.data;
-    }
+    },
   },
 
   admin: {

@@ -96,7 +96,7 @@ def list_books(
             total_copies=len(book.copies),
             available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
             times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
-            created_at=None  # TODO: Add created_at to Book model
+            created_at=book.created_at
         )
         for book in books
     ]
@@ -138,7 +138,7 @@ def search_books(
             total_copies=len(book.copies),
             available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
             times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
-            created_at=None  # TODO: Add created_at to Book model
+            created_at=book.created_at
         )
         for book in books
     ]
@@ -182,7 +182,7 @@ def get_book_details(
         total_copies=len(book.copies),
         available_copies=available_copies,
         times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
-        created_at=None,  # TODO: Add created_at to Book model
+        created_at=book.created_at,
         reserved_copies=reserved_copies,
         issued_copies=issued_copies,
         damaged_copies=damaged_copies,
@@ -281,7 +281,7 @@ def create_book(
         total_copies=len(book.copies),
         available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
         times_borrowed=0,
-        created_at=None
+        created_at=book.created_at
     )
 
 
@@ -392,7 +392,7 @@ def update_book(
         total_copies=len(book.copies),
         available_copies=len([c for c in book.copies if c.status == bookStatus.AVAILABLE]),
         times_borrowed=len([ib for c in book.copies for ib in c.issue_books]),
-        created_at=None
+        created_at=book.created_at
     )
 
 

@@ -95,6 +95,35 @@ def add_missing_columns():
         else:
             print("bio column already exists.")
 
+        # Check and add donation_cover_url
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'bookrequest' AND column_name = 'donation_cover_url'
+        """))
+        if not result.fetchone():
+            conn.execute(text("""
+                ALTER TABLE bookrequest ADD COLUMN donation_cover_url TEXT NULL
+            """))
+            print("Added donation_cover_url column to bookrequest table.")
+        else:
+            print("donation_cover_url column already exists.")
+
+        # Check and add created_at to book table (used for sorting)
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'book' AND column_name = 'created_at'
+        """))
+        if not result.fetchone():
+            # Add created_at with default NOW() so existing rows get a timestamp
+            conn.execute(text("""
+                ALTER TABLE book ADD COLUMN created_at TIMESTAMP NULL DEFAULT NOW()
+            """))
+            print("Added created_at column to book table.")
+        else:
+            print("created_at column already exists on book table.")
+
         conn.commit()
 
 if __name__ == "__main__":

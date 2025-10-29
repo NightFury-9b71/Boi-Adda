@@ -29,6 +29,7 @@ except Exception as e:
 # Storage buckets
 BOOK_COVERS_BUCKET = "book-covers"
 USER_PROFILES_BUCKET = "profile-pictures"
+DONATION_COVERS_BUCKET = "donation-covers"
 
 # Allowed file extensions
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
@@ -81,6 +82,50 @@ async def upload_book_cover(file: UploadFile, book_id: int) -> str:
         # Reset file pointer
         await file.seek(0)
 
+async def upload_donation_cover(file: UploadFile, donation_id: int) -> str:
+    """
+    Upload a donation cover image to Supabase Storage
+    Returns the public URL of the uploaded image
+    """
+    if not SUPABASE_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="স্টোরেজ সেবা উপলব্ধ নেই। দয়া করে পরে চেষ্টা করুন।"
+        )
+    
+    if not validate_image_file(file.filename):
+        raise HTTPException(
+            status_code=400,
+            detail="ভুল ফাইল টাইপ। শুধুমাত্র ছবি আপলোড করুন (JPG, PNG, GIF)।"
+        )
+    
+    # Generate unique filename
+    ext = os.path.splitext(file.filename)[1]
+    file_path = f"donation_{donation_id}{ext}"
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Upload to Supabase Storage
+        response = supabase.storage.from_(DONATION_COVERS_BUCKET).upload(
+            path=file_path,
+            file=content,
+            file_options={"content-type": file.content_type, "upsert": "true"}
+        )
+        
+        # Get public URL
+        public_url = supabase.storage.from_(DONATION_COVERS_BUCKET).get_public_url(file_path)
+        
+        return public_url
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="দানের কভার আপলোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।")
+    finally:
+        # Reset file pointer
+        await file.seek(0)
+
+
 async def upload_profile_photo(file: UploadFile, user_id: int, user_type: str) -> str:
     """
     Upload a user profile photo to Supabase Storage
@@ -124,6 +169,7 @@ async def upload_profile_photo(file: UploadFile, user_id: int, user_type: str) -
     finally:
         # Reset file pointer
         await file.seek(0)
+
 
 def delete_book_cover(book_id: int):
     """Delete a book cover from Supabase Storage"""

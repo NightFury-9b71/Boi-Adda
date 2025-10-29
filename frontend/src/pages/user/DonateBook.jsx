@@ -63,7 +63,7 @@ const DonateBook = () => {
 
   // Create donation mutation
   const createDonationMutation = useMutation({
-    mutationFn: apiServices.donations.createDonationWithNewBook,
+    mutationFn: apiServices.donations.createDonation,
     onSuccess: () => {
       toast.success(t('donation.submitSuccess'));
       queryClient.invalidateQueries(['userDonations']);
@@ -73,7 +73,22 @@ const DonateBook = () => {
       setShowDonateModal(false);
     },
     onError: (error) => {
-      const errorMessage = error.response?.data?.detail || error.message || t('donation.submitError');
+      let errorMessage = t('donation.submitError');
+      
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          // FastAPI validation errors
+          errorMessage = detail.map(err => err.msg || err.message).join(', ');
+        } else if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (detail?.message) {
+          errorMessage = detail.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
     },
   });
@@ -141,14 +156,19 @@ const DonateBook = () => {
       toast.error(t('donation.authorRequired'));
       return false;
     }
-    if (!formData.pages || formData.pages < 1) {
+
+    const pagesNum = parseInt(formData.pages);
+    if (!formData.pages || isNaN(pagesNum) || pagesNum < 1) {
       toast.error(t('donation.pagesRequired'));
       return false;
     }
-    if (formData.published_year < 1000 || formData.published_year > new Date().getFullYear()) {
+
+    const yearNum = parseInt(formData.published_year);
+    if (!formData.published_year || isNaN(yearNum) || yearNum < 1000 || yearNum > new Date().getFullYear()) {
       toast.error(t('donation.yearRequired'));
       return false;
     }
+
     return true;
   };
 
@@ -163,23 +183,15 @@ const DonateBook = () => {
     if (!confirmed) return;
     
     try {
-      let donationData = {
-        user_id: user.id,
-        title: formData.title,
-        author: formData.author,
-        cover: formData.cover,
-        published_year: parseInt(formData.published_year),
-        pages: parseInt(formData.pages)
-      };
+      // Always send as FormData since backend expects form data
+      const donationData = new FormData();
+      donationData.append('title', formData.title);
+      donationData.append('author', formData.author);
+      donationData.append('published_year', formData.published_year.toString());
+      donationData.append('pages', formData.pages.toString());
       
-      if (formData.category_id && formData.category_id !== '') {
-        donationData.category_id = parseInt(formData.category_id);
-      } else {
-        donationData.category_id = null;
-      }
-      
-      if (useCustomImage && uploadedImage) {
-        donationData.cover = 'cover-1.jpg';
+      if (uploadedImage) {
+        donationData.append('cover_image', uploadedImage);
       }
       
       await createDonationMutation.mutateAsync(donationData);
@@ -512,7 +524,6 @@ const DonateBookModal = ({
                 onChange={handleInputChange}
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                 placeholder={t('donation.modal.bookTitlePlaceholder')}
-                required
               />
             </div>
             
@@ -527,7 +538,6 @@ const DonateBookModal = ({
                 onChange={handleInputChange}
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                 placeholder={t('donation.modal.authorPlaceholder')}
-                required
               />
             </div>
           </div>
@@ -564,7 +574,6 @@ const DonateBookModal = ({
                 min="1000"
                 max={new Date().getFullYear()}
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                required
               />
             </div>
             
@@ -580,7 +589,6 @@ const DonateBookModal = ({
                 min="1"
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                 placeholder={t('donation.modal.pageCountPlaceholder')}
-                required
               />
             </div>
           </div>
@@ -624,6 +632,10 @@ const DonateBookModal = ({
             <label className="block text-sm font-medium text-gray-700 mb-3">
               {t('donation.modal.uploadCover')}
             </label>
+            
+            <div className="mb-2 text-xs text-gray-600">
+              💡 {t('donation.modal.selectCover')} - The image will be processed when your donation is approved by an admin.
+            </div>
             
             <div className="flex flex-wrap gap-3 mb-4">
               <label className="cursor-pointer flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md">
@@ -694,7 +706,7 @@ const DonateBookModal = ({
                 ) : (
                   <img
                     src={`/book-covers/${formData.cover}`}
-                    alt="Selected cover"
+                    alt="Book cover"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src = '/vite.svg';

@@ -1,10 +1,11 @@
 from db import get_session
 from models import Book, User, BookRequest, requestType, requestStatus
 from sqlmodel import select, Session, SQLModel
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from datetime import datetime
 from auth import get_current_user
 from typing import Optional
+from storage import upload_donation_cover
 
 router = APIRouter()
 
@@ -23,6 +24,7 @@ class DonationResponse(SQLModel):
     donation_author: str
     donation_year: int
     donation_pages: int
+    donation_cover_url: Optional[str] = None
     status: requestStatus
     created_at: datetime
     reviewed_at: Optional[datetime] = None
@@ -34,8 +36,12 @@ class DonationWithBookCreate(SQLModel):
 
 # POST /donations - Create a new donation request
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_donation_request(
-    request_data: DonationCreate,
+async def create_donation_request(
+    title: str = Form(...),
+    author: str = Form(...),
+    published_year: int = Form(...),
+    pages: int = Form(...),
+    cover_image: UploadFile = File(None),
     current_user: dict = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -51,32 +57,75 @@ def create_donation_request(
         )
     
     # Validate donation data
-    if request_data.published_year < 1000 or request_data.published_year > datetime.now().year:
+    if published_year < 1000 or published_year > datetime.now().year:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid publication year"
         )
     
-    if request_data.pages <= 0:
+    if pages <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Pages must be greater than 0"
         )
     
-    # Create the donation request
-    donation_request = BookRequest(
-        request_type=requestType.DONATION,
-        member_id=member.id,
-        donation_title=request_data.title,
-        donation_author=request_data.author,
-        donation_year=request_data.published_year,
-        donation_pages=request_data.pages,
-        status=requestStatus.PENDING
-    )
-    
-    session.add(donation_request)
-    session.commit()
-    session.refresh(donation_request)
+    # Handle cover image upload
+    cover_url = None
+    if cover_image and cover_image.filename:
+        try:
+            # First create the donation to get the ID
+            temp_donation = BookRequest(
+                request_type=requestType.DONATION,
+                member_id=member.id,
+                donation_title=title,
+                donation_author=author,
+                donation_year=published_year,
+                donation_pages=pages,
+                status=requestStatus.PENDING
+            )
+            session.add(temp_donation)
+            session.commit()
+            session.refresh(temp_donation)
+            
+            # Upload cover image with the donation ID
+            cover_url = await upload_donation_cover(cover_image, temp_donation.id)
+            
+            # Update the donation with the cover URL
+            temp_donation.donation_cover_url = cover_url
+            session.add(temp_donation)
+            session.commit()
+            
+            donation_request = temp_donation
+        except Exception as e:
+            # If image upload fails, still create the donation without image
+            print(f"Failed to upload cover image: {e}")
+            donation_request = BookRequest(
+                request_type=requestType.DONATION,
+                member_id=member.id,
+                donation_title=title,
+                donation_author=author,
+                donation_year=published_year,
+                donation_pages=pages,
+                status=requestStatus.PENDING
+            )
+            session.add(donation_request)
+            session.commit()
+            session.refresh(donation_request)
+    else:
+        # Create the donation request without image
+        donation_request = BookRequest(
+            request_type=requestType.DONATION,
+            member_id=member.id,
+            donation_title=title,
+            donation_author=author,
+            donation_year=published_year,
+            donation_pages=pages,
+            status=requestStatus.PENDING
+        )
+        
+        session.add(donation_request)
+        session.commit()
+        session.refresh(donation_request)
     
     return DonationResponse(
         id=donation_request.id,
@@ -84,6 +133,7 @@ def create_donation_request(
         donation_author=donation_request.donation_author,
         donation_year=donation_request.donation_year,
         donation_pages=donation_request.donation_pages,
+        donation_cover_url=donation_request.donation_cover_url,
         status=donation_request.status,
         created_at=donation_request.created_at,
         reviewed_at=donation_request.reviewed_at
@@ -176,6 +226,7 @@ def get_my_donation_requests(
             donation_author=req.donation_author,
             donation_year=req.donation_year,
             donation_pages=req.donation_pages,
+            donation_cover_url=req.donation_cover_url,
             status=req.status,
             created_at=req.created_at,
             reviewed_at=req.reviewed_at

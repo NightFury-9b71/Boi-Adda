@@ -100,6 +100,7 @@ class Book(SQLModel, table=True):
     published_year: int
     pages: int
     cover_image_url: str | None = None  # Supabase Storage URL
+    created_at: datetime = Field(default_factory=datetime.now)
 
     category_id: int | None = Field(default=None, foreign_key="category.id")
     category: "Category" = Relationship(back_populates="books")
@@ -140,6 +141,7 @@ class BookRequest(SQLModel, table=True):
     donation_author: str | None = None
     donation_year: int | None = None
     donation_pages: int | None = None
+    donation_cover_url: str | None = None  # Cover image URL for donation requests
     
     # Relationships
     member_id: int = Field(foreign_key="user.id")
