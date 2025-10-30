@@ -1441,6 +1441,18 @@ export const en = {
     bookPlaceholder: 'Book',
     bookIdLabel: 'Book ID:',
     processing: 'Processing...',
+    setDueDate: 'Set Due Date',
+    selectReturnDate: 'Select Return Date',
+    dueDate: 'Due Date',
+    dueDateHelp: 'Select when the book should be returned. Default is 14 days from today.',
+    issuing: 'Issuing...',
+    selectDueDate: 'Please select a due date',
+    setDueDate: 'Set Due Date',
+    selectReturnDate: 'Select Return Date',
+    dueDate: 'Due Date',
+    dueDateHelp: 'Select when the book should be returned. Default is 14 days from today.',
+    issuing: 'Issuing...',
+    selectDueDate: 'Please select a due date',
     // Book Issue specific
     bookIssue: {
       title: 'Book Issue',

@@ -226,8 +226,9 @@ const apiServices = {
       const response = await apiClient.post(API_ENDPOINTS.ADMIN.REJECT_BORROW(borrowId), { reason });
       return response.data;
     },
-    handoverBook: async (borrowId) => {
-      const response = await apiClient.post(API_ENDPOINTS.ADMIN.HANDOVER_BOOK(borrowId));
+    handoverBook: async (borrowId, dueDate = null) => {
+      const payload = dueDate ? { due_date: dueDate } : {};
+      const response = await apiClient.post(API_ENDPOINTS.ADMIN.HANDOVER_BOOK(borrowId), payload);
       return response.data;
     },
     returnBook: async (borrowId) => {

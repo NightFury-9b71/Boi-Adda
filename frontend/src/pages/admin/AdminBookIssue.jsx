@@ -93,9 +93,9 @@ const IssueBook = () => {
     book.id.toString().includes(searchTerm)
   );
 
-  // Calculate return date (14 days from issue date)
+  // Calculate return date (14 days from issue date) - only if not manually set
   useEffect(() => {
-    if (issueDate) {
+    if (issueDate && !returnDate) {
       const date = new Date(issueDate);
       date.setDate(date.getDate() + 14);
       setReturnDate(date.toISOString().split('T')[0]);
@@ -118,6 +118,7 @@ const IssueBook = () => {
     const borrowData = {
       user_id: selectedMember.id,
       book_copy_id: selectedBookCopy.id,
+      due_date: returnDate ? new Date(returnDate + 'T23:59:59').toISOString() : null,
       notes: notes.trim() || undefined
     };
 

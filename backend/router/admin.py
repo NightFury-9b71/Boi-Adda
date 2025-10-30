@@ -18,6 +18,11 @@ router = APIRouter()
 class IssueBookCreate(SQLModel):
     user_id: int
     book_copy_id: int
+    due_date: Optional[datetime] = None
+
+
+class HandoverBookRequest(SQLModel):
+    due_date: Optional[datetime] = None
 
 
 class BorrowRequestResponse(SQLModel):
@@ -547,6 +552,7 @@ def approve_borrow_request(
 @router.post("/borrows/{borrow_id}/handover")
 def handover_book(
     borrow_id: int,
+    handover_data: Optional[HandoverBookRequest] = None,
     current_user: dict = Depends(require_admin),
     session: Session = Depends(get_session)
 ):
@@ -576,7 +582,11 @@ def handover_book(
     
     # Create issue record
     issue_date = datetime.now()
-    due_date = issue_date + timedelta(days=14)
+    # Use provided due_date or default to 14 days
+    if handover_data.due_date is None:
+        due_date = issue_date + timedelta(days=14)
+    else:
+        due_date = handover_data.due_date
     
     issue_book = IssueBook(
         member_id=request_obj.member_id,
@@ -1272,7 +1282,11 @@ def issue_book_directly(
     
     # Create issue record
     issue_date = datetime.now()
-    due_date = issue_date + timedelta(days=14)
+    # Use provided due_date or default to 14 days
+    if data.due_date is None:
+        due_date = issue_date + timedelta(days=14)
+    else:
+        due_date = data.due_date
     
     issue_book = IssueBook(
         member_id=data.user_id,

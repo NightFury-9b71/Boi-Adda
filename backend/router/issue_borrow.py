@@ -7,6 +7,7 @@ from sqlmodel import select, Session, SQLModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 from auth import require_admin
+from typing import Optional
 
 router = APIRouter()
 
@@ -14,6 +15,7 @@ router = APIRouter()
 # Request/Response Models
 class IssueBookCreate(SQLModel):
     request_id: int
+    due_date: Optional[datetime] = None
 
 
 class IssueBookResponse(SQLModel):
@@ -98,7 +100,11 @@ def issue_book_from_borrow_request(
     
     # Create IssueBook record
     issue_date = datetime.now()
-    due_date = issue_date + timedelta(days=14)  # 14 days borrowing period
+    # Use provided due_date or default to 14 days
+    if data.due_date is None:
+        due_date = issue_date + timedelta(days=14)
+    else:
+        due_date = data.due_date
     
     issue_book = IssueBook(
         member_id=borrow_request.member_id,

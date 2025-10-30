@@ -202,6 +202,8 @@ const AdminBorrowManagement = () => {
   const [rejectingBorrowId, setRejectingBorrowId] = useState(null);
   const [handoverBorrowId, setHandoverBorrowId] = useState(null);
   const [returningBorrowId, setReturningBorrowId] = useState(null);
+  const [showDueDateModal, setShowDueDateModal] = useState(false);
+  const [selectedDueDate, setSelectedDueDate] = useState('');
 
   // Fetch all borrows
   const { data: borrows = [], isLoading } = useQuery({
@@ -241,11 +243,13 @@ const AdminBorrowManagement = () => {
 
   // Handover book (step 2) mutation  
   const handoverBookMutation = useMutation({
-    mutationFn: (borrowId) => apiServices.admin.handoverBook(borrowId),
+    mutationFn: ({ borrowId, dueDate }) => apiServices.admin.handoverBook(borrowId, dueDate),
     onSuccess: () => {
       toast.success(t('messages.bookBorrowed'));
       queryClient.invalidateQueries(['admin', 'borrows']);
       setHandoverBorrowId(null);
+      setShowDueDateModal(false);
+      setSelectedDueDate('');
     },
     onError: (error) => {
       toast.error(t('messages.operationFailed') + ': ' + (error?.response?.data?.detail || t('messages.networkError')));
@@ -383,14 +387,33 @@ const AdminBorrowManagement = () => {
   };
 
   const handleHandover = async (borrowId) => {
+    // Set default due date to 14 days from now
+    const defaultDueDate = new Date();
+    defaultDueDate.setDate(defaultDueDate.getDate() + 14);
+    setSelectedDueDate(defaultDueDate.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+    setHandoverBorrowId(borrowId);
+    setShowDueDateModal(true);
+  };
+
+  const confirmHandoverWithDueDate = async () => {
+    if (!selectedDueDate) {
+      toast.error(t('messages.selectDueDate'));
+      return;
+    }
+
+    // Convert date string to full datetime string for backend
+    const dueDateTime = new Date(selectedDueDate + 'T23:59:59').toISOString();
+
     const confirmed = await confirmSubmit(
       t('admin.issueBook'),
-      t('messages.confirmDelete')
+      `${t('messages.confirmDelete')} ${t('admin.dueDate')}: ${new Date(selectedDueDate).toLocaleDateString('bn-BD')}`
     );
     
     if (confirmed) {
-      setHandoverBorrowId(borrowId);
-      handoverBookMutation.mutate(borrowId);
+      handoverBookMutation.mutate({ 
+        borrowId: handoverBorrowId, 
+        dueDate: dueDateTime 
+      });
     }
   };
 
@@ -800,6 +823,80 @@ const AdminBorrowManagement = () => {
           userBorrows={userBorrows}
           userDonations={userDonations}
         />
+      )}
+
+      {/* Due Date Selection Modal */}
+      {showDueDateModal && (
+        <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('admin.setDueDate')}</h2>
+                  <p className="text-gray-600">{t('admin.selectReturnDate')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDueDateModal(false);
+                    setHandoverBorrowId(null);
+                    setSelectedDueDate('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('admin.dueDate')}
+                </label>
+                <input
+                  type="date"
+                  value={selectedDueDate}
+                  onChange={(e) => setSelectedDueDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {t('admin.dueDateHelp')}
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDueDateModal(false);
+                    setHandoverBorrowId(null);
+                    setSelectedDueDate('');
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={confirmHandoverWithDueDate}
+                  disabled={handoverBookMutation.isPending}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {handoverBookMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {t('admin.issuing')}
+                    </>
+                  ) : (
+                    <>
+                      <HandMetal className="h-4 w-4 mr-2" />
+                      {t('admin.issueBook')}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
