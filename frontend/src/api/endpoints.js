@@ -80,6 +80,7 @@ const API_ENDPOINTS = {
     REJECT_DONATION: (donationId) => `/admin/donations/${donationId}/reject`,
     USER_BORROWS: (userId) => `/admin/borrows/user/${userId}`,
     USER_DONATIONS: (userId) => `/admin/donations/user/${userId}`,
+    RESET_USER_CREDENTIALS: (userId) => `/admin/users/${userId}/reset-credentials`,
   },
 };
 

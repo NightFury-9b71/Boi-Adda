@@ -45,6 +45,8 @@ const AdminUserManagement = () => {
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [updatingStatusUserId, setUpdatingStatusUserId] = useState(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState(null);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [selectedUserForRegenerate, setSelectedUserForRegenerate] = useState(null);
 
   // Fetch all users
   const { data: users = [], isLoading } = useQuery({
@@ -127,6 +129,22 @@ const AdminUserManagement = () => {
       } else {
         toast.error(`❌ ব্যবহারকারী মুছতে সমস্যা হয়েছে: ${errorDetail}`);
       }
+    }
+  });
+
+  // Reset user credentials mutation
+  const resetUserCredentialsMutation = useMutation({
+    mutationFn: ({ userId, credentials }) => apiServices.admin.resetUserCredentials(userId, credentials),
+    onSuccess: () => {
+      toast.success('ব্যবহারকারীর ক্রেডেনশিয়ালস সফলভাবে রিসেট করা হয়েছে');
+      queryClient.invalidateQueries(['admin', 'users']);
+      setShowRegenerateModal(false);
+      setSelectedUserForRegenerate(null);
+    },
+    onError: (error) => {
+      console.error('Reset credentials error:', error);
+      const errorMessage = error?.response?.data?.detail || error?.message || 'ক্রেডেনশিয়ালস রিসেট করতে সমস্যা হয়েছে';
+      toast.error('ক্রেডেনশিয়ালস রিসেট করতে সমস্যা হয়েছে: ' + errorMessage);
     }
   });
 
@@ -257,9 +275,6 @@ const AdminUserManagement = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">{t('admin.userManagement.totalUsers')}</p>
               <p className="text-3xl font-bold text-gray-900">{users.length}</p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="h-6 w-6 text-blue-600" />
             </div>
           </div>
         </div>
@@ -469,6 +484,16 @@ const AdminUserManagement = () => {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
+                          onClick={() => {
+                            setSelectedUserForRegenerate(user);
+                            setShowRegenerateModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 p-1 rounded transition-colors"
+                          title="পাসওয়ার্ড রিসেট করুন"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteUser(user.id, user.name)}
                           disabled={deletingUserId === user.id}
                           className="text-red-600 hover:text-red-700 p-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
@@ -518,6 +543,18 @@ const AdminUserManagement = () => {
           }}
         />
       )}
+
+      {/* Regenerate Credentials Modal */}
+      {showRegenerateModal && selectedUserForRegenerate && (
+        <RegenerateModal
+          user={selectedUserForRegenerate}
+          resetMutation={resetUserCredentialsMutation}
+          onClose={() => {
+            setShowRegenerateModal(false);
+            setSelectedUserForRegenerate(null);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -536,7 +573,10 @@ const UserDetailsModal = ({ user, onClose }) => {
     retry: 1,
     onError: (error) => {
       console.error('User stats query error:', error);
-      toast.error(t('admin.userManagement.dataLoadError'));
+      // Don't show toast for 404 errors as the endpoint might not exist
+      if (error?.response?.status !== 404) {
+        toast.error(t('admin.userManagement.dataLoadError'));
+      }
     },
     onSuccess: (data) => {
       toast.info('User stats loaded successfully');
@@ -666,7 +706,7 @@ const UserDetailsModal = ({ user, onClose }) => {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.userManagement.activitySummary')}</h3>
             
-            {statsError && (
+            {statsError && statsError?.response?.status !== 404 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                 <p className="text-red-700 text-sm">
                   ডেটা লোড করতে সমস্যা হয়েছে: {statsError?.response?.data?.detail || statsError.message}
@@ -677,7 +717,16 @@ const UserDetailsModal = ({ user, onClose }) => {
               </div>
             )}
             
-            {statsLoading ? (
+            {statsError && statsError?.response?.status === 404 ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-blue-700 text-sm">
+                  ব্যবহারকারীর কার্যক্রমের পরিসংখ্যান এখনও উপলব্ধ নয়।
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  এই বৈশিষ্ট্যটি শীঘ্রই যোগ করা হবে।
+                </p>
+              </div>
+            ) : statsLoading ? (
               <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="text-center p-4 bg-gray-50 rounded-lg animate-pulse">
@@ -695,9 +744,6 @@ const UserDetailsModal = ({ user, onClose }) => {
                     {userStats?.borrow_activity?.total || 0}
                   </p>
                   <p className="text-sm text-gray-600">{t('admin.userManagement.totalBorrows')}</p>
-                  {/* <p className="text-xs text-gray-500 mt-1">
-                    (API: {statsError ? 'Error' : userStats ? `Borrows: ${JSON.stringify(userStats.borrow_activity)}` : 'No Data'})
-                  </p> */}
                 </div>
                 
                 <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -706,9 +752,6 @@ const UserDetailsModal = ({ user, onClose }) => {
                     {userStats?.donation_activity?.total || 0}
                   </p>
                   <p className="text-sm text-gray-600">{t('admin.userManagement.totalDonations')}</p>
-                  {/* <p className="text-xs text-gray-500 mt-1">
-                    (API: {statsError ? 'Error' : userStats ? `Donations: ${JSON.stringify(userStats.donation_activity)}` : 'No Data'})
-                  </p> */}
                 </div>
                 
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
@@ -717,15 +760,12 @@ const UserDetailsModal = ({ user, onClose }) => {
                     {userStats?.borrow_activity?.active || 0}
                   </p>
                   <p className="text-sm text-gray-600">{t('admin.userManagement.activeBorrows')}</p>
-                  {/* <p className="text-xs text-gray-500 mt-1">
-                    (API: {statsError ? 'Error' : userStats ? `Active: ${userStats.borrow_activity?.active || 0}` : 'No Data'})
-                  </p> */}
                 </div>
               </div>
             )}
             
             {/* Detailed breakdown */}
-            {!statsLoading && userStats && (
+            {!statsLoading && !statsError && userStats && (
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <h4 className="font-medium text-gray-700 mb-2">{t('admin.userManagement.borrowDetails')}</h4>
@@ -918,6 +958,132 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
             >
               {createUserMutation.isPending ? t('admin.userManagement.creating') : t('admin.userManagement.create')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Regenerate Credentials Modal Component
+const RegenerateModal = ({ user, resetMutation, onClose }) => {
+  const { t } = useTranslation();
+  const [formData, setFormData] = useState({
+    email: user.email,
+    password: ''
+  });
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let result = '';
+    for (let i = 0; i < 12; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const handleRegeneratePassword = () => {
+    const newPassword = generateRandomPassword();
+    setFormData(prev => ({
+      ...prev,
+      password: newPassword
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!formData.email.trim() || !formData.password.trim()) {
+      toast.error('ইমেইল এবং পাসওয়ার্ড উভয়ই প্রয়োজন');
+      return;
+    }
+
+    resetMutation.mutate({
+      userId: user.id,
+      credentials: {
+        email: formData.email,
+        password: formData.password
+      }
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl max-w-md w-full">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-900">ক্রেডেনশিয়ালস রিসেট করুন</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              ইমেইল *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              পাসওয়ার্ড *
+            </label>
+            <div className="flex space-x-2">
+              <PasswordInput
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="flex-1 px-3 py-2"
+                placeholder="পাসওয়ার্ড লিখুন"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={handleRegeneratePassword}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                title="র‍্যান্ডম পাসওয়ার্ড তৈরি করুন"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              বাতিল
+            </button>
+            <button
+              type="submit"
+              disabled={resetMutation.isPending}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {resetMutation.isPending ? 'রিসেট হচ্ছে...' : 'রিসেট করুন'}
             </button>
           </div>
         </form>

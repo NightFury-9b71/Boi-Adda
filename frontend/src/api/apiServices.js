@@ -273,6 +273,10 @@ const apiServices = {
       const response = await apiClient.get(`/admin/users/${userId}/stats`);
       return response.data;
     },
+    resetUserCredentials: async (userId, credentials) => {
+      const response = await apiClient.put(`/admin/users/${userId}/reset-credentials`, credentials);
+      return response.data;
+    },
     getTrendsData: async () => {
       const response = await apiClient.get(API_ENDPOINTS.ADMIN.STATS_TRENDS);
       return response.data;

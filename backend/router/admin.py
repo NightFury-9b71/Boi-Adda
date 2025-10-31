@@ -1004,64 +1004,51 @@ def get_all_users(
     return users
 
 
-@router.get("/users/{user_id}/stats")
-def get_specific_user_stats(
+class ResetUserCredentialsRequest(SQLModel):
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+
+@router.put("/users/{user_id}/reset-credentials")
+def reset_user_credentials(
     user_id: int,
+    request: ResetUserCredentialsRequest,
     current_user: dict = Depends(require_admin),
     session: Session = Depends(get_session)
 ):
-    """Get specific user activity statistics"""
-    member = session.get(User, user_id)
-    
-    if not member:
+    """Reset user email and/or password by admin"""
+    # Find user
+    user = session.get(User, user_id)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
     
-    # Get user's borrow statistics
-    user_borrows = session.exec(
-        select(BookRequest).where(
-            BookRequest.member_id == user_id,
-            BookRequest.request_type == requestType.BORROW
-        )
-    ).all()
+    # Check if email is being changed and if it's already taken
+    if request.email and request.email != user.email:
+        existing_user = session.exec(select(User).where(User.email == request.email)).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already taken by another user"
+            )
+        user.email = request.email
     
-    # Get user's donation statistics
-    user_donations = session.exec(
-        select(BookRequest).where(
-            BookRequest.member_id == user_id,
-            BookRequest.request_type == requestType.DONATION
-        )
-    ).all()
+    # Update password if provided
+    if request.password:
+        from auth_utils import get_password_hash
+        user.password_hash = get_password_hash(request.password)
     
-    # Get active issues
-    active_issues = session.exec(
-        select(IssueBook).where(
-            IssueBook.member_id == user_id,
-            IssueBook.return_date.is_(None)
-        )
-    ).all()
+    session.add(user)
+    session.commit()
+    session.refresh(user)
     
     return {
+        "message": "User credentials updated successfully",
         "user_id": user_id,
-        "user_name": member.name,
-        "user_email": member.email,
-        "borrow_activity": {
-            "total": len(user_borrows),
-            "pending": len([b for b in user_borrows if b.status == requestStatus.PENDING]),
-            "approved": len([b for b in user_borrows if b.status == requestStatus.APPROVED]),
-            "collected": len([b for b in user_borrows if b.status == requestStatus.COLLECTED]),
-            "rejected": len([b for b in user_borrows if b.status == requestStatus.REJECTED])
-        },
-        "donation_activity": {
-            "total": len(user_donations),
-            "pending": len([d for d in user_donations if d.status == requestStatus.PENDING]),
-            "approved": len([d for d in user_donations if d.status == requestStatus.APPROVED]),
-            "completed": len([d for d in user_donations if d.status == requestStatus.COMPLETED]),
-            "rejected": len([d for d in user_donations if d.status == requestStatus.REJECTED])
-        },
-        "current_active_borrows": len(active_issues)
+        "email_updated": request.email is not None,
+        "password_updated": request.password is not None
     }
 
 
