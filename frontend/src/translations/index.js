@@ -68,7 +68,8 @@ export const bn = {
   // User Roles
   roles: {
     admin: 'প্রশাসক',
-    member: 'সদস্য'
+    member: 'সদস্য',
+    undefined: 'অজানা'
   },
 
   // Book status
@@ -498,9 +499,9 @@ export const bn = {
       instruction2: 'সঠিক ও সম্পূর্ণ তথ্য প্রদান করছেন',
       instruction3: 'বইটি শিক্ষামূলক বা উপকারী বিষয়ের',
       bookTitle: 'বইয়ের নাম *',
-      bookTitlePlaceholder: 'যেমন: আমার দেখা নয়াচীন',
+      bookTitlePlaceholder: 'যেমন: ফাতাওয়া শাহ আহমদ শফী',
       authorName: 'লেখকের নাম *',
-      authorPlaceholder: 'যেমন: বঙ্গবন্ধু শেখ মুজিবুর রহমান',
+      authorPlaceholder: 'যেমন: আল্লামা শাহ আহমদ শফী',
       category: 'বিভাগ',
       selectCategory: 'নির্বাচন করুন',
       publishYear: 'প্রকাশনা বছর *',
@@ -560,9 +561,47 @@ export const bn = {
     handoverButton: 'বই হস্তান্তর করুন',
     returnButton: 'বই ফেরত গ্রহণ করুন',
     rejecting: 'প্রত্যাখ্যান হচ্ছে...',
-    bookPlaceholder: 'বই',
-    bookIdLabel: 'বই ID:',
-    processing: 'প্রক্রিয়াকরণ...',
+    // Book Issue specific
+    bookIssue: {
+      title: 'বই ইস্যু',
+      subtitle: 'সদস্যদের জন্য বই ইস্যু করুন',
+      stats: {
+        activeMembers: 'সক্রিয় সদস্য',
+        availableBooks: 'উপলব্ধ বই',
+        totalCopies: 'মোট কপি'
+      },
+      selectBook: 'বই নির্বাচন করুন',
+      searchBookPlaceholder: 'বইয়ের নাম দিয়ে খুঁজুন...',
+      availableCopies: 'উপলব্ধ কপি',
+      loadingBooks: 'বই লোড হচ্ছে...',
+      available: 'উপলব্ধ',
+      noBooksFound: 'কোন বই পাওয়া যায়নি',
+      noAvailableBooks: 'কোন উপলব্ধ বই নেই',
+      selectMember: 'সদস্য নির্বাচন করুন',
+      searchMemberPlaceholder: 'সদস্যের নাম বা ইমেইল দিয়ে খুঁজুন...',
+      loadingMembers: 'সদস্য লোড হচ্ছে...',
+      noMembersFound: 'কোন সদস্য পাওয়া যায়নি',
+      noActiveMembers: 'কোন সক্রিয় সদস্য নেই',
+      issueDetails: 'ইস্যু বিবরণ',
+      selectedBook: 'নির্বাচিত বই',
+      selectedMember: 'নির্বাচিত সদস্য',
+      issueDate: 'ইস্যু তারিখ',
+      returnDate: 'ফেরতের তারিখ',
+      notes: 'নোট',
+      optional: 'ঐচ্ছিক',
+      notesPlaceholder: 'অতিরিক্ত নোট...',
+      issueBook: 'বই ইস্যু করুন',
+      processing: 'প্রক্রিয়াকরণ...',
+      noAvailableCopies: 'কোন কপি উপলব্ধ নেই',
+      success: 'বই সফলভাবে ইস্যু করা হয়েছে',
+      error: 'বই ইস্যু করতে ব্যর্থ হয়েছে',
+      selectBookAndMember: 'দয়া করে বই এবং সদস্য উভয়ই নির্বাচন করুন'
+    },
+    // Book Management specific
+    bookManagementPlaceholders: {
+      bookTitlePlaceholder: 'যেমন: হ্যারি পটার এন্ড দ্য ফিলোসফার্স স্টোন',
+      authorPlaceholder: 'যেমন: জে.কে. রাউলিং'
+    },
     // Statistics specific
     statistics: {
       loading: 'লোড হচ্ছে...',
@@ -939,7 +978,8 @@ export const en = {
   // User Roles
   roles: {
     admin: 'Administrator',
-    member: 'Member'
+    member: 'Member',
+    undefined: 'Unknown'
   },
 
   // Book status
@@ -1376,9 +1416,9 @@ export const en = {
       instruction2: 'You are providing correct and complete information',
       instruction3: 'The book is educational or beneficial',
       bookTitle: 'Book Title *',
-      bookTitlePlaceholder: 'Example: My China Visit',
+      bookTitlePlaceholder: 'Example: Fatwa Shah Ahmad Shafi',
       authorName: 'Author Name *',
-      authorPlaceholder: 'Example: Bangabandhu Sheikh Mujibur Rahman',
+      authorPlaceholder: 'Example: Allama Shah Ahmad Shafi',
       category: 'Category',
       selectCategory: 'Select',
       publishYear: 'Publication Year *',
@@ -1488,6 +1528,11 @@ export const en = {
       success: 'Book issued successfully',
       error: 'Failed to issue book',
       selectBookAndMember: 'Please select both book and member'
+    },
+    // Book Management specific
+    bookManagementPlaceholders: {
+      bookTitlePlaceholder: 'Example: Harry Potter and the Philosopher\'s Stone',
+      authorPlaceholder: 'Example: J.K. Rowling'
     },
     // Statistics specific
     statistics: {

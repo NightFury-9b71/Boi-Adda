@@ -52,7 +52,7 @@ const SidebarMobile = ({ isOpen, onClose }) => {
   };
 
   const getRoleText = (role) => {
-    return t(`roles.${role}`);
+    return t(`roles.${role || 'member'}`);
   };
 
   return (
@@ -153,7 +153,7 @@ const Sidebar = () => {
   const adminItems = AdminItems();
 
   const getRoleText = (role) => {
-    return t(`roles.${role}`);
+    return t(`roles.${role || 'member'}`);
   };
 
   return (

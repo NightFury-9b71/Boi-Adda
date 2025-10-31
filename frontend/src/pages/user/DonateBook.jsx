@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   BookOpen, 
   Heart, 
-  Plus, 
   CheckCircle, 
   Clock, 
   AlertCircle,
