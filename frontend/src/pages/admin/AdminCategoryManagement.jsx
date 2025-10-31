@@ -12,7 +12,8 @@ import {
   Eye,
   X,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  BookOpen
 } from 'lucide-react';
 import { apiServices } from '../../api';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -30,9 +31,16 @@ const AdminCategoryManagement = () => {
   const [updatingCategoryId, setUpdatingCategoryId] = useState(null);
 
   // Fetch all categories
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: apiServices.categories.getCategories,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch all books to count books per category
+  const { data: books = [], isLoading: booksLoading } = useQuery({
+    queryKey: ['books'],
+    queryFn: () => apiServices.books.getBooks(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -85,11 +93,10 @@ const AdminCategoryManagement = () => {
     }
   });
 
-  // Filter categories based on search
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Count books per category
+  const getBooksCountForCategory = (categoryId) => {
+    return books.filter(book => book.category_id === categoryId).length;
+  };
 
   const handleCreateCategory = (categoryData) => {
     createCategoryMutation.mutate(categoryData);
@@ -115,7 +122,13 @@ const AdminCategoryManagement = () => {
     }
   };
 
-  if (isLoading) {
+  // Filter categories based on search
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  if (categoriesLoading || booksLoading) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
@@ -144,7 +157,7 @@ const AdminCategoryManagement = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
@@ -160,11 +173,25 @@ const AdminCategoryManagement = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">সক্রিয় ক্যাটেগরি</p>
-              <p className="text-3xl font-bold text-green-900">{categories.length}</p>
+              <p className="text-sm font-medium text-gray-600">মোট বই</p>
+              <p className="text-3xl font-bold text-green-900">{books.length}</p>
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Eye className="h-6 w-6 text-green-600" />
+              <BookOpen className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">সক্রিয় ক্যাটেগরি</p>
+              <p className="text-3xl font-bold text-blue-900">
+                {categories.filter(cat => getBooksCountForCategory(cat.id) > 0).length}
+              </p>
+            </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Eye className="h-6 w-6 text-blue-600" />
             </div>
           </div>
         </div>
@@ -174,7 +201,7 @@ const AdminCategoryManagement = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">খালি ক্যাটেগরি</p>
               <p className="text-3xl font-bold text-orange-900">
-                {categories.filter(cat => !cat.description || cat.description.trim() === '').length}
+                {categories.filter(cat => getBooksCountForCategory(cat.id) === 0).length}
               </p>
             </div>
             <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -215,7 +242,7 @@ const AdminCategoryManagement = () => {
                   বিবরণ
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  আইডি
+                  বইয়ের সংখ্যা
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   কার্যক্রম
@@ -241,7 +268,9 @@ const AdminCategoryManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {category.id}
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {getBooksCountForCategory(category.id)} টি বই
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
