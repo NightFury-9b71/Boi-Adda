@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BookOpen, User, HistoryIcon, X, Home, Gift, BookMarked, LogOut, BarChart3, Users, HeartHandshake, Library, TrendingUp, BookA } from 'lucide-react';
+import { BookOpen, User, HistoryIcon, X, Home, Gift, BookMarked, LogOut, BarChart3, Users, HeartHandshake, Library, TrendingUp, BookA, Tag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -23,6 +23,7 @@ const AdminItems = () => {
     { path: '/admin/dashboard', label: t('nav.admin.dashboard'), icon: BarChart3 },
     { path: '/admin/statistics', label: t('nav.admin.statistics'), icon: TrendingUp },
     { path: '/admin/users', label: t('nav.admin.users'), icon: Users },
+    { path: '/admin/categories', label: t('nav.admin.categories'), icon: Tag },
     { path: '/admin/issue', label: t('nav.admin.issue'), icon: BookA },
     { path: '/admin/borrows', label: t('nav.admin.borrows'), icon: BookMarked },
     { path: '/admin/donations', label: t('nav.admin.donations'), icon: HeartHandshake },

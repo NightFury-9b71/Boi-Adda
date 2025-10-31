@@ -31,7 +31,8 @@ import {
   AdminDonationManagement,
   AdminBookManagement,
   AdminBookIssue,
-  AdminStatistics
+  AdminStatistics,
+  AdminCategoryManagement
 } from '../pages/admin';
 
 const AppRoutes = () => {
@@ -77,6 +78,7 @@ const AppRoutes = () => {
         <Route path="books" element={<AdminBookManagement />} />
         <Route path="statistics" element={<AdminStatistics />} />
         <Route path="issue" element={<AdminBookIssue />} />
+        <Route path="categories" element={<AdminCategoryManagement />} />
       </Route>
 
       {/* 404 Not Found */}
