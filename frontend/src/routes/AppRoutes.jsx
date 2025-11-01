@@ -9,6 +9,9 @@ import { PublicLayout, ProtectedLayout, AdminLayout } from '../layouts/Layout';
 import LandingPage from '../pages/LandingPage';
 import NotFound from '../pages/NotFound';
 import DeveloperPage from '../pages/DeveloperPage';
+import VerifyEmailPage from '../pages/VerifyEmailPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
 
 import Book from '../components/book';
 
@@ -44,6 +47,18 @@ const AppRoutes = () => {
       <Route 
         path="/login" 
         element={!isAuthenticated ? <LandingPage /> : <Navigate to="/dashboard" replace />} 
+      />
+      <Route 
+        path="/verify-email" 
+        element={!isAuthenticated ? <VerifyEmailPage /> : <Navigate to="/dashboard" replace />} 
+      />
+      <Route 
+        path="/forgot-password" 
+        element={!isAuthenticated ? <ForgotPasswordPage /> : <Navigate to="/dashboard" replace />} 
+      />
+      <Route 
+        path="/reset-password" 
+        element={!isAuthenticated ? <ResetPasswordPage /> : <Navigate to="/dashboard" replace />} 
       />
 
       {/* Unauthorized access routes */}

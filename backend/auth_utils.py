@@ -74,3 +74,42 @@ def generate_verification_code() -> str:
     """Generate a 6-digit verification code"""
     import random
     return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+
+def create_verification_token(email: str, token_type: str = "verify") -> str:
+    """
+    Create a JWT token for email verification or password reset
+    
+    Args:
+        email: User's email address
+        token_type: Type of token ("verify" or "reset")
+    
+    Returns:
+        JWT token string
+    """
+    data = {
+        "email": email,
+        "type": token_type,
+        "exp": datetime.utcnow() + timedelta(hours=1)  # Valid for 1 hour
+    }
+    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_verification_token(token: str, token_type: str = "verify") -> Optional[str]:
+    """
+    Verify a verification/reset token and return the email
+    
+    Args:
+        token: JWT token to verify
+        token_type: Expected type of token ("verify" or "reset")
+    
+    Returns:
+        Email address if valid, None otherwise
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != token_type:
+            return None
+        return payload.get("email")
+    except JWTError:
+        return None

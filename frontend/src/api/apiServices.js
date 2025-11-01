@@ -23,8 +23,27 @@ const apiServices = {
       const response = await apiClient.post(API_ENDPOINTS.AUTH.VERIFY_EMAIL, data);
       return response.data;
     },
-    resendVerification: async (data) => {
-      const response = await apiClient.post(API_ENDPOINTS.AUTH.RESEND_VERIFICATION, data);
+    verifyByLink: async (token) => {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.VERIFY_BY_LINK, { token });
+      return response.data;
+    },
+    resendVerification: async (email) => {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.RESEND_VERIFICATION, { email });
+      return response.data;
+    },
+    forgotPassword: async (email) => {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+      return response.data;
+    },
+    resetPassword: async (data) => {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
+      return response.data;
+    },
+    resetPasswordByLink: async (token, newPassword) => {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD_BY_LINK, { 
+        token, 
+        new_password: newPassword 
+      });
       return response.data;
     },
     getCurrentUser: async () => {

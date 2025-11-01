@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -14,7 +14,17 @@ from auth_utils import (
     create_access_token,
     create_refresh_token,
     verify_token,
-    generate_verification_code
+    generate_verification_code,
+    create_verification_token,
+    verify_verification_token
+)
+from email_service import (
+    send_verification_email_with_otp,
+    send_verification_email_with_link,
+    send_password_reset_email_with_otp,
+    send_password_reset_email_with_link,
+    send_both_verification_methods,
+    send_both_password_reset_methods
 )
 
 router = APIRouter()
@@ -134,18 +144,35 @@ async def require_member_or_admin(current_user: User = Depends(get_current_user)
 
 
 @router.post("/signup", response_model=MessageResponse)
-async def sign_up(request: SignUpRequest, session: Session = Depends(get_session)):
+async def sign_up(request: SignUpRequest, session: Session = Depends(get_session), background_tasks: BackgroundTasks = BackgroundTasks()):
     """
     Register a new user with email and password.
     By default, users are created with MEMBER role unless specified.
-    A verification code will be sent (in production, this would be via email).
+    Sends verification email with both OTP and magic link.
     """
     try:
         # Check if user already exists
         existing_user = session.exec(select(User).where(User.email == request.email)).first()
         if existing_user:
-            # Since we auto-verify users now, all existing users should be verified
-            raise HTTPException(status_code=400, detail="এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে। লগইন করুন।")
+            if existing_user.is_verified:
+                raise HTTPException(status_code=400, detail="এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে। লগইন করুন।")
+            else:
+                # User exists but not verified, resend verification
+                verification_code = generate_verification_code()
+                verification_token = create_verification_token(request.email, "verify")
+                
+                existing_user.verification_code = verification_code
+                existing_user.verification_code_expires = datetime.now() + timedelta(hours=1)
+                session.add(existing_user)
+                session.commit()
+                
+                # Send both OTP and magic link
+                await send_verification_email_with_otp(request.email, verification_code, background_tasks)
+                await send_verification_email_with_link(request.email, verification_token, background_tasks)
+                
+                return MessageResponse(
+                    message="আপনার ইমেইল এখনও যাচাই হয়নি। যাচাইকরণ ইমেইল পুনরায় পাঠানো হয়েছে।"
+                )
         
         # Get role from database
         role = session.exec(select(Role).where(Role.name == request.role)).first()
@@ -159,31 +186,39 @@ async def sign_up(request: SignUpRequest, session: Session = Depends(get_session
         # Hash password
         password_hash = get_password_hash(request.password)
         
-        # Create new user (automatically verified)
+        # Generate verification code and token
+        verification_code = generate_verification_code()
+        verification_token = create_verification_token(request.email, "verify")
+        
+        # Create new user (NOT auto-verified)
         new_user = User(
             name=request.name,
             email=request.email,
             password_hash=password_hash,
             role_id=role.id,
-            is_verified=True,  # Auto-verify users
-            is_active=True,  # New users are active by default
-            verification_code=None,  # No verification code needed
-            verification_code_expires=None  # No expiration needed
+            is_verified=False,  # User must verify email
+            is_active=True,
+            verification_code=verification_code,
+            verification_code_expires=datetime.now() + timedelta(hours=1)
         )
         
         session.add(new_user)
         session.commit()
         
-        # User is automatically verified - no email verification needed
-        print(f"User registered and verified successfully: {request.email}")
+        # Send both OTP and magic link verification emails
+        await send_verification_email_with_otp(request.email, verification_code, background_tasks)
+        await send_verification_email_with_link(request.email, verification_token, background_tasks)
+        
+        print(f"User registered: {request.email}, OTP: {verification_code}")
         
         return MessageResponse(
-            message="রেজিস্ট্রেশন সফল! এখন লগইন করুন।"
+            message="রেজিস্ট্রেশন সফল! আপনার ইমেইল চেক করে যাচাই করুন।"
         )
     except HTTPException:
         raise
     except Exception as e:
         session.rollback()
+        print(f"Signup error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -193,7 +228,7 @@ async def verify_email(
     session: Session = Depends(get_session)
 ):
     """
-    Verify user email with the 6-digit verification code.
+    Verify user email with the 6-digit verification code (OTP).
     """
     try:
         # Find user by email
@@ -229,10 +264,54 @@ async def verify_email(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/resend-verification", response_model=MessageResponse)
-async def resend_verification(request: ResendVerificationRequest, session: Session = Depends(get_session)):
+class VerifyByLinkRequest(BaseModel):
+    token: str
+
+
+@router.post("/verify-by-link", response_model=MessageResponse)
+async def verify_email_by_link(
+    request: VerifyByLinkRequest,
+    session: Session = Depends(get_session)
+):
     """
-    Resend verification code to the user's email.
+    Verify user email via magic link (JWT token).
+    """
+    try:
+        # Verify the token and get email
+        email = verify_verification_token(request.token, "verify")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="লিংক সঠিক নয় বা মেয়াদ শেষ হয়ে গেছে।")
+        
+        # Find user by email
+        user = session.exec(select(User).where(User.email == email)).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="ব্যবহারকারী খুঁজে পাওয়া যায়নি।")
+        
+        if user.is_verified:
+            return MessageResponse(message="ইমেইল ইতিমধ্যে যাচাই করা হয়েছে। লগইন করতে পারেন।")
+        
+        # Mark user as verified
+        user.is_verified = True
+        user.verification_code = None
+        user.verification_code_expires = None
+        session.add(user)
+        session.commit()
+        
+        return MessageResponse(
+            message="ইমেইল সফলভাবে যাচাই হয়েছে! এখন লগইন করতে পারেন।"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="ইমেইল যাচাই করতে সমস্যা হয়েছে।")
+
+
+@router.post("/resend-verification", response_model=MessageResponse)
+async def resend_verification(request: ResendVerificationRequest, session: Session = Depends(get_session), background_tasks: BackgroundTasks = BackgroundTasks()):
+    """
+    Resend verification email with both OTP and magic link to the user's email.
     """
     try:
         user = session.exec(select(User).where(User.email == request.email)).first()
@@ -241,20 +320,25 @@ async def resend_verification(request: ResendVerificationRequest, session: Sessi
             raise HTTPException(status_code=404, detail="ইমেইল খুঁজে পাওয়া যায়নি। প্রথমে রেজিস্টার করুন।")
         
         if user.is_verified:
-            return MessageResponse(message="Email already verified. You can sign in.")
+            return MessageResponse(message="ইমেইল ইতিমধ্যে যাচাই করা হয়েছে। লগইন করতে পারেন।")
         
-        # Generate new verification code
+        # Generate new verification code and token
         verification_code = generate_verification_code()
+        verification_token = create_verification_token(request.email, "verify")
+        
         user.verification_code = verification_code
-        user.verification_code_expires = datetime.now() + timedelta(hours=24)
+        user.verification_code_expires = datetime.now() + timedelta(hours=1)
         session.add(user)
         session.commit()
         
-        # TODO: Send verification email here
+        # Send both OTP and magic link verification emails
+        await send_verification_email_with_otp(request.email, verification_code, background_tasks)
+        await send_verification_email_with_link(request.email, verification_token, background_tasks)
+        
         print(f"New verification code for {request.email}: {verification_code}")
         
         return MessageResponse(
-            message=f"Verification code sent! Your code is: {verification_code}"
+            message="যাচাইকরণ ইমেইল পাঠানো হয়েছে! আপনার ইমেইল চেক করুন।"
         )
     except HTTPException:
         raise
@@ -405,29 +489,35 @@ class ForgotPasswordRequest(BaseModel):
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(request: ForgotPasswordRequest, session: Session = Depends(get_session)):
+async def forgot_password(request: ForgotPasswordRequest, session: Session = Depends(get_session), background_tasks: BackgroundTasks = BackgroundTasks()):
     """
-    Send password reset code.
+    Send password reset email with both OTP and magic link.
     """
     try:
         user = session.exec(select(User).where(User.email == request.email)).first()
         
         if not user:
-            # Don't reveal if email exists
-            return MessageResponse(message="If the email exists, a password reset code has been sent.")
+            # Don't reveal if email exists for security
+            return MessageResponse(message="যদি ইমেইলটি আমাদের সিস্টেমে থাকে, পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে।")
         
-        # Generate reset code
+        # Generate reset code and token
         reset_code = generate_verification_code()
+        reset_token = create_verification_token(request.email, "reset")
+        
         user.verification_code = reset_code
         user.verification_code_expires = datetime.now() + timedelta(hours=1)
         session.add(user)
         session.commit()
         
-        # TODO: Send reset email here
+        # Send both OTP and magic link password reset emails
+        await send_password_reset_email_with_otp(request.email, reset_code, background_tasks)
+        await send_password_reset_email_with_link(request.email, reset_token, background_tasks)
+        
         print(f"Password reset code for {request.email}: {reset_code}")
         
-        return MessageResponse(message=f"Password reset code sent! Your code is: {reset_code}")
+        return MessageResponse(message="পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে! আপনার ইমেইল চেক করুন।")
     except Exception as e:
+        print(f"Forgot password error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -440,7 +530,7 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/reset-password", response_model=MessageResponse)
 async def reset_password(request: ResetPasswordRequest, session: Session = Depends(get_session)):
     """
-    Reset password using the code from email.
+    Reset password using the OTP code from email.
     """
     try:
         user = session.exec(select(User).where(User.email == request.email)).first()
@@ -463,11 +553,48 @@ async def reset_password(request: ResetPasswordRequest, session: Session = Depen
         session.add(user)
         session.commit()
         
-        return MessageResponse(message="Password reset successfully")
+        return MessageResponse(message="পাসওয়ার্ড সফলভাবে রিসেট হয়েছে!")
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+class ResetPasswordByLinkRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/reset-password-by-link", response_model=MessageResponse)
+async def reset_password_by_link(request: ResetPasswordByLinkRequest, session: Session = Depends(get_session)):
+    """
+    Reset password using the magic link (JWT token) from email.
+    """
+    try:
+        # Verify the token and get email
+        email = verify_verification_token(request.token, "reset")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="লিংক সঠিক নয় বা মেয়াদ শেষ হয়ে গেছে।")
+        
+        # Find user by email
+        user = session.exec(select(User).where(User.email == email)).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="ব্যবহারকারী পাওয়া যায়নি।")
+        
+        # Update password
+        user.password_hash = get_password_hash(request.new_password)
+        user.verification_code = None
+        user.verification_code_expires = None
+        session.add(user)
+        session.commit()
+        
+        return MessageResponse(message="পাসওয়ার্ড সফলভাবে রিসেট হয়েছে!")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="পাসওয়ার্ড রিসেট করতে সমস্যা হয়েছে।")
 
 
 class ChangePasswordRequest(BaseModel):

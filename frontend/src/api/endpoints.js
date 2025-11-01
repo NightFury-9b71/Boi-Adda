@@ -10,7 +10,11 @@ const API_ENDPOINTS = {
     REGISTER: '/auth/signup',
     ME: '/auth/me',
     VERIFY_EMAIL: '/auth/verify-email',
+    VERIFY_BY_LINK: '/auth/verify-by-link',
     RESEND_VERIFICATION: '/auth/resend-verification',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    RESET_PASSWORD_BY_LINK: '/auth/reset-password-by-link',
     CHANGE_PASSWORD: '/auth/change-password',
   },
   // Book endpoints

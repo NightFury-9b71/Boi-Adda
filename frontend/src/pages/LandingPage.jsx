@@ -33,49 +33,57 @@ const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
   );
 };
 
-const LoginForm = ({ formData, setFormData, onSubmit, loading }) => (
-  <form onSubmit={onSubmit} className="space-y-4">
-    <div>
-      <input
-        type="email"
-        placeholder="ইমেইল"
-        value={formData.email}
-        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-        required
-        autoComplete="username"
-      />
-    </div>
-    <div>
-      <PasswordInput
-        placeholder="পাসওয়ার্ড"
-        value={formData.password}
-        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-        autoComplete="current-password"
-      />
-    </div>
-    <button
-      type="submit"
-      disabled={loading}
-      className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-4 rounded-md font-semibold hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-    >
-      {loading ? (
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-      ) : (
-        <>
-          <span>লগইন করুন</span>
-          <ArrowRight className="h-4 w-4" />
-        </>
-      )}
-    </button>
-    <p className="text-center text-sm text-gray-600">
-      পাসওয়ার্ড ভুলে গেছেন?{' '}
-      <span className="text-green-600 font-medium">
-        অ্যাডমিনের সাথে যোগাযোগ করুন
-      </span>
-    </p>
-  </form>
-);
+const LoginForm = ({ formData, setFormData, onSubmit, loading }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <input
+          type="email"
+          placeholder="ইমেইল"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+          required
+          autoComplete="username"
+        />
+      </div>
+      <div>
+        <PasswordInput
+          placeholder="পাসওয়ার্ড"
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          autoComplete="current-password"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-4 rounded-md font-semibold hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+      >
+        {loading ? (
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+        ) : (
+          <>
+            <span>লগইন করুন</span>
+            <ArrowRight className="h-4 w-4" />
+          </>
+        )}
+      </button>
+      <p className="text-center text-sm text-gray-600">
+        পাসওয়ার্ড ভুলে গেছেন?{' '}
+        <button
+          type="button"
+          onClick={() => navigate('/forgot-password')}
+          className="text-green-600 font-medium hover:text-green-700 hover:underline"
+        >
+          পাসওয়ার্ড রিসেট করুন
+        </button>
+      </p>
+    </form>
+  );
+};
 
 const RegistrationForm = ({ formData, setFormData, onSubmit, loading, setIsLogin }) => (
   <form onSubmit={onSubmit} className="space-y-4">
@@ -220,9 +228,10 @@ const LandingPage = () => {
         setIsRegisterLoading(true);
         const result = await register(formData);
         // Success toast is handled by AuthContext
-        // Skip verification and redirect to login
+        // Redirect to verification page
         setShowAuthModal(false);
-        setIsLogin(true);
+        toast.info('আপনার ইমেইল চেক করে যাচাই করুন।');
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         // Reset form
         setFormData({
           name: '',
