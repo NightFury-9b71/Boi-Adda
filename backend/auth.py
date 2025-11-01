@@ -26,6 +26,9 @@ from email_service import (
     send_both_verification_methods,
     send_both_password_reset_methods
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 security = HTTPBearer()
@@ -209,7 +212,7 @@ async def sign_up(request: SignUpRequest, session: Session = Depends(get_session
         await send_verification_email_with_otp(request.email, verification_code, background_tasks)
         await send_verification_email_with_link(request.email, verification_token, background_tasks)
         
-        print(f"User registered: {request.email}, OTP: {verification_code}")
+        logger.info(f"User registered: {request.email}")
         
         return MessageResponse(
             message="রেজিস্ট্রেশন সফল! আপনার ইমেইল চেক করে যাচাই করুন।"
@@ -218,7 +221,7 @@ async def sign_up(request: SignUpRequest, session: Session = Depends(get_session
         raise
     except Exception as e:
         session.rollback()
-        print(f"Signup error: {str(e)}")
+        logger.error(f"Signup error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -335,7 +338,7 @@ async def resend_verification(request: ResendVerificationRequest, session: Sessi
         await send_verification_email_with_otp(request.email, verification_code, background_tasks)
         await send_verification_email_with_link(request.email, verification_token, background_tasks)
         
-        print(f"New verification code for {request.email}: {verification_code}")
+        logger.info(f"Verification email resent to: {request.email}")
         
         return MessageResponse(
             message="যাচাইকরণ ইমেইল পাঠানো হয়েছে! আপনার ইমেইল চেক করুন।"
@@ -513,11 +516,11 @@ async def forgot_password(request: ForgotPasswordRequest, session: Session = Dep
         await send_password_reset_email_with_otp(request.email, reset_code, background_tasks)
         await send_password_reset_email_with_link(request.email, reset_token, background_tasks)
         
-        print(f"Password reset code for {request.email}: {reset_code}")
+        logger.info(f"Password reset email sent to: {request.email}")
         
         return MessageResponse(message="পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে! আপনার ইমেইল চেক করুন।")
     except Exception as e:
-        print(f"Forgot password error: {str(e)}")
+        logger.error(f"Forgot password error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 

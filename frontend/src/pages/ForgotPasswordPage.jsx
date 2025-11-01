@@ -32,7 +32,7 @@ const ForgotPasswordPage = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
         <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
           <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
@@ -58,7 +58,7 @@ const ForgotPasswordPage = () => {
           <div className="space-y-3">
             <button
               onClick={() => navigate('/reset-password', { state: { email } })}
-              className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
             >
               পাসওয়ার্ড রিসেট করুন
             </button>
@@ -80,13 +80,13 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-red-600"
+              className="h-10 w-10 text-emerald-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -115,7 +115,7 @@ const ForgotPasswordPage = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="আপনার ইমেইল"
               required
             />
@@ -124,7 +124,7 @@ const ForgotPasswordPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? 'পাঠানো হচ্ছে...' : 'রিসেট লিংক পাঠান'}
           </button>
@@ -134,7 +134,7 @@ const ForgotPasswordPage = () => {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="text-red-600 hover:text-red-700 font-medium"
+            className="text-emerald-600 hover:text-emerald-700 font-medium"
           >
             ← লগইনে ফিরে যান
           </button>
