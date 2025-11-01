@@ -14,7 +14,6 @@ from router import (
     issue_direct,
     upload_books,
     issue_books,
-    mock_data,
     book_images,
     books,
     book_copies,
@@ -96,6 +95,6 @@ app.include_router(upload_books.router, prefix="/upload-books", tags=["Upload Bo
 app.include_router(issue_books.router, prefix="/issue", tags=["Issue Books Management"])
 
 # Mock data
-app.include_router(mock_data.router, prefix="/mock", tags=["Mock Data"])
+# app.include_router(mock_data.router, prefix="/mock", tags=["Mock Data"])
 
 
