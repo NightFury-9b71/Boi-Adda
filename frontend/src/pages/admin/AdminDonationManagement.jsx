@@ -525,8 +525,24 @@ const AdminDonationManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-12 w-10 bg-purple-200 rounded shadow-sm flex items-center justify-center mr-3">
-                          <span className="text-purple-700 font-bold text-xs">BOOK</span>
+                        <div className="h-12 w-10 bg-purple-200 rounded shadow-sm flex items-center justify-center mr-3 overflow-hidden">
+                          {donation.donation_cover_url ? (
+                            <img
+                              src={donation.donation_cover_url}
+                              alt={donation.donation_title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <span 
+                            className="text-purple-700 font-bold text-xs"
+                            style={{display: donation.donation_cover_url ? 'none' : 'flex'}}
+                          >
+                            BOOK
+                          </span>
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
@@ -709,8 +725,24 @@ const DonationDetailsModal = ({ donation, onClose, onApprove, onComplete, onReje
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('books.title')}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start">
-                <div className="h-24 w-16 bg-purple-200 rounded shadow-sm flex items-center justify-center">
-                  <span className="text-purple-700 font-bold text-xs">BOOK</span>
+                <div className="h-24 w-16 bg-purple-200 rounded shadow-sm flex items-center justify-center overflow-hidden">
+                  {donation.donation_cover_url ? (
+                    <img
+                      src={donation.donation_cover_url}
+                      alt={donation.donation_title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span 
+                    className="text-purple-700 font-bold text-xs"
+                    style={{display: donation.donation_cover_url ? 'none' : 'flex'}}
+                  >
+                    BOOK
+                  </span>
                 </div>
                 <div className="ml-4 flex-1">
                   <div className="text-lg font-medium text-gray-900">

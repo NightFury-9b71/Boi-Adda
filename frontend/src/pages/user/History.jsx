@@ -115,7 +115,7 @@ const History = () => {
         published_year: donation.donation_year || null,
         pages: donation.donation_pages || null,
         category: null,
-        image_url: null, // Donations don't have cover images
+        image_url: donation.donation_cover_url || null, // Use donation cover URL
         cover_public_id: null
       },
       status: donation.status,
